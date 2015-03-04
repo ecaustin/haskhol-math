@@ -14,8 +14,10 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.Nums.Context
 import HaskHOL.Lib.Arith.A.Base
 
--- generate template types
-extendTheory ctxtNums "ArithA" $
+templateTypes ctxtNums "ArithA"
+
+ctxtArithA :: TheoryPath ArithAType
+ctxtArithA = extendTheory ctxtNums $
     do mapM_ parseAsInfix [ ("<", (12, "right"))
                           , ("<=", (12, "right"))
                           , (">", (12, "right"))

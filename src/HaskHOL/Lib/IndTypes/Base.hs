@@ -223,8 +223,8 @@ convMATCH_ONEPATTERN_TRIV =
     convMATCH_ONEPATTERN `_THEN` convGEN_REWRITE id [convUNWIND_pth5]
   where convUNWIND_pth5 :: (BasicConvs thry, IndTypesBCtxt thry) 
                         => HOL cls thry HOLThm
-        convUNWIND_pth5 = cacheProof "convUNWIND_pth5" ctxtIndTypesB $ 
-            prove "(if ?!z. z = k then @z. z = k else @x. F) = k"
+        convUNWIND_pth5 = cacheProof "convUNWIND_pth5" ctxtIndTypesB .
+            prove "(if ?!z. z = k then @z. z = k else @x. F) = k" $
               tacMESON_NIL
 
 convMATCH_ONEPATTERN :: (BasicConvs thry, IndTypesBCtxt thry) 
@@ -248,18 +248,26 @@ convMATCH_ONEPATTERN = Conv $ \ tm ->
                  (convRATOR 
                   (convCOMB2 (convRAND (convBINDER conv)) 
                    (convBINDER conv)))) th1
+-- Can't use tacREWRITE directly here in case conversions need to be recomputed
+-- before these proofs have been run.
   where convUNWIND_pth3 :: (BasicConvs thry, IndTypesBCtxt thry) 
                         => HOL cls thry HOLThm
-        convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypesB $ prove
-          [str|(_MATCH x (\y z. P y z) = if ?!z. P x z then @z. P x z else @x. F) /\
-               (_FUNCTION (\y z. P y z) x = if ?!z. P x z then @z. P x z else @x. F) |] $
-            tacREWRITE [ def_MATCH, def_FUNCTION]
+        convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypesB $ 
+            do ths1 <- basicRewrites
+               ths2 <- sequence [def_MATCH, def_FUNCTION]
+               prove [str| (_MATCH x (\y z. P y z) = 
+                             if ?!z. P x z then @z. P x z else @x. F) /\ 
+                           (_FUNCTION (\y z. P y z) x = 
+                             if ?!z. P x z then @z. P x z else @x. F) |] $
+                 tacPURE_REWRITE $ ths1 ++ ths2
 
         convUNWIND_pth4 :: (BasicConvs thry, IndTypesBCtxt thry) 
                         => HOL cls thry HOLThm
-        convUNWIND_pth4 = cacheProof "convUNWIND_pth4" ctxtIndTypesB $ prove
-          [str|(_UNGUARDED_PATTERN (GEQ s t) (GEQ u y) <=> y = u /\ s = t) /\
-           (_GUARDED_PATTERN (GEQ s t) p (GEQ u y) <=> y = u /\ s = t /\ p) |] $
+        convUNWIND_pth4 = cacheProof "convUNWIND_pth4" ctxtIndTypesB $
+            prove [str| (_UNGUARDED_PATTERN (GEQ s t) (GEQ u y) <=> 
+                          y = u /\ s = t) /\ 
+                        (_GUARDED_PATTERN (GEQ s t) p (GEQ u y) <=> 
+                          y = u /\ s = t /\ p) |] $
               tacREWRITE [ def_UNGUARDED_PATTERN
                          , def_GUARDED_PATTERN, defGEQ ] `_THEN`
               tacMESON_NIL

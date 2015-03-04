@@ -14,8 +14,10 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.Arith.Context
 import HaskHOL.Lib.WF.Base
 
--- generate template types
-extendTheory ctxtArith "WF" $
+templateTypes ctxtArith "WF"
+
+ctxtWF :: TheoryPath WFType
+ctxtWF = extendTheory ctxtArith $
     do parseAsInfix ("<<", (12, "right"))
        parseAsInfix ("<<<", (12, "right"))
        sequence_ [ defWF'

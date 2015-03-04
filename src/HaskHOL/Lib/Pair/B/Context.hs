@@ -13,8 +13,10 @@ import HaskHOL.Deductive
 import HaskHOL.Lib.Pair.A
 import HaskHOL.Lib.Pair.B.Base
 
--- generate template types
-extendTheory ctxtPairA "PairB" $
+templateTypes ctxtPairA "PairB"
+
+ctxtPairB :: TheoryPath PairBType
+ctxtPairB = extendTheory ctxtPairA $
     do void tyDefProd'
        parseAsInfix (",", (14, "right"))
        sequence_ [ defCOMMA'

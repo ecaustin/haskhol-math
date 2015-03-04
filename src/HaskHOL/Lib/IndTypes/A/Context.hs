@@ -14,8 +14,10 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.WF.Context
 import HaskHOL.Lib.IndTypes.A.Base
 
--- generate template types
-extendTheory ctxtWF "IndTypesA" $
+templateTypes ctxtWF "IndTypesA"
+
+ctxtIndTypesA :: TheoryPath IndTypesAType
+ctxtIndTypesA = extendTheory ctxtWF $
     do sequence_ [ specNUMPAIR_DEST'
                  , specNUMSUM_DEST'
                  , defINJN'

@@ -14,8 +14,10 @@ import HaskHOL.Lib.IndTypes
 import HaskHOL.Lib.Lists.A.Context
 import HaskHOL.Lib.Lists.Base
 
--- generate template types
-extendTheory ctxtListsA "Lists" $
+templateTypes ctxtListsA "Lists"
+
+ctxtLists :: TheoryPath ListsType
+ctxtLists = extendTheory ctxtListsA $
     mapM_ addMonoThm [thmMONO_ALL, thmMONO_ALL2]
 
 templateProvers 'ctxtLists

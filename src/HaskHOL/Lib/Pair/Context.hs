@@ -16,8 +16,10 @@ import HaskHOL.Lib.Pair.Base
 
 import Unsafe.Coerce (unsafeCoerce)
 
--- generate template types
-extendTheory ctxtPairC "Pair" $
+templateTypes ctxtPairC "Pair"
+
+ctxtPair :: TheoryPath PairType
+ctxtPair = extendTheory ctxtPairC $
     do indth <- inductPAIR
        recth <- recursionPAIR
        addIndDefs [("prod", (1, indth, recth))]

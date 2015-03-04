@@ -14,8 +14,10 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.Pair.Context
 import HaskHOL.Lib.Nums.A.Base
 
--- generate template types
-extendTheory ctxtPair "NumsA" $
+templateTypes ctxtPair "NumsA"
+
+ctxtNumsA :: TheoryPath NumsAType
+ctxtNumsA = extendTheory ctxtPair $
     do newType "ind" 0
        sequence_ [defONE_ONE', defONTO']
        void axINFINITY'

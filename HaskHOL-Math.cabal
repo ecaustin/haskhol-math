@@ -24,6 +24,7 @@ library
                    , vector >= 0.10
                    , haskhol-core >=1.1
                    , haskhol-deductive >=0.1
+                   , text >= 1.2
 
     exposed-modules:
       HaskHOL.Math

@@ -14,8 +14,10 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.IndTypes.A.Context
 import HaskHOL.Lib.IndTypes.B.Base
 
--- generate template types
-extendTheory ctxtIndTypesA "IndTypesB" $
+templateTypes ctxtIndTypesA "IndTypesB"
+
+ctxtIndTypesB :: TheoryPath IndTypesBType
+ctxtIndTypesB = extendTheory ctxtIndTypesA $
     do (indth, recth) <- indDefSum'
        sequence_ [ defOUTL' recth
                  , defOUTR' recth

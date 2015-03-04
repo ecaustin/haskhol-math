@@ -14,8 +14,10 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.Nums.A.Context
 import HaskHOL.Lib.Nums.B.Base
 
--- generate template types
-extendTheory ctxtNumsA "NumsB" $
+templateTypes ctxtNumsA "NumsB"
+
+ctxtNumsB :: TheoryPath NumsBType
+ctxtNumsB = extendTheory ctxtNumsA $
     do sequence_ [defIND_SUC', defIND_0']
        (rep, _, _) <- indDefNUM_REP''
        void $ tyDefNum'' rep

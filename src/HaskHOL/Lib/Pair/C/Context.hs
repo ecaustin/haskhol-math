@@ -13,8 +13,10 @@ import HaskHOL.Deductive
 import HaskHOL.Lib.Pair.B
 import HaskHOL.Lib.Pair.C.Base
 
--- generate template types
-extendTheory ctxtPairB "PairC" $
+templateTypes ctxtPairB "PairC"
+
+ctxtPairC :: TheoryPath PairCType
+ctxtPairC = extendTheory ctxtPairB $
     do extendBasicRewrites =<< sequence [thmFST, thmSND, thmPAIR]
        ths <- sequence [ defSND, defFST, defCOMMA, defMK_PAIR
                        , defGEQ, defGABS, defLET_END, defLET

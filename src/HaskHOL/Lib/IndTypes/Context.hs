@@ -18,8 +18,10 @@ import HaskHOL.Lib.IndTypes.Base
 
 import Unsafe.Coerce (unsafeCoerce)
 
--- generate template types
-extendTheory ctxtIndTypesB "IndTypes" $
+templateTypes ctxtIndTypesB "IndTypes"
+
+ctxtIndTypes :: TheoryPath IndTypesType
+ctxtIndTypes = extendTheory ctxtIndTypesB $
     do (oindth, orecth) <- indDefOption'
        (lindth, lrecth) <- indDefList'
        addIndDefs [ ("option", (2, oindth, orecth))
@@ -63,8 +65,8 @@ instance BasicConvs IndTypesType where
 
 convMATCH_SEQPATTERN_TRIV' :: Conversion cls thry
 convMATCH_SEQPATTERN_TRIV' = 
-    unsafeCoerce (convMATCH_SEQPATTERN_TRIV :: Conversion cls IndTypesType)
+    unsafeCoerce (convMATCH_SEQPATTERN_TRIV :: Conversion cls IndTypesBType)
 
 convMATCH_ONEPATTERN_TRIV' :: Conversion cls thry
 convMATCH_ONEPATTERN_TRIV' =
-    unsafeCoerce (convMATCH_ONEPATTERN_TRIV :: Conversion cls IndTypesType)
+    unsafeCoerce (convMATCH_ONEPATTERN_TRIV :: Conversion cls IndTypesBType)

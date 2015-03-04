@@ -14,8 +14,10 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.Arith.A.Context
 import HaskHOL.Lib.Arith.Base
 
--- generate template types
-extendTheory ctxtArithA "Arith" $
+templateTypes ctxtArithA "Arith"
+
+ctxtArith :: TheoryPath ArithType
+ctxtArith = extendTheory ctxtArithA $
     do parseAsBinder "minimal"
        void specDIVISION_0'
        void defMinimal'

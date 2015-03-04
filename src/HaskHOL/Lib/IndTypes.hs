@@ -71,6 +71,8 @@ import qualified HaskHOL.Lib.IndTypes.Pre as Pre
 import HaskHOL.Lib.IndTypes.Base
 import HaskHOL.Lib.IndTypes.Context
 
+import qualified Data.Text as T (words)
+
 defISO :: IndTypesCtxt thry => HOL cls thry HOLThm
 defISO = cacheProof "defISO" ctxtIndTypes $ getDefinition "ISO"
 
@@ -137,7 +139,8 @@ defineType s =
     do acid <- openLocalStateHOL (InductiveTypes mapEmpty)
        indTys <- queryHOL acid GetInductiveTypes
        closeAcidStateHOL acid
-       case mapLookup s indTys of
+       let s' = head $ T.words s
+       case mapLookup s' indTys of
          Just retval -> 
              return retval
          Nothing ->
@@ -164,7 +167,7 @@ defineType s =
                                        " already defined."
                         else do retval <- defineTypeRaw defspec
                                 acid' <- openLocalStateHOL (InductiveTypes mapEmpty)
-                                updateHOL acid' (AddInductiveType s retval)
+                                updateHOL acid' (AddInductiveType s' retval)
                                 createCheckpointAndCloseHOL acid'
                                 return retval
 

@@ -14,8 +14,10 @@ import HaskHOL.Lib.IndTypes.Context
 
 import HaskHOL.Lib.Lists.A.Base
 
--- generate template types
-extendTheory ctxtIndTypes "ListsA" $
+templateTypes ctxtIndTypes "ListsA"
+
+ctxtListsA :: TheoryPath ListsAType
+ctxtListsA = extendTheory ctxtIndTypes $
     do sequence_ [ defHD'
                  , defTL'
                  , defAPPEND'
