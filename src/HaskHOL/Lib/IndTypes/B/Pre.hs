@@ -261,20 +261,17 @@ thmCONSTR_REC = cacheProof "thmCONSTR_REC" ctxtIndTypesA $
 parseInductiveTypeSpecification :: Text -> 
     HOL cls thry [(HOLType, [(Text, [HOLType])])]
 parseInductiveTypeSpecification s =
-    do ctxt <- prepHOLContext
-       case runHOLParser parser s ctxt of
-         Left _ -> fail "parseInductiveTypeSpecification"
-         Right res -> mapM toTys res
-  where parser :: MyParser thry [(Text, [(Text, [PreType])])]
+     mapM toTys =<< runHOLParser parser s
+  where parser :: MyParser cls thry [(Text, [(Text, [PreType])])]
         parser = mywhiteSpace >> mysemiSep1 typeParser
         
-        typeParser :: MyParser thry (Text, [(Text, [PreType])])
+        typeParser :: MyParser cls thry (Text, [(Text, [PreType])])
         typeParser = do x <- myidentifier
                         myreservedOp "="
                         ptys <- subtypeParser `mysepBy1` myreservedOp "|"
                         return (x, ptys)
 
-        subtypeParser :: MyParser thry (Text, [PreType])
+        subtypeParser :: MyParser cls thry (Text, [PreType])
         subtypeParser = do x <- myidentifier
                            ptys <- mymany ptype
                            return (x, ptys)

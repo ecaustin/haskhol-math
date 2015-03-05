@@ -71,7 +71,7 @@ import qualified HaskHOL.Lib.IndTypes.Pre as Pre
 import HaskHOL.Lib.IndTypes.Base
 import HaskHOL.Lib.IndTypes.Context
 
-import qualified Data.Text as T (words)
+import qualified Data.Text.Lazy as T (words)
 
 defISO :: IndTypesCtxt thry => HOL cls thry HOLThm
 defISO = cacheProof "defISO" ctxtIndTypes $ getDefinition "ISO"
