@@ -2,14 +2,13 @@
              TypeFamilies, TypeSynonymInstances, UndecidableInstances #-}
 module HaskHOL.Lib.IndTypes.A.Context
     ( IndTypesAType
+    , IndTypesAThry
     , IndTypesACtxt
     , ctxtIndTypesA
     , indTypesA
     ) where
 
 import HaskHOL.Core
-import HaskHOL.Deductive
-import HaskHOL.Lib.Pair
 
 import HaskHOL.Lib.WF.Context
 import HaskHOL.Lib.IndTypes.A.Base
@@ -42,6 +41,3 @@ type family IndTypesACtxt a where
     IndTypesACtxt a = (WFCtxt a, IndTypesAContext a ~ True)
 
 type instance PolyTheory IndTypesAType b = IndTypesACtxt b
-
-instance BasicConvs IndTypesAType where
-    basicConvs _ = basicConvs (undefined :: PairType)

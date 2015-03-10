@@ -2,13 +2,13 @@
              TypeFamilies, TypeSynonymInstances, UndecidableInstances #-}
 module HaskHOL.Lib.Pair.B.Context
     ( PairBType
+    , PairBThry
     , PairBCtxt
     , ctxtPairB
     , pairB
     ) where
 
 import HaskHOL.Core
-import HaskHOL.Deductive
 
 import HaskHOL.Lib.Pair.A
 import HaskHOL.Lib.Pair.B.Base
@@ -31,6 +31,3 @@ type family PairBCtxt a where
     PairBCtxt a = (PairACtxt a, PairBContext a ~ True)
 
 type instance PolyTheory PairBType b = PairBCtxt b
-
-instance BasicConvs PairBType where
-    basicConvs _ = basicConvs (undefined :: DeductiveType)

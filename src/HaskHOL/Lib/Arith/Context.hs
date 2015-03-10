@@ -2,14 +2,13 @@
              TypeFamilies, TypeSynonymInstances, UndecidableInstances #-}
 module HaskHOL.Lib.Arith.Context
     ( ArithType
+    , ArithThry
     , ArithCtxt
     , ctxtArith
     , arith
     ) where
 
 import HaskHOL.Core
-import HaskHOL.Deductive
-import HaskHOL.Lib.Pair
 
 import HaskHOL.Lib.Arith.A.Context
 import HaskHOL.Lib.Arith.Base
@@ -29,7 +28,3 @@ type family ArithCtxt a where
     ArithCtxt a = (ArithACtxt a, ArithContext a ~ True)
 
 type instance PolyTheory ArithType b = ArithCtxt b
-
-instance BasicConvs ArithType where
-    basicConvs _ = basicConvs (undefined :: PairType)
-

@@ -151,7 +151,7 @@ proveRecursiveFunctionsExist ax tm =
                ruleMP (fromJust $ primINST [(l, r)] th') $ primREFL r
 
 
-newRecursiveDefinition :: (BasicConvs thry, NumsCtxt thry, 
+newRecursiveDefinition :: (NumsCtxt thry, 
                            HOLThmRep thm Theory thry,
                            HOLTermRep tm Theory thry) => String -> thm -> tm 
                        -> HOL Theory thry HOLThm

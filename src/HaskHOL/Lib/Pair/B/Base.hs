@@ -39,11 +39,11 @@ def_FUNCTION = cacheProof "def_FUNCTION" ctxtPairA $ getDefinition "_FUNCTION"
 defMK_PAIR :: PairACtxt thry => HOL cls thry HOLThm
 defMK_PAIR = cacheProof "defMK_PAIR" ctxtPairA $ getDefinition "mk_pair"
 
-thmPAIR_EXISTS :: (BasicConvs thry, PairACtxt thry) => HOL cls thry HOLThm
+thmPAIR_EXISTS :: PairACtxt thry => HOL cls thry HOLThm
 thmPAIR_EXISTS = cacheProof "thmPAIR_EXISTS" ctxtPairA $
     prove "? x. ? (a:A) (b:B). x = mk_pair a b" tacMESON_NIL
 
-tyDefProd' :: (BasicConvs thry, PairACtxt thry) => HOL Theory thry HOLThm
+tyDefProd' :: PairACtxt thry => HOL Theory thry HOLThm
 tyDefProd' = newTypeDefinition "prod" "ABS_prod" "REP_prod" thmPAIR_EXISTS
 
 defCOMMA' :: BoolCtxt thry => HOL Theory thry HOLThm

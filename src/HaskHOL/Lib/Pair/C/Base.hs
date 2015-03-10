@@ -20,12 +20,12 @@ defFST = cacheProof "defFST" ctxtPairB $ D.getDefinition "FST"
 defSND :: PairBCtxt thry => HOL cls thry HOLThm
 defSND = cacheProof "defSND" ctxtPairB $ D.getDefinition "SND"
 
-thmREP_ABS_PAIR :: (BasicConvs thry, PairBCtxt thry) => HOL cls thry HOLThm
+thmREP_ABS_PAIR :: PairBCtxt thry => HOL cls thry HOLThm
 thmREP_ABS_PAIR = cacheProof "thmREP_ABS_PAIR" ctxtPairB $
     prove "!(x:A) (y:B). REP_prod (ABS_prod (mk_pair x y)) = mk_pair x y" $
       tacMESON [tyDefProd]
 
-thmPAIR_SURJECTIVE :: (BasicConvs thry, PairBCtxt thry) => HOL cls thry HOLThm
+thmPAIR_SURJECTIVE :: PairBCtxt thry => HOL cls thry HOLThm
 thmPAIR_SURJECTIVE = cacheProof "thmPAIR_SURJECTIVE" ctxtPairB $
     do tm <- toHTm "ABS_prod:(A->B->bool)->A#B"
        (th1, th2) <- ruleCONJ_PAIR tyDefProd
@@ -39,7 +39,7 @@ thmPAIR_SURJECTIVE = cacheProof "thmPAIR_SURJECTIVE" ctxtPairB $
          tacREWRITE [th1] `_THEN` _DISCH_THEN tacSUBST1 `_THEN`
          _MAP_EVERY tacEXISTS ["a:A", "b:B"] `_THEN` tacREFL
 
-thmPAIR_EQ :: (BasicConvs thry, PairBCtxt thry) => HOL cls thry HOLThm
+thmPAIR_EQ :: PairBCtxt thry => HOL cls thry HOLThm
 thmPAIR_EQ = cacheProof "thmPAIR_EQ" ctxtPairB $
     do tm <- toHTm "REP_prod:A#B->A->B->bool"
        prove [str| !(x:A) (y:B) a b. (x,y = a,b) <=> (x = a) /\ (y = b) |] $
@@ -52,7 +52,7 @@ thmPAIR_EQ = cacheProof "thmPAIR_EQ" ctxtPairB $
          ] `_THEN`
          tacMESON_NIL
 
-thmFST :: (BasicConvs thry, PairBCtxt thry) => HOL cls thry HOLThm
+thmFST :: PairBCtxt thry => HOL cls thry HOLThm
 thmFST = cacheProof "thmFST" ctxtPairB $
     prove "!(x:A) (y:B). FST(x,y) = x" $
       _REPEAT tacGEN `_THEN` tacREWRITE[defFST] `_THEN`
@@ -61,7 +61,7 @@ thmFST = cacheProof "thmFST" ctxtPairB $
       tacSTRIP `_THEN` tacASM_REWRITE_NIL `_THEN`
       tacEXISTS "y:B" `_THEN` tacASM_REWRITE_NIL
 
-thmSND :: (BasicConvs thry, PairBCtxt thry) => HOL cls thry HOLThm
+thmSND :: PairBCtxt thry => HOL cls thry HOLThm
 thmSND = cacheProof "thmSND" ctxtPairB $
     prove "!(x:A) (y:B). SND(x,y) = y" $
       _REPEAT tacGEN `_THEN` tacREWRITE [defSND] `_THEN`
@@ -70,7 +70,7 @@ thmSND = cacheProof "thmSND" ctxtPairB $
       tacSTRIP `_THEN` tacASM_REWRITE_NIL `_THEN`
       tacEXISTS "x:A" `_THEN` tacASM_REWRITE_NIL
 
-thmPAIR :: (BasicConvs thry, PairBCtxt thry) => HOL cls thry HOLThm
+thmPAIR :: PairBCtxt thry => HOL cls thry HOLThm
 thmPAIR = cacheProof "thmPAIR" ctxtPairB $
     prove "!x:A#B. FST x,SND x = x" $
       tacGEN `_THEN` 
@@ -78,14 +78,14 @@ thmPAIR = cacheProof "thmPAIR" ctxtPairB $
         (ruleSPEC "x:A#B" thmPAIR_SURJECTIVE) `_THEN`
       tacREWRITE [thmFST, thmSND]
 
-recursionPAIR :: (BasicConvs thry, PairBCtxt thry) => HOL cls thry HOLThm
+recursionPAIR :: PairBCtxt thry => HOL cls thry HOLThm
 recursionPAIR = cacheProof "recursionPAIR" ctxtPairB $
     prove "!PAIR'. ?fn:A#B->C. !a0 a1. fn (a0,a1) = PAIR' a0 a1" $
       tacGEN `_THEN` 
       tacEXISTS [str| \p. (PAIR':A->B->C) (FST p) (SND p) |] `_THEN`
       tacREWRITE [thmFST, thmSND]
 
-inductPAIR :: (BasicConvs thry, PairBCtxt thry) => HOL cls thry HOLThm
+inductPAIR :: PairBCtxt thry => HOL cls thry HOLThm
 inductPAIR = cacheProof "inductPAIR" ctxtPairB $
     prove "!P. (!x y. P (x,y)) ==> !p. P p" $
       _REPEAT tacSTRIP `_THEN`
@@ -119,7 +119,7 @@ makeAcidic ''Definitions
     ['getDefinitions, 'getDefinition', 'addDefinition, 'addDefinitions]
 
 
-newDefinition :: (BasicConvs thry, PairBCtxt thry, HOLTermRep tm Theory thry) 
+newDefinition :: (PairBCtxt thry, HOLTermRep tm Theory thry) 
               => Text -> tm -> HOL Theory thry HOLThm
 newDefinition lbl ptm =
     do acid <- openLocalStateHOL (Definitions mapEmpty)
@@ -187,14 +187,14 @@ getDefinition lbl =
        liftMaybe ("getDefinition: definition for " ++ show lbl ++ 
                   " not found.") qth
             
-defCURRY' :: (BasicConvs thry, PairBCtxt thry) => HOL Theory thry HOLThm
+defCURRY' :: PairBCtxt thry => HOL Theory thry HOLThm
 defCURRY' = newDefinition "CURRY"
     [str| CURRY(f:A#B->C) x y = f(x,y) |]
 
-defUNCURRY' :: (BasicConvs thry, PairBCtxt thry) => HOL Theory thry HOLThm
+defUNCURRY' :: PairBCtxt thry => HOL Theory thry HOLThm
 defUNCURRY' = newDefinition "UNCURRY"
     [str| !f x y. UNCURRY(f:A->B->C)(x,y) = f x y |]
 
-defPASSOC' :: (BasicConvs thry, PairBCtxt thry) => HOL Theory thry HOLThm
+defPASSOC' :: PairBCtxt thry => HOL Theory thry HOLThm
 defPASSOC' = newDefinition "PASSOC"
     [str| !f x y z. PASSOC (f:(A#B)#C->D) (x,y,z) = f ((x,y),z) |]

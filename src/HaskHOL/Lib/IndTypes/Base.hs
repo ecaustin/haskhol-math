@@ -96,8 +96,7 @@ rehashRectypeNet =
        net' <- liftO $ foldrM (netOfThm True) (netEmpty :: Net (GConversion cls thry)) canonThl
        writeHOLRef rectypeNet (Just net')
 
-extendRectypeNet :: (BasicConvs thry, IndTypesBCtxt thry) 
-                 => (Text, (Int, HOLThm, HOLThm)) 
+extendRectypeNet :: IndTypesBCtxt thry => (Text, (Int, HOLThm, HOLThm)) 
                  -> HOL Theory thry ()
 extendRectypeNet (tyname, (_, _, rth)) =
     do ths1 <- liftM (: []) (proveConstructorsDistinct rth) <|> return []
@@ -119,17 +118,15 @@ basicRectypeNet =
                        basicRectypeNet
              
 
-indDefOption' :: (BasicConvs thry, IndTypesBCtxt thry) 
-              => HOL Theory thry (HOLThm, HOLThm)
+indDefOption' :: IndTypesBCtxt thry => HOL Theory thry (HOLThm, HOLThm)
 indDefOption' = defineTypeRaw =<< 
     parseInductiveTypeSpecification "option = NONE | SOME A"
 
-indDefList' :: (BasicConvs thry, IndTypesBCtxt thry) 
-            => HOL Theory thry (HOLThm, HOLThm)
+indDefList' :: IndTypesBCtxt thry => HOL Theory thry (HOLThm, HOLThm)
 indDefList' = defineTypeRaw =<< 
     parseInductiveTypeSpecification "list = NIL | CONS A list"
 
-defISO' :: (BasicConvs thry, PairCtxt thry) => HOL Theory thry HOLThm
+defISO' :: PairCtxt thry => HOL Theory thry HOLThm
 defISO' = newDefinition "ISO"
     [str| ISO (f:A->B) (g:B->A) <=> (!x. f(g x) = x) /\ (!y. g(f y) = y) |]
 
@@ -180,13 +177,11 @@ convBREAK_CONS = Conv $ \ tm ->
                                  [ thmAND_CLAUSES, thmOR_CLAUSES ] `_THEN` 
                                convASSOC thmCONJ_ASSOC)) tm
 
-convMATCH_SEQPATTERN_TRIV :: (BasicConvs thry, IndTypesBCtxt thry) 
-                          => Conversion cls thry
+convMATCH_SEQPATTERN_TRIV :: IndTypesBCtxt thry => Conversion cls thry
 convMATCH_SEQPATTERN_TRIV = 
     convMATCH_SEQPATTERN `_THEN` convGEN_REWRITE id [thmCOND_CLAUSES]
 
-convMATCH_SEQPATTERN :: (BasicConvs thry, IndTypesBCtxt thry) 
-                     => Conversion cls thry
+convMATCH_SEQPATTERN :: IndTypesBCtxt thry => Conversion cls thry
 convMATCH_SEQPATTERN =
     convGEN_REWRITE id [convUNWIND_pth1] `_THEN`
     convRATOR (convLAND 
@@ -198,37 +193,34 @@ convMATCH_SEQPATTERN =
                                , thmAND_CLAUSES
                                ] `_THEN`
      convGEN_REWRITE convDEPTH [thmEXISTS_SIMP]))
-  where convUNWIND_pth1 :: (BasicConvs thry, IndTypesBCtxt thry) 
-                        => HOL cls thry HOLThm
-        convUNWIND_pth1 = cacheProof "convUNWIND_pth1" ctxtIndTypesB $ prove
-            [str| _MATCH x (_SEQPATTERN r s) =
-                    (if ?y. r x y then _MATCH x r else _MATCH x s) /\
-                  _FUNCTION (_SEQPATTERN r s) x =
-                    (if ?y. r x y then _FUNCTION r x else _FUNCTION s x) |] $
-              tacREWRITE [def_MATCH, def_SEQPATTERN, def_FUNCTION] `_THEN`
-              tacMESON_NIL
 
-        convUNWIND_pth2 :: (BasicConvs thry, IndTypesBCtxt thry) 
-                        => HOL cls thry HOLThm
-        convUNWIND_pth2 = cacheProof "convUNWIND_pth2" ctxtIndTypesB $ prove
-          [str|((?y. _UNGUARDED_PATTERN (GEQ s t) (GEQ u y)) <=> s = t) /\
+convUNWIND_pth1 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+convUNWIND_pth1 = cacheProof "convUNWIND_pth1" ctxtIndTypesB $
+    prove [str| _MATCH x (_SEQPATTERN r s) =
+                 (if ?y. r x y then _MATCH x r else _MATCH x s) /\
+                _FUNCTION (_SEQPATTERN r s) x =
+                 (if ?y. r x y then _FUNCTION r x else _FUNCTION s x) |] $
+      tacREWRITE [def_MATCH, def_SEQPATTERN, def_FUNCTION] `_THEN`
+      tacMESON_NIL
+
+convUNWIND_pth2 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+convUNWIND_pth2 = cacheProof "convUNWIND_pth2" ctxtIndTypesB $
+    prove [str|((?y. _UNGUARDED_PATTERN (GEQ s t) (GEQ u y)) <=> s = t) /\
                ((?y. _GUARDED_PATTERN (GEQ s t) p (GEQ u y)) <=> s = t /\ p)|] $
-            tacREWRITE [ def_UNGUARDED_PATTERN
-                       , def_GUARDED_PATTERN, defGEQ ] `_THEN`
-            tacMESON_NIL
+      tacREWRITE [ def_UNGUARDED_PATTERN
+                 , def_GUARDED_PATTERN, defGEQ ] `_THEN`
+      tacMESON_NIL
 
-convMATCH_ONEPATTERN_TRIV :: (BasicConvs thry, IndTypesBCtxt thry) 
-                          => Conversion cls thry
+convMATCH_ONEPATTERN_TRIV :: IndTypesBCtxt thry => Conversion cls thry
 convMATCH_ONEPATTERN_TRIV =
     convMATCH_ONEPATTERN `_THEN` convGEN_REWRITE id [convUNWIND_pth5]
-  where convUNWIND_pth5 :: (BasicConvs thry, IndTypesBCtxt thry) 
-                        => HOL cls thry HOLThm
-        convUNWIND_pth5 = cacheProof "convUNWIND_pth5" ctxtIndTypesB .
-            prove "(if ?!z. z = k then @z. z = k else @x. F) = k" $
-              tacMESON_NIL
 
-convMATCH_ONEPATTERN :: (BasicConvs thry, IndTypesBCtxt thry) 
-                     => Conversion cls thry
+convUNWIND_pth5 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+convUNWIND_pth5 = cacheProof "convUNWIND_pth5" ctxtIndTypesB .
+    prove "(if ?!z. z = k then @z. z = k else @x. F) = k" $
+      tacMESON_NIL
+
+convMATCH_ONEPATTERN :: IndTypesBCtxt thry => Conversion cls thry
 convMATCH_ONEPATTERN = Conv $ \ tm ->
     do th1 <- runConv (convGEN_REWRITE id [convUNWIND_pth3]) tm
        let tm' = fromJust $ body =<< rand =<< lHand =<< rand (concl th1)
@@ -248,26 +240,21 @@ convMATCH_ONEPATTERN = Conv $ \ tm ->
                  (convRATOR 
                   (convCOMB2 (convRAND (convBINDER conv)) 
                    (convBINDER conv)))) th1
--- Can't use tacREWRITE directly here in case conversions need to be recomputed
--- before these proofs have been run.
-  where convUNWIND_pth3 :: (BasicConvs thry, IndTypesBCtxt thry) 
-                        => HOL cls thry HOLThm
-        convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypesB $ 
-            do ths1 <- basicRewrites
-               ths2 <- sequence [def_MATCH, def_FUNCTION]
-               prove [str| (_MATCH x (\y z. P y z) = 
-                             if ?!z. P x z then @z. P x z else @x. F) /\ 
-                           (_FUNCTION (\y z. P y z) x = 
-                             if ?!z. P x z then @z. P x z else @x. F) |] $
-                 tacPURE_REWRITE $ ths1 ++ ths2
 
-        convUNWIND_pth4 :: (BasicConvs thry, IndTypesBCtxt thry) 
-                        => HOL cls thry HOLThm
-        convUNWIND_pth4 = cacheProof "convUNWIND_pth4" ctxtIndTypesB $
-            prove [str| (_UNGUARDED_PATTERN (GEQ s t) (GEQ u y) <=> 
-                          y = u /\ s = t) /\ 
-                        (_GUARDED_PATTERN (GEQ s t) p (GEQ u y) <=> 
-                          y = u /\ s = t /\ p) |] $
-              tacREWRITE [ def_UNGUARDED_PATTERN
-                         , def_GUARDED_PATTERN, defGEQ ] `_THEN`
-              tacMESON_NIL
+convUNWIND_pth3 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypesB $ 
+    prove [str| (_MATCH x (\y z. P y z) = 
+                  if ?!z. P x z then @z. P x z else @x. F) /\ 
+                (_FUNCTION (\y z. P y z) x = 
+                  if ?!z. P x z then @z. P x z else @x. F) |] $
+      tacREWRITE [def_MATCH, def_FUNCTION]
+
+convUNWIND_pth4 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+convUNWIND_pth4 = cacheProof "convUNWIND_pth4" ctxtIndTypesB $
+    prove [str| (_UNGUARDED_PATTERN (GEQ s t) (GEQ u y) <=> 
+                  y = u /\ s = t) /\ 
+                (_GUARDED_PATTERN (GEQ s t) p (GEQ u y) <=> 
+                  y = u /\ s = t /\ p) |] $
+      tacREWRITE [ def_UNGUARDED_PATTERN
+                 , def_GUARDED_PATTERN, defGEQ ] `_THEN`
+      tacMESON_NIL

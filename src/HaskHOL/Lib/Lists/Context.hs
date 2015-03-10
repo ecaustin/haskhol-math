@@ -2,6 +2,7 @@
              TypeFamilies, TypeSynonymInstances, UndecidableInstances #-}
 module HaskHOL.Lib.Lists.Context
     ( ListsType
+    , ListsThry
     , ListsCtxt
     , ctxtLists
     , lists
@@ -9,7 +10,6 @@ module HaskHOL.Lib.Lists.Context
 
 import HaskHOL.Core
 import HaskHOL.Deductive
-import HaskHOL.Lib.IndTypes
 
 import HaskHOL.Lib.Lists.A.Context
 import HaskHOL.Lib.Lists.Base
@@ -27,6 +27,3 @@ type family ListsCtxt a where
     ListsCtxt a = (ListsACtxt a, ListsContext a ~ True)
 
 type instance PolyTheory ListsType b = ListsCtxt b
-
-instance BasicConvs ListsType where
-    basicConvs _ = basicConvs (undefined :: IndTypesType)

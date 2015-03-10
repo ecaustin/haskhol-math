@@ -10,7 +10,11 @@
 -}
 module HaskHOL.Lib.Nums
     ( NumsType
+    , NumsAThry
+    , NumsBThry
+    , NumsThry
     , NumsCtxt
+    , ctxtNums
     , defONE_ONE -- A
     , defONTO
     , axINFINITY -- B
@@ -55,6 +59,7 @@ module HaskHOL.Lib.Nums
     , pattern BIT1
     ) where
 
+import HaskHOL.Lib.Nums.A
 import HaskHOL.Lib.Nums.B
 import HaskHOL.Lib.Nums.Base
 import HaskHOL.Lib.Nums.Context
@@ -102,13 +107,13 @@ makeAcidic ''TheSpecifications
     ['getSpecifications, 'getASpecification, 'addSpecification]
 
 
-defBIT0 :: (BasicConvs thry, NumsCtxt thry) => HOL cls thry HOLThm
+defBIT0 :: NumsCtxt thry => HOL cls thry HOLThm
 defBIT0 = cacheProof "defBIT0" ctxtNums $
     do th <- ruleBETA =<< 
                ruleISPECL ["0", "\\m n:num. SUC (SUC m)"] recursionNUM
        ruleREWRITE [ruleGSYM defBIT0'] =<< ruleSELECT th
 
-tacINDUCT :: (BasicConvs thry, NumsCtxt thry) => Tactic cls thry
+tacINDUCT :: NumsCtxt thry => Tactic cls thry
 tacINDUCT = tacMATCH_MP inductionNUM `_THEN` tacCONJ `_THENL` 
             [_ALL, tacGEN `_THEN` tacDISCH]
 
@@ -137,8 +142,7 @@ destSmallNumeral = liftM fromInteger . destNumeral
 isNumeral :: HOLTerm -> Bool
 isNumeral = isJust . destNumeral
 
-newSpecification :: (BasicConvs thry, NumsCtxt thry) => [Text] -> HOLThm 
-                 -> HOL Theory thry HOLThm
+newSpecification :: NumsCtxt thry => [Text] -> HOLThm -> HOL Theory thry HOLThm
 newSpecification [] _ = fail "newSpecification: no constant names provided."
 newSpecification names th@(Thm asl c)
     | not $ null asl = fail $ "newSpecification: " ++ 
@@ -165,15 +169,13 @@ newSpecification names th@(Thm asl c)
                        updateHOL acid' (AddSpecification names th sth)
                        createCheckpointAndCloseHOL acid'
                        return sth
-  where specifies :: (BasicConvs thry, NumsCtxt thry) => [Text] -> HOLThm 
-                  -> HOL Theory thry HOLThm
+  where specifies :: NumsCtxt thry => [Text] -> HOLThm -> HOL Theory thry HOLThm
         specifies [] thm = return thm
         specifies (n:ns) thm =
             do th' <- specify n thm
                specifies ns th'
 
-        specify :: (BasicConvs thry, NumsCtxt thry) => Text -> HOLThm 
-                -> HOL Theory thry HOLThm
+        specify :: NumsCtxt thry => Text -> HOLThm -> HOL Theory thry HOLThm
         specify name thm =
             do ntm <- mkCode $ unpack name
                gv <- genVar $ typeOf ntm

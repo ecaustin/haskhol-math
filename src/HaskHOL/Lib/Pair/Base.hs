@@ -21,7 +21,7 @@ defPASSOC = cacheProof "defPASSOC" ctxtPairC $ getDefinition "PASSOC"
 type ProjectionState = HOLRef ProjectionCache
 data ProjectionCache = ProjectionCache !(Map Text [HOLThm]) deriving Typeable
 
-createProjections :: (BasicConvs thry, ClassicCtxt thry) => ProjectionState 
+createProjections :: ClassicCtxt thry => ProjectionState 
                   -> Text -> HOL cls thry [HOLThm]
 createProjections ref conname =
     do (ProjectionCache projs) <- readHOLRef ref
@@ -81,14 +81,14 @@ convGEQ = convREWR (ruleGSYM defGEQ)
 ruleDEGEQ :: PairACtxt thry => HOLThm -> HOL cls thry HOLThm
 ruleDEGEQ = ruleCONV (convREWR defGEQ)
 
-ruleGABS :: (BasicConvs thry, PairCCtxt thry) => HOLThm -> HOL cls thry HOLThm
+ruleGABS :: PairCCtxt thry => HOLThm -> HOL cls thry HOLThm
 ruleGABS = liftM1 ruleMATCH_MP ruleGABS_pth
-  where ruleGABS_pth :: (BasicConvs thry, PairCCtxt thry) => HOL cls thry HOLThm
+  where ruleGABS_pth :: PairCCtxt thry => HOL cls thry HOLThm
         ruleGABS_pth = cacheProof "ruleGABS_pth" ctxtPairC $
             prove "(?) P ==> P (GABS P)" $
               tacSIMP [defGABS, axSELECT, axETA]
 
-createIteratedProjections :: (BasicConvs thry, ClassicCtxt thry) 
+createIteratedProjections :: ClassicCtxt thry
                           => ProjectionState -> HOLTerm 
                           -> HOL cls thry [HOLThm]
 createIteratedProjections ref tm
@@ -106,7 +106,7 @@ createIteratedProjections ref tm
                        mapM (ruleCONV (convRAND $ convSUBS [arth])) sths) arths
            return $! unions ths
 
-convGEN_BETA :: (BasicConvs thry, PairCCtxt thry) => Conversion cls thry
+convGEN_BETA :: PairCCtxt thry => Conversion cls thry
 convGEN_BETA = Conv $ \ tm ->
     runConv convBETA tm
     <|> noteHOL "convGEN_BETA"

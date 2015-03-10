@@ -20,8 +20,7 @@ tmAdd' = [wF| (+) |]
 tmSuc' = [wF| SUC |]
 
 
-mkClauses :: (BasicConvs thry, WFCtxt thry) => Bool -> HOLTerm 
-          -> HOL cls thry (HOLThm, Int)
+mkClauses :: WFCtxt thry => Bool -> HOLTerm -> HOL cls thry (HOLThm, Int)
 mkClauses sucflag t =
     do tmSuc <- serve tmSuc'
        tmAdd <- serve tmAdd'
@@ -85,7 +84,7 @@ starts =
                        then mkComb tmBIT1 t
                        else mkComb tmBIT0 t
 
-convNUM_SHIFT_pths1' :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+convNUM_SHIFT_pths1' :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_SHIFT_pths1' = cacheProof "convNUM_SHIFT_pths1'" ctxtWF .
     prove [str| (n = a + p * b <=>
                  BIT0(BIT0(BIT0(BIT0 n))) =
@@ -145,7 +144,7 @@ convNUM_SHIFT_pths1' = cacheProof "convNUM_SHIFT_pths1'" ctxtWF .
                  , thmEQ_MULT_LCANCEL, thmARITH_EQ
                  , ruleGSYM thmLEFT_ADD_DISTRIB, ruleGSYM thmMULT_ASSOC ]
 
-convNUM_SHIFT_pths0' :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+convNUM_SHIFT_pths0' :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_SHIFT_pths0' = cacheProof "convNUM_SHIFT_pths0'" ctxtWF .
     prove [str| (n = _0 + p * b <=>
                  BIT0(BIT0(BIT0(BIT0 n))) =
@@ -206,7 +205,7 @@ convNUM_SHIFT_pths0' = cacheProof "convNUM_SHIFT_pths0'" ctxtWF .
                  , thmEQ_MULT_LCANCEL, thmARITH_EQ
                  , ruleGSYM thmLEFT_ADD_DISTRIB, ruleGSYM thmMULT_ASSOC ]
 
-convNUM_UNSHIFT_puths1' :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+convNUM_UNSHIFT_puths1' :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_UNSHIFT_puths1' = cacheProof "convNUM_UNSHIFT_puths1'" ctxtWF .
     prove [str| (a + p * b = n <=>
                  BIT0(BIT0(BIT0(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b =

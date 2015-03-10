@@ -3,6 +3,7 @@
              UndecidableInstances #-}
 module HaskHOL.Lib.IndTypes.Context
     ( IndTypesType
+    , IndTypesThry
     , IndTypesCtxt
     , ctxtIndTypes
     , indTypes
@@ -10,13 +11,11 @@ module HaskHOL.Lib.IndTypes.Context
 
 import HaskHOL.Core
 import HaskHOL.Deductive
-import HaskHOL.Lib.Pair
 
 import HaskHOL.Lib.IndTypes.Pre
 import HaskHOL.Lib.IndTypes.B.Context
 import HaskHOL.Lib.IndTypes.Base
 
-import Unsafe.Coerce (unsafeCoerce)
 
 templateTypes ctxtIndTypesB "IndTypes"
 
@@ -42,6 +41,22 @@ ctxtIndTypes = extendTheory ctxtIndTypesB $
        updateHOL acid2 (PutDistinctnessStore [("bool", th)])
        createCheckpointAndCloseHOL acid2
        mapM_ extendRectypeNet =<< liftM mapToAscList getIndDefs
+       sequence_ [ convUNWIND_pth1, convUNWIND_pth2
+                 , convUNWIND_pth3, convUNWIND_pth4, convUNWIND_pth5 ]
+       mapM_ extendBasicConvs 
+                [ ("convMATCH_SEQPATTERN", ("_MATCH x (_SEQPATTERN r s)", 
+                   ("return convMATCH_SEQPATTERN_TRIV", [ "HaskHOL.Deductive"
+                                                 , "HaskHOL.Math" ])))
+                , ("convFUN_SEQPATTERN", ("_FUNCTION (_SEQPATTERN r s) x", 
+                   ("return convMATCH_SEQPATTERN_TRIV", [ "HaskHOL.Deductive"
+                                                 , "HaskHOL.Math" ])))
+                , ("convMATCH_ONEPATTERN", ([str| _MATCH x (\y z. P y z) |], 
+                   ("return convMATCH_ONEPATTERN_TRIV", [ "HaskHOL.Deductive"
+                                                 , "HaskHOL.Math" ])))
+                , ("convFUN_ONEPATTERN", ([str|_FUNCTION (\y z. P y z) x|], 
+                   ("return convMATCH_ONEPATTERN_TRIV", [ "HaskHOL.Deductive"
+                                                 , "HaskHOL.Math" ])))
+                ]
 
 templateProvers 'ctxtIndTypes
 
@@ -50,23 +65,3 @@ type family IndTypesCtxt a where
     IndTypesCtxt a = (IndTypesBCtxt a, IndTypesContext a ~ True)
 
 type instance PolyTheory IndTypesType b = IndTypesCtxt b
-
-instance BasicConvs IndTypesType where
-    basicConvs _ = basicConvs (undefined :: PairType) ++
-        [ ("convMATCH_SEQPATTERN",
-           ("_MATCH x (_SEQPATTERN r s)", convMATCH_SEQPATTERN_TRIV'))
-        , ("convFUN_SEQPATTERN",
-           ("_FUNCTION (_SEQPATTERN r s) x", convMATCH_SEQPATTERN_TRIV'))
-        , ("convMATCH_ONEPATTERN",
-           ([str| _MATCH x (\y z. P y z) |], convMATCH_ONEPATTERN_TRIV'))
-        , ("convFUN_ONEPATTERN",
-           ([str| _FUNCTION (\y z. P y z) x |], convMATCH_ONEPATTERN_TRIV'))
-        ]
-
-convMATCH_SEQPATTERN_TRIV' :: Conversion cls thry
-convMATCH_SEQPATTERN_TRIV' = 
-    unsafeCoerce (convMATCH_SEQPATTERN_TRIV :: Conversion cls IndTypesBType)
-
-convMATCH_ONEPATTERN_TRIV' :: Conversion cls thry
-convMATCH_ONEPATTERN_TRIV' =
-    unsafeCoerce (convMATCH_ONEPATTERN_TRIV :: Conversion cls IndTypesBType)

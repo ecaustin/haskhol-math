@@ -89,24 +89,24 @@ tyChar = getType "char"
 
 
 
-inductLIST' :: (BasicConvs thry, ListsACtxt thry) => HOL cls thry HOLThm
+inductLIST' :: ListsACtxt thry => HOL cls thry HOLThm
 inductLIST' = cacheProof "inductLIST'" ctxtListsA $
     prove [str| !P:(A)list->bool. P [] /\ 
                 (!h t. P t ==> P (CONS h t)) ==> !l. P l |] $
       tacMATCH_ACCEPT inductLIST
 
-tacLIST_INDUCT :: (BasicConvs thry, ListsACtxt thry) => Tactic cls thry
+tacLIST_INDUCT :: ListsACtxt thry => Tactic cls thry
 tacLIST_INDUCT = 
     tacMATCH_MP inductLIST' `_THEN` tacCONJ `_THENL`
     [ _ALL, tacGEN `_THEN` tacGEN `_THEN` tacDISCH]
 
-thmMONO_ALL :: (BasicConvs thry, ListsACtxt thry) => HOL cls thry HOLThm
+thmMONO_ALL :: ListsACtxt thry => HOL cls thry HOLThm
 thmMONO_ALL = cacheProof "thmMONO_ALL" ctxtListsA .
     prove "(!x:A. P x ==> Q x) ==> ALL P l ==> ALL Q l" $
       tacDISCH `_THEN` tacSPEC ("l:A list", "l:A list") `_THEN`
       tacLIST_INDUCT `_THEN` tacASM_REWRITE [defALL] `_THEN` tacASM_MESON_NIL
 
-thmMONO_ALL2 :: (BasicConvs thry, ListsACtxt thry) => HOL cls thry HOLThm
+thmMONO_ALL2 :: ListsACtxt thry => HOL cls thry HOLThm
 thmMONO_ALL2 = cacheProof "thmMONO_ALL2" ctxtListsA .
     prove [str| (!x y. (P:A->B->bool) x y ==> Q x y) ==> 
                 ALL2 P l l' ==> ALL2 Q l l' |] $

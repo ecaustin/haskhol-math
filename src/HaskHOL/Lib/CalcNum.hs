@@ -49,12 +49,12 @@ tmL' = [wF| l:num |]
 tmMul' = [wF| (*) |]
 
 -- numeral conversions
-convNUM_EVEN :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_EVEN :: WFCtxt thry => Conversion cls thry
 convNUM_EVEN = Conv $ \ tm ->
     do (tth, rths) <- ruleCONJ_PAIR thmARITH_EVEN
        runConv (convGEN_REWRITE id [tth] `_THEN` convGEN_REWRITE id [rths]) tm
 
-convNUM_SUC :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_SUC ::  WFCtxt thry => Conversion cls thry
 convNUM_SUC = Conv $ \ tm ->
     case tm of
       (Comb SUC (NUMERAL mtm)) ->
@@ -69,12 +69,12 @@ convNUM_SUC = Conv $ \ tm ->
                           (fromJust $ primINST [(tmM, mtm), (tmN, ntm)] pth) th1
           else fail "convNUM_SUC: not wellformed."
       _ -> fail "convNUM_SUC"
-  where convNUM_SUC_pth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+  where convNUM_SUC_pth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_SUC_pth = cacheProof "convNUM_SUC_pth" ctxtWF .
             prove "SUC(_0 + m) = n <=> SUC(NUMERAL m) = NUMERAL n" $
               tacBINOP `_THEN` tacMESON [defNUMERAL, thmADD_CLAUSES]
 
-convNUM_ADD :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_ADD :: WFCtxt thry => Conversion cls thry
 convNUM_ADD = Conv $ \ tm ->
     case tm of
       (Comb (Comb (Const "+" _) (NUMERAL mtm)) (NUMERAL ntm)) ->
@@ -90,12 +90,12 @@ convNUM_ADD = Conv $ \ tm ->
                   liftO $ primEQ_MP th2 th1
           else fail "convNUM_ADD: not wellformed."
       _ -> fail "convNUM_ADD"
-  where convNUM_ADD_pth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+  where convNUM_ADD_pth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_ADD_pth = cacheProof "convNUM_ADD_pth" ctxtWF $
             ruleMESON [defNUMERAL] 
               "m + n = p <=> NUMERAL m + NUMERAL n = NUMERAL p"
 
-convNUM_MULT :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_MULT :: WFCtxt thry => Conversion cls thry
 convNUM_MULT = Conv $ \ tm ->
     case tm of
       (Comb (Comb (Const "*" _) (NUMERAL mtm)) (NUMERAL ntm)) ->
@@ -119,19 +119,17 @@ convNUM_MULT = Conv $ \ tm ->
                                                   , (tmP, ptm) ] pth
                     liftO $ primEQ_MP th2 th1
       _ -> fail "convNUM_MULT"
-  where convNUM_MULT_pth1 :: (BasicConvs thry, WFCtxt thry) 
-                          => HOL cls thry HOLThm
+  where convNUM_MULT_pth1 :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_MULT_pth1 = cacheProof "convNUM_MULT_pth1" ctxtWF $
             ruleMESON [defNUMERAL] 
               "m * n = p <=> NUMERAL m * NUMERAL n = NUMERAL p"
 
-        convNUM_MULT_pth2 :: (BasicConvs thry, WFCtxt thry) 
-                          => HOL cls thry HOLThm
+        convNUM_MULT_pth2 :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_MULT_pth2 = cacheProof "convNUM_MULT_pth2" ctxtWF $
             ruleMESON [defNUMERAL, thmEXP_2] 
               "m EXP 2 = p <=> NUMERAL m * NUMERAL m = NUMERAL p"
 
-convNUM_LE :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_LE :: WFCtxt thry => Conversion cls thry
 convNUM_LE = Conv $ \ tm ->
     case tm of
       (Comb (Comb (Const "<=" _) (NUMERAL mtm)) (NUMERAL ntm)) ->
@@ -158,7 +156,7 @@ convNUM_LE = Conv $ \ tm ->
                        liftO $ ruleQUICK_PROVE_HYP th #<< 
                                primINST [(tmM, dtm), (tmN, mtm), (tmP, ntm)] pth
       _ -> fail "convNUM_LE"
-  where convNUM_LE_pth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+  where convNUM_LE_pth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_LE_pth = cacheProof "convNUM_LE_pth" ctxtWF $
             ruleUNDISCH =<< 
               prove "m + n = p ==> ((NUMERAL n <= NUMERAL p) <=> T)"
@@ -166,7 +164,7 @@ convNUM_LE = Conv $ \ tm ->
                  tacREWRITE [defNUMERAL] `_THEN`
                  tacMESON [thmLE_ADD, thmADD_SYM])
 
-        convNUM_LE_qth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_LE_qth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_LE_qth = cacheProof "convNUM_LE_qth" ctxtWF $
             ruleUNDISCH =<< 
               prove "SUC(m + p) = n ==> (NUMERAL n <= NUMERAL p <=> F)"
@@ -175,12 +173,12 @@ convNUM_LE = Conv $ \ tm ->
                             , thmADD_CLAUSES, thmLT_EXISTS ] `_THEN`
                  tacMESON [thmADD_SYM])
 
-        convNUM_LE_rth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_LE_rth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_LE_rth = cacheProof "convNUM_LE_rth" ctxtWF $
             prove "NUMERAL n <= NUMERAL n <=> T" $
               tacREWRITE [thmLE_REFL]
 
-convNUM_EQ :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_EQ :: WFCtxt thry => Conversion cls thry
 convNUM_EQ = Conv $ \ tm ->
     do tmM <- serve tmM'
        tmN <- serve tmN'
@@ -205,7 +203,7 @@ convNUM_EQ = Conv $ \ tm ->
                                       primINST [ (tmM, dtm), (tmN, mtm)
                                                , (tmP, ntm) ] qth
          _ -> fail "convNUM_EQ"
-  where convNUM_EQ_pth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+  where convNUM_EQ_pth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_EQ_pth = cacheProof "convNUM_EQ_pth" ctxtWF $
             ruleUNDISCH =<< 
               prove "SUC(m + n) = p ==> ((NUMERAL n = NUMERAL p) <=> F)"
@@ -215,7 +213,7 @@ convNUM_EQ = Conv $ \ tm ->
                  tacREWRITE [thmNOT_LE, thmLT_EXISTS, thmADD_CLAUSES] `_THEN`
                  tacMESON [thmADD_SYM])
 
-        convNUM_EQ_qth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_EQ_qth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_EQ_qth = cacheProof "convNUM_EQ_qth" ctxtWF $
             ruleUNDISCH =<< 
               prove "SUC(m + p) = n ==> ((NUMERAL n = NUMERAL p) <=> F)"
@@ -225,11 +223,11 @@ convNUM_EQ = Conv $ \ tm ->
                  tacREWRITE [thmNOT_LE, thmLT_EXISTS, thmADD_CLAUSES] `_THEN`
                  tacMESON [thmADD_SYM])
 
-        convNUM_EQ_rth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_EQ_rth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_EQ_rth = cacheProof "convNUM_EQ_rth" ctxtWF $
             prove "(NUMERAL n = NUMERAL n) <=> T" tacREWRITE_NIL
 
-convNUM_EXP :: (BasicConvs thry, WFCtxt thry) =>Conversion cls thry
+convNUM_EXP :: WFCtxt thry =>Conversion cls thry
 convNUM_EXP = Conv $ \ tm ->
     (do tth <- convNUM_EXP_tth
         th <- runConv (convGEN_REWRITE id [tth]) tm
@@ -243,7 +241,7 @@ convNUM_EXP = Conv $ \ tm ->
                    tmM <- serve tmM'
                    liftO $ liftM1 primTRANS (primTRANS th th') #<<
                              primINST [(tmM, tm')] fth) <?> "convNUM_EXP"
-  where ruleNUM_EXP_CONV :: (BasicConvs thry, WFCtxt thry )=> HOLTerm -> HOLTerm
+  where ruleNUM_EXP_CONV :: WFCtxt thry => HOLTerm -> HOLTerm
                          -> HOL cls thry HOLThm
         ruleNUM_EXP_CONV l (Const "_0" _) =
             do pth <- convNUM_EXP_pth
@@ -282,7 +280,7 @@ convNUM_EXP = Conv $ \ tm ->
                                       primINST [ (tmM, l), (tmN, r'), (tmP, tm1)
                                                , (tmB, tm2), (tmA, tm3) ] pth
                             ruleMP (ruleMP (ruleMP th4 th1) th2) th3
-        convNUM_MULT' :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+        convNUM_MULT' :: WFCtxt thry => Conversion cls thry
         convNUM_MULT' = Conv $ \ tm ->
             case tm of
               (Comb (Comb (Const "*" _) mtm) ntm)
@@ -300,44 +298,42 @@ convNUM_EXP = Conv $ \ tm ->
                         ruleNUM_MUL (w1+z1) (w2+z2) mtm ntm
               _ -> fail "convNUM_MULT'" 
 
-        convNUM_EXP_pth0 :: (BasicConvs thry, WFCtxt thry) 
-                         => HOL cls thry HOLThm
+        convNUM_EXP_pth0 :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_EXP_pth0 = cacheProof "convNUM_EXP_pth0" ctxtWF .
             prove "(m EXP n = p) ==> (p * p = a) ==> (m EXP (BIT0 n) = a)" $
               _REPEAT (_DISCH_THEN (tacSUBST1 . ruleSYM)) `_THEN`
               tacREWRITE [thmBIT0, thmEXP_ADD]
 
-        convNUM_EXP_pth1 :: (BasicConvs thry, WFCtxt thry) 
-                         => HOL cls thry HOLThm
+        convNUM_EXP_pth1 :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_EXP_pth1 = cacheProof "convNUM_EXP_pth1" ctxtWF .
             prove [str| (m EXP n = p) ==> (p * p = b) ==> (m * b = a) 
                         ==> (m EXP (BIT1 n) = a) |] $
               _REPEAT (_DISCH_THEN (tacSUBST1 . ruleSYM)) `_THEN`
               tacREWRITE [thmBIT1, thmEXP_ADD, defEXP]
 
-        convNUM_EXP_pth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_EXP_pth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_EXP_pth = cacheProof "convNUM_EXP_pth" ctxtWF .
             prove "m EXP _0 = BIT1 _0" $
               tacMP (ruleCONJUNCT1 defEXP) `_THEN` 
               tacREWRITE [defNUMERAL, thmBIT1] `_THEN`
               _DISCH_THEN tacMATCH_ACCEPT
 
-        convNUM_EXP_tth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_EXP_tth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_EXP_tth = cacheProof "convNUM_EXP_tth" ctxtWF .
             prove "(NUMERAL m) EXP (NUMERAL n) = m EXP n" $
               tacREWRITE [defNUMERAL]
 
-        convNUM_EXP_fth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_EXP_fth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_EXP_fth = cacheProof "convNUM_EXP_fth" ctxtWF .
             prove "m = NUMERAL m" $
               tacREWRITE [defNUMERAL]
 
-        convNUM_EXP_pth_refl :: (BasicConvs thry, WFCtxt thry) 
+        convNUM_EXP_pth_refl :: WFCtxt thry 
                              => HOL cls thry HOLThm
         convNUM_EXP_pth_refl = cacheProof "convNUM_EXP_pth_refl" ctxtWF $
             ruleMESON [thmEXP_2] "m EXP 2 = p <=> m * m = p"
 
-convNUM_LT :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_LT :: WFCtxt thry => Conversion cls thry
 convNUM_LT = Conv $ \ tm ->
     case tm of
       (Comb (Comb (Const "<" _) (NUMERAL mtm)) (NUMERAL ntm)) ->
@@ -364,14 +360,14 @@ convNUM_LT = Conv $ \ tm ->
                          liftO $ ruleQUICK_PROVE_HYP th #<<
                            primINST [(tmM, dtm), (tmN, mtm), (tmP, ntm)] pth
       _ -> fail "convNUM_LT"
-  where convNUM_LT_pth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+  where convNUM_LT_pth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_LT_pth = cacheProof "convNUM_LT_pth" ctxtWF $
             ruleUNDISCH =<< 
               prove "SUC(m + n) = p ==> ((NUMERAL n < NUMERAL p) <=> T)"
                 (tacREWRITE [defNUMERAL, thmLT_EXISTS, thmADD_CLAUSES] `_THEN`
                  tacMESON [thmADD_SYM])
 
-        convNUM_LT_qth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_LT_qth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_LT_qth = cacheProof "convNUM_LT_qth" ctxtWF $
             ruleUNDISCH =<< 
               prove "m + p = n ==> (NUMERAL n < NUMERAL p <=> F)"
@@ -379,11 +375,11 @@ convNUM_LT = Conv $ \ tm ->
                  tacREWRITE [thmNOT_LT, defNUMERAL] `_THEN`
                  tacMESON [thmLE_ADD, thmADD_SYM])
 
-        convNUM_LT_rth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+        convNUM_LT_rth :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_LT_rth = cacheProof "convNUM_LT_rth" ctxtWF $
             prove "NUMERAL n < NUMERAL n <=> F" $ tacMESON[thmLT_REFL]
                            
-ruleNUM_ADD :: (BasicConvs thry, WFCtxt thry) => HOLTerm -> HOLTerm 
+ruleNUM_ADD :: WFCtxt thry => HOLTerm -> HOLTerm 
             -> HOL cls thry HOLThm
 ruleNUM_ADD mtm ntm =
     let (mLo, mHi) = fromJust $ topsplit mtm
@@ -419,8 +415,7 @@ ruleNUM_ADD mtm ntm =
                    liftO $ primEQ_MP th3 th2
            _ -> fail "ruleNUM_ADD"
 
-ruleNUM_ADC :: (BasicConvs thry, WFCtxt thry) => HOLTerm -> HOLTerm 
-            -> HOL cls thry HOLThm
+ruleNUM_ADC :: WFCtxt thry => HOLTerm -> HOLTerm -> HOL cls thry HOLThm
 ruleNUM_ADC mtm ntm =
     let (mLo, mHi) = fromJust $ topsplit mtm
         (nLo, nHi) = fromJust $ topsplit ntm
@@ -456,7 +451,7 @@ ruleNUM_ADC mtm ntm =
            _ -> fail "ruleNUM_ADC"
 
 
-ruleNUM_MUL_pth_0 :: (BasicConvs thry, WFCtxt thry) => [HOL cls thry HOLThm]
+ruleNUM_MUL_pth_0 :: WFCtxt thry => [HOL cls thry HOLThm]
 ruleNUM_MUL_pth_0 = 
     cacheProofs ["ruleNUM_MUL_pth_0l", "ruleNUM_MUL_pth_0r"] ctxtWF $
       do th <- prove [str| _0 * n = _0 /\ m * _0 = _0 |] $
@@ -464,7 +459,7 @@ ruleNUM_MUL_pth_0 =
          (th1, th2) <- ruleCONJ_PAIR th
          return [th1, th2]
 
-ruleNUM_MUL_pth_1 :: (BasicConvs thry, WFCtxt thry) => [HOL cls thry HOLThm]
+ruleNUM_MUL_pth_1 :: WFCtxt thry => [HOL cls thry HOLThm]
 ruleNUM_MUL_pth_1 = 
     cacheProofs ["ruleNUM_MUL_pth_1l", "ruleNUM_MUL_pth_1r"] ctxtWF $
       do th <- prove [str| (BIT1 _0) * n = n /\ m * (BIT1 _0) = m |] $
@@ -472,7 +467,7 @@ ruleNUM_MUL_pth_1 =
          (th1, th2) <- ruleCONJ_PAIR th
          return [th1, th2]
     
-ruleNUM_MUL_pth_even :: (BasicConvs thry, WFCtxt thry) => [HOL cls thry HOLThm]
+ruleNUM_MUL_pth_even :: WFCtxt thry => [HOL cls thry HOLThm]
 ruleNUM_MUL_pth_even = 
     cacheProofs ["ruleNUM_MUL_pth_evenl", "ruleNUM_MUL_pth_evenr"] ctxtWF $
       do th <- prove [str| (m * n = p <=> (BIT0 m) * n = BIT0 p) /\
@@ -487,35 +482,31 @@ ruleNUM_MUL_pth_even =
          return [th1, th2]
 
 
-ruleNUM_MUL :: (BasicConvs thry, WFCtxt thry) => Int -> Int -> HOLTerm 
+ruleNUM_MUL :: WFCtxt thry => Int -> Int -> HOLTerm 
             -> HOLTerm -> HOL cls thry HOLThm
 ruleNUM_MUL _ _ (Const "_0" _) tm' =
     do pth <- ruleNUM_MUL_pth_0l
        tmN <- serve tmN'
        liftO $ primINST [(tmN, tm')] pth
-  where ruleNUM_MUL_pth_0l :: (BasicConvs thry, WFCtxt thry) 
-                           => HOL cls thry HOLThm
+  where ruleNUM_MUL_pth_0l :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_MUL_pth_0l = ruleNUM_MUL_pth_0 !! 0
 ruleNUM_MUL _ _ tm (Const "_0" _) =
     do pth <- ruleNUM_MUL_pth_0r
        tmM <- serve tmM'
        liftO $ primINST [(tmM, tm)] pth
-  where ruleNUM_MUL_pth_0r :: (BasicConvs thry, WFCtxt thry) 
-                           => HOL cls thry HOLThm 
+  where ruleNUM_MUL_pth_0r :: WFCtxt thry => HOL cls thry HOLThm 
         ruleNUM_MUL_pth_0r = ruleNUM_MUL_pth_0 !! 1
 ruleNUM_MUL _ _ (BIT1 (Const "_0" _)) tm' =
     do pth <- ruleNUM_MUL_pth_1l
        tmN <- serve tmN'
        liftO $ primINST [(tmN, tm')] pth
-  where ruleNUM_MUL_pth_1l :: (BasicConvs thry, WFCtxt thry) 
-                           => HOL cls thry HOLThm
+  where ruleNUM_MUL_pth_1l :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_MUL_pth_1l = ruleNUM_MUL_pth_1 !! 0
 ruleNUM_MUL _ _ tm (BIT1 (Const "_0" _)) =
     do pth <- ruleNUM_MUL_pth_1r
        tmM <- serve tmM'
        liftO $ primINST [(tmM, tm)] pth
-  where ruleNUM_MUL_pth_1r :: (BasicConvs thry, WFCtxt thry) 
-                           => HOL cls thry HOLThm 
+  where ruleNUM_MUL_pth_1r :: WFCtxt thry => HOL cls thry HOLThm 
         ruleNUM_MUL_pth_1r = ruleNUM_MUL_pth_1 !! 1
 ruleNUM_MUL k l (BIT0 mtm) tm' =
     do th0 <- ruleNUM_MUL (k - 1) l mtm tm'
@@ -526,8 +517,7 @@ ruleNUM_MUL k l (BIT0 mtm) tm' =
        let tm0 = fromJust . rand $ concl th0
            th1 = fromJust $ primINST [(tmM, mtm), (tmN, tm'), (tmP, tm0)] pth
        liftO $ primEQ_MP th1 th0
-  where ruleNUM_MUL_pth_evenl :: (BasicConvs thry, WFCtxt thry) 
-                              => HOL cls thry HOLThm
+  where ruleNUM_MUL_pth_evenl :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_MUL_pth_evenl = ruleNUM_MUL_pth_even !! 0
 ruleNUM_MUL k l tm (BIT0 ntm) =
     do th0 <- ruleNUM_MUL k (l - 1) tm ntm
@@ -538,8 +528,7 @@ ruleNUM_MUL k l tm (BIT0 ntm) =
        let tm0 = fromJust . rand $ concl th0
            th1 = fromJust $ primINST [(tmM, tm), (tmN, ntm), (tmP, tm0)] pth
        liftO $ primEQ_MP th1 th0
-  where ruleNUM_MUL_pth_evenr :: (BasicConvs thry, WFCtxt thry) 
-                              => HOL cls thry HOLThm 
+  where ruleNUM_MUL_pth_evenr :: WFCtxt thry => HOL cls thry HOLThm 
         ruleNUM_MUL_pth_evenr = ruleNUM_MUL_pth_even !! 1
 ruleNUM_MUL k l tm@(BIT1 mtm) tm'@(BIT1 ntm)
     | k <= 50 || l <= 50 || k * k < l || l * l < k =
@@ -659,8 +648,7 @@ ruleNUM_MUL k l tm@(BIT1 mtm) tm'@(BIT1 ntm)
                                                    , (tmP, ptm) ] pth
                      th7 <- foldr1M ruleCONJ [th2, th3, th4, th5, th6]
                      liftO $ ruleQUICK_PROVE_HYP th7 th1
-  where ruleNUM_MUL_pth_oo :: (BasicConvs thry, WFCtxt thry) 
-                           => [HOL cls thry HOLThm]
+  where ruleNUM_MUL_pth_oo :: WFCtxt thry => [HOL cls thry HOLThm]
         ruleNUM_MUL_pth_oo = 
             cacheProofs ["ruleNUM_MUL_pth_oo1", "ruleNUM_MUL_pth_oo2"] ctxtWF $
                 do tmM <- serve tmM'
@@ -691,15 +679,12 @@ ruleNUM_MUL k l tm@(BIT1 mtm) tm'@(BIT1 ntm)
                    let th3 = fromJust $ primINST [(tmM, tmN), (tmN, tmM)] th2
                    th4 <- rulePURE_ONCE_REWRITE [thmMULT_SYM] th3
                    return [th2, th4]
-        ruleNUM_MUL_pth_oo1 :: (BasicConvs thry, WFCtxt thry) 
-                            => HOL cls thry HOLThm
+        ruleNUM_MUL_pth_oo1 :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_MUL_pth_oo1 = ruleNUM_MUL_pth_oo !! 0
-        ruleNUM_MUL_pth_oo2 :: (BasicConvs thry, WFCtxt thry) 
-                            => HOL cls thry HOLThm 
+        ruleNUM_MUL_pth_oo2 :: WFCtxt thry => HOL cls thry HOLThm 
         ruleNUM_MUL_pth_oo2 = ruleNUM_MUL_pth_oo !! 1
 
-        ruleNUM_MUL_pth_odd :: (BasicConvs thry, WFCtxt thry) 
-                            => [HOL cls thry HOLThm]
+        ruleNUM_MUL_pth_odd :: WFCtxt thry => [HOL cls thry HOLThm]
         ruleNUM_MUL_pth_odd = 
             cacheProofs ["ruleNUM_MUL_pth_oddl", "ruleNUM_MUL_pth_oddr"] ctxtWF $
                 do th <- prove [str|(m * n = p <=> BIT1 m * n = BIT0 p + n) /\
@@ -715,15 +700,12 @@ ruleNUM_MUL k l tm@(BIT1 mtm) tm'@(BIT1 ntm)
                            tacREWRITE [thmARITH_EQ]
                    (th1, th2) <- ruleCONJ_PAIR th
                    return [th1, th2]
-        ruleNUM_MUL_pth_oddl :: (BasicConvs thry, WFCtxt thry) 
-                             => HOL cls thry HOLThm
+        ruleNUM_MUL_pth_oddl :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_MUL_pth_oddl = ruleNUM_MUL_pth_odd !! 0
-        ruleNUM_MUL_pth_oddr :: (BasicConvs thry, WFCtxt thry) 
-                             => HOL cls thry HOLThm 
+        ruleNUM_MUL_pth_oddr :: WFCtxt thry => HOL cls thry HOLThm 
         ruleNUM_MUL_pth_oddr = ruleNUM_MUL_pth_odd !! 1
 
-        ruleNUM_MUL_pth_recodel :: (BasicConvs thry, WFCtxt thry) 
-                                => HOL cls thry HOLThm
+        ruleNUM_MUL_pth_recodel :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_MUL_pth_recodel = cacheProof "ruleNUM_MUL_pth_recodel" ctxtWF $
             do th <- prove "SUC(_0 + m) = p ==> (p * n = a + n <=> m * n = a)" $
                        tacSUBST1 (ruleMESON [defNUMERAL] "_0 = 0") `_THEN`
@@ -732,8 +714,7 @@ ruleNUM_MUL k l tm@(BIT1 mtm) tm'@(BIT1 ntm)
                                   , thmEQ_ADD_RCANCEL]
                ruleUNDISCH_ALL th
 
-        ruleNUM_MUL_pth_recoder :: (BasicConvs thry, WFCtxt thry) 
-                                => HOL cls thry HOLThm
+        ruleNUM_MUL_pth_recoder :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_MUL_pth_recoder = cacheProof "ruleNUM_MUL_pth_recoder" ctxtWF $
             do th <- prove "SUC(_0 + n) = p ==> (m * p = a + m <=> m * n = a)" $
                        tacONCE_REWRITE [thmMULT_SYM] `_THEN`
@@ -744,7 +725,7 @@ ruleNUM_MUL k l tm@(BIT1 mtm) tm'@(BIT1 ntm)
                ruleUNDISCH_ALL th
 ruleNUM_MUL _ _ _ _ = fail "ruleNUM_MUL"
               
-convNUM_SHIFT :: (BasicConvs thry, WFCtxt thry) => Int -> Conversion cls thry
+convNUM_SHIFT :: WFCtxt thry => Int -> Conversion cls thry
 convNUM_SHIFT k = Conv $ \ tm ->
     if k <= 0
     then do pth <- convNUM_SHIFT_pth_base
@@ -830,8 +811,7 @@ convNUM_SHIFT k = Conv $ \ tm ->
                     (fromJust $ primINST [ (tmA, atm), (tmB, btm)
                                          , (tmP, ptm) ] pth) th1 
            _ -> fail "convNUM_SHIFT: malformed numeral"
-  where convNUM_SHIFT_pth0 :: (BasicConvs thry, WFCtxt thry) 
-                           => HOL cls thry HOLThm
+  where convNUM_SHIFT_pth0 :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_SHIFT_pth0 = cacheProof "convNUM_SHIFT_pth0" ctxtWF .
             prove "(n = a + p * b <=> BIT0 n = BIT0 a + BIT0 p * b)" $
               tacREWRITE [thmBIT0, thmBIT1] `_THEN`
@@ -839,8 +819,7 @@ convNUM_SHIFT k = Conv $ \ tm ->
                          , ruleGSYM thmLEFT_ADD_DISTRIB ] `_THEN`
               tacREWRITE [thmEQ_MULT_LCANCEL, thmARITH_EQ]
 
-        convNUM_SHIFT_pthz :: (BasicConvs thry, WFCtxt thry) 
-                           => HOL cls thry HOLThm
+        convNUM_SHIFT_pthz :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_SHIFT_pthz = cacheProof "convNUM_SHIFT_pthz" ctxtWF $
             do th1 <- ruleSPEC "_0" defNUMERAL
                prove "n = _0 + p * b <=> BIT0 n = _0 + BIT0 p * b" $
@@ -850,8 +829,7 @@ convNUM_SHIFT k = Conv $ \ tm ->
                  tacREWRITE [ ruleGSYM thmMULT_ASSOC, thmEQ_MULT_LCANCEL
                             , thmARITH_EQ ]
 
-        convNUM_SHIFT_pth1 :: (BasicConvs thry, WFCtxt thry) 
-                           => HOL cls thry HOLThm
+        convNUM_SHIFT_pth1 :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_SHIFT_pth1 = cacheProof "convNUM_SHIFT_pth1" ctxtWF .
             prove "(n = a + p * b <=> BIT1 n = BIT1 a + BIT0 p * b)" $
               tacREWRITE [thmBIT0, thmBIT1] `_THEN`
@@ -860,14 +838,12 @@ convNUM_SHIFT k = Conv $ \ tm ->
                          , thmSUC_INJ ] `_THEN`
               tacREWRITE [thmEQ_MULT_LCANCEL, thmARITH_EQ]
 
-        convNUM_SHIFT_pth_base :: (BasicConvs thry, WFCtxt thry) 
-                               => HOL cls thry HOLThm
+        convNUM_SHIFT_pth_base :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_SHIFT_pth_base = cacheProof "convNUM_SHIFT_pth_base" ctxtWF .
             prove "n = _0 + BIT1 _0 * n" $
               tacMESON [thmADD_CLAUSES, thmMULT_CLAUSES, defNUMERAL]
 
-        convNUM_SHIFT_pth_triv :: (BasicConvs thry, WFCtxt thry) 
-                               => HOL cls thry HOLThm
+        convNUM_SHIFT_pth_triv :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_SHIFT_pth_triv = cacheProof "convNUM_SHIFT_pth_triv" ctxtWF $
             do th1 <- ruleSPEC "_0" defNUMERAL
                prove "_0 = a + p * b <=> _0 = a + BIT0 p * b" $
@@ -875,7 +851,7 @@ convNUM_SHIFT k = Conv $ \ tm ->
                  tacSUBST1 (ruleSYM th1) `_THEN`
                  tacREWRITE [thmADD_EQ_0, thmMULT_EQ_0, thmBIT0]
                       
-convNUM_UNSHIFT :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_UNSHIFT :: WFCtxt thry => Conversion cls thry
 convNUM_UNSHIFT = Conv $ \ tm ->
     case tm of
       (Comb (Comb (Const "+" _) atm) (Comb (Comb (Const "*" _) ptm) btm)) ->
@@ -959,31 +935,27 @@ convNUM_UNSHIFT = Conv $ \ tm ->
                    ruleCONV (convRAND (convRAND convNUM_UNSHIFT)) th1
             _ -> fail "convNUM_UNSHIFT: malformed numeral"
       _ -> fail "convNUM_UNSHIFT: malformed numeral"
-  where convNUM_UNSHIFT_pth_triv :: (BasicConvs thry, WFCtxt thry) 
-                                 => HOL cls thry HOLThm
+  where convNUM_UNSHIFT_pth_triv :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_UNSHIFT_pth_triv = cacheProof "convNUM_UNSHIFT_pth_triv" ctxtWF $
             do th1 <- ruleSPEC "_0" defNUMERAL
                prove "a + p * _0 = a" $
                  tacSUBST1 (ruleSYM th1) `_THEN` 
                  tacREWRITE [thmMULT_CLAUSES, thmADD_CLAUSES]
 
-        convNUM_UNSHIFT_pth_base :: (BasicConvs thry, WFCtxt thry) 
-                                 => HOL cls thry HOLThm
+        convNUM_UNSHIFT_pth_base :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_UNSHIFT_pth_base = cacheProof "convNUM_UNSHIFT_pth_base" ctxtWF $
             do th1 <- ruleSPEC "BIT1 _0" defNUMERAL
                prove "a + BIT1 _0 * b = a + b" $
                  tacSUBST1 (ruleSYM th1) `_THEN`
                  tacREWRITE [thmMULT_CLAUSES, thmADD_CLAUSES]
 
-        convNUM_UNSHIFT_pth0 :: (BasicConvs thry, WFCtxt thry) 
-                             => HOL cls thry HOLThm
+        convNUM_UNSHIFT_pth0 :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_UNSHIFT_pth0 = cacheProof "convNUM_UNSHIFT_pth0" ctxtWF .
             prove "BIT0 a + BIT0 p * b = BIT0(a + p * b)" $
               tacREWRITE [thmBIT0] `_THEN` tacREWRITE [ruleGSYM thmMULT_2] `_THEN`
               tacREWRITE [ruleGSYM thmMULT_ASSOC, ruleGSYM thmLEFT_ADD_DISTRIB]
 
-        convNUM_UNSHIFT_pth1 :: (BasicConvs thry, WFCtxt thry) 
-                             => HOL cls thry HOLThm
+        convNUM_UNSHIFT_pth1 :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_UNSHIFT_pth1 = cacheProof "convNUM_UNSHIFT_pth1" ctxtWF .
             prove "BIT1 a + BIT0 p * b = BIT1(a + p * b)" $
               tacREWRITE [thmBIT0, thmBIT1] `_THEN` 
@@ -992,8 +964,7 @@ convNUM_UNSHIFT = Conv $ \ tm ->
               tacREWRITE [ruleGSYM thmMULT_ASSOC, ruleGSYM thmLEFT_ADD_DISTRIB] `_THEN`
               tacREWRITE [thmEQ_MULT_LCANCEL, thmARITH_EQ]
 
-        convNUM_UNSHIFT_pthz :: (BasicConvs thry, WFCtxt thry) 
-                             => HOL cls thry HOLThm
+        convNUM_UNSHIFT_pthz :: WFCtxt thry => HOL cls thry HOLThm
         convNUM_UNSHIFT_pthz = cacheProof "convNUM_UNSHIFT_pthz" ctxtWF $
             do th1 <- ruleSPEC "_0" defNUMERAL
                prove "_0 + BIT0 p * b = BIT0(_0 + p * b)" $
@@ -1002,12 +973,11 @@ convNUM_UNSHIFT = Conv $ \ tm ->
                  tacREWRITE [thmADD_CLAUSES] `_THEN`
                  tacREWRITE [thmRIGHT_ADD_DISTRIB]
 
-ruleNUM_SQUARE :: (BasicConvs thry, WFCtxt thry) => HOLTerm 
-               -> HOL cls thry HOLThm
+ruleNUM_SQUARE :: WFCtxt thry => HOLTerm -> HOL cls thry HOLThm
 ruleNUM_SQUARE tm =
     let (w, z) = fromJust $ bitcounts tm in
       ruleGEN_NUM_SQUARE w z tm
-  where ruleGEN_NUM_SQUARE :: (BasicConvs thry, WFCtxt thry) => Int -> Int 
+  where ruleGEN_NUM_SQUARE :: WFCtxt thry => Int -> Int 
                            -> HOLTerm -> HOL cls thry HOLThm
         ruleGEN_NUM_SQUARE _ _ (Const "_0" _) = 
             ruleNUM_SQUARE_pth0
@@ -1154,45 +1124,39 @@ ruleNUM_SQUARE tm =
                      ruleMP th' =<< foldr1M ruleCONJ [th1, th2, th3, th4, th5]
         ruleGEN_NUM_SQUARE _ _ _ = fail "ruleGEN_NUM_SQUARE"
        
-        convTOOM3 :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+        convTOOM3 :: WFCtxt thry => Conversion cls thry
         convTOOM3 = convBINOP2 (convLAND convNUM_UNSHIFT2) convNUM_UNSHIFT4
 
-        convBINOP2 :: BasicConvs thry => Conversion cls thry 
+        convBINOP2 :: Conversion cls thry 
                    -> Conversion cls thry 
                    -> Conversion cls thry
         convBINOP2 conv1 = convCOMB2 (convRAND conv1)
 
-        convNUM_UNSHIFT4 :: (BasicConvs thry, WFCtxt thry) 
-                         => Conversion cls thry
+        convNUM_UNSHIFT4 :: WFCtxt thry => Conversion cls thry
         convNUM_UNSHIFT4 = convRAND (convRAND convNUM_UNSHIFT3) `_THEN`
                            convNUM_UNSHIFT
 
-        convNUM_UNSHIFT3 :: (BasicConvs thry, WFCtxt thry) 
-                         => Conversion cls thry
+        convNUM_UNSHIFT3 :: WFCtxt thry => Conversion cls thry
         convNUM_UNSHIFT3 = convRAND (convRAND convNUM_UNSHIFT2) `_THEN`
                            convNUM_UNSHIFT
 
-        convNUM_UNSHIFT2 :: (BasicConvs thry, WFCtxt thry) 
-                         => Conversion cls thry
+        convNUM_UNSHIFT2 :: WFCtxt thry => Conversion cls thry
         convNUM_UNSHIFT2 = convRAND (convRAND convNUM_UNSHIFT) `_THEN`
                            convNUM_UNSHIFT
 
-        ruleNUM_SQUARE_pth0 :: (BasicConvs thry, WFCtxt thry) 
-                            => HOL cls thry HOLThm
+        ruleNUM_SQUARE_pth0 :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_SQUARE_pth0 = cacheProof "ruleNUM_SQUARE_pth0" ctxtWF .
             prove "_0 EXP 2 = _0" $
               tacMESON [ defNUMERAL
                        , runConv (convREWRITE [thmARITH]) =<< toHTm "0 EXP 2" ]
 
-        ruleNUM_SQUARE_pth1 :: (BasicConvs thry, WFCtxt thry) 
-                            => HOL cls thry HOLThm
+        ruleNUM_SQUARE_pth1 :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_SQUARE_pth1 = cacheProof "ruleNUM_SQUARE_pth1" ctxtWF .
             prove "(BIT1 _0) EXP 2 = BIT1 _0" $
               tacMESON [ defNUMERAL
                        , runConv (convREWRITE [thmARITH]) =<< toHTm "1 EXP 2" ]
 
-        ruleNUM_SQUARE_pth_even :: (BasicConvs thry, WFCtxt thry) 
-                                => HOL cls thry HOLThm
+        ruleNUM_SQUARE_pth_even :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_SQUARE_pth_even = cacheProof "ruleNUM_SQUARE_pth_even" ctxtWF .
             prove "m EXP 2 = n <=> (BIT0 m) EXP 2 = BIT0(BIT0 n)" $
               tacABBREV "two = 2" `_THEN`
@@ -1203,8 +1167,7 @@ ruleNUM_SQUARE tm =
                             "(2 * m) * (2 * n) = 2 * 2 * m * n"] `_THEN`
               tacREWRITE [thmEQ_MULT_LCANCEL, thmARITH_EQ]
 
-        ruleNUM_SQUARE_pth_odd :: (BasicConvs thry, WFCtxt thry) 
-                               => HOL cls thry HOLThm
+        ruleNUM_SQUARE_pth_odd :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_SQUARE_pth_odd = cacheProof "ruleNUM_SQUARE_pth_odd" ctxtWF .
             prove "m EXP 2 = n <=> (BIT1 m) EXP 2 = BIT1(BIT0(m + n))" $
               tacABBREV "two = 2" `_THEN`
@@ -1224,8 +1187,7 @@ ruleNUM_SQUARE tm =
               tacGEN_REWRITE (convRAND . convRAND) [thmADD_SYM] `_THEN`
               tacREWRITE [thmEQ_ADD_RCANCEL]
 
-        ruleNUM_SQUARE_pth_qstep :: (BasicConvs thry, WFCtxt thry) 
-                                 => HOL cls thry HOLThm
+        ruleNUM_SQUARE_pth_qstep :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_SQUARE_pth_qstep = cacheProof "ruleNUM_SQUARE_pth_qstep" ctxtWF $
             ruleUNDISCH =<< 
               prove [str| n + BIT1 _0 = m /\
@@ -1267,8 +1229,7 @@ ruleNUM_SQUARE tm =
                  tacREWRITE [ruleGSYM thmRIGHT_ADD_DISTRIB] `_THEN`
                  tacREWRITE [thmARITH])
 
-        ruleNUM_SQUARE_pth_rec :: (BasicConvs thry, WFCtxt thry) 
-                               => HOL cls thry HOLThm
+        ruleNUM_SQUARE_pth_rec :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_SQUARE_pth_rec = cacheProof "ruleNUM_SQUARE_pth_rec" ctxtWF $
             ruleUNDISCH =<< 
               prove [str| n = l + p * h /\
@@ -1290,8 +1251,7 @@ ruleNUM_SQUARE tm =
                  tacREWRITE [thmRIGHT_ADD_DISTRIB] `_THEN`
                  tacREWRITE [thmMULT_AC] `_THEN` tacREWRITE [thmADD_AC])
 
-        ruleNUM_SQUARE_pth_toom3 :: (BasicConvs thry, WFCtxt thry) 
-                                 => HOL cls thry HOLThm
+        ruleNUM_SQUARE_pth_toom3 :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_SQUARE_pth_toom3 = cacheProof "ruleNUM_SQUARE_pth_toom3" ctxtWF $
             do rewrites <- mapM (\ k -> 
                                  do tmSuc <- serve tmSuc'
@@ -1371,8 +1331,7 @@ ruleNUM_SQUARE tm =
                             (ruleCONJUNCTS thmMULT_CLAUSES)] `_THEN`
                 tacSIMP [thmEQ_MULT_LCANCEL, thmNOT_SUC]
 
-        ruleNUM_SQUARE_pth_even3 :: (BasicConvs thry, WFCtxt thry) 
-                                 => HOL cls thry HOLThm
+        ruleNUM_SQUARE_pth_even3 :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_SQUARE_pth_even3 = cacheProof "ruleNUM_SQUARE_pth_even3" ctxtWF .
             prove [str| m EXP 2 = n <=>
                        (BIT0(BIT0(BIT0 m))) EXP 2 = 
@@ -1386,7 +1345,7 @@ ruleNUM_SQUARE tm =
                                   2 * 2 * 2 * 2 * 2 * 2 * m * m |]] `_THEN`
               tacREWRITE [thmEQ_MULT_LCANCEL, thmARITH_EQ]
 
-convNUM :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM :: WFCtxt thry => Conversion cls thry
 convNUM = Conv $ \ tm ->
     do tmSUC <- serve tmSuc'
        let n = fromJust (destNumeral tm) - 1

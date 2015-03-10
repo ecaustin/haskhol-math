@@ -50,7 +50,7 @@ tyDefDestNum = cacheProof "tyDefDestNum" ctxtNumsB $
 tyDefNum' ::NumsBCtxt thry => HOL cls thry (HOLThm, HOLThm)
 tyDefNum' = getBasicTypeDefinition "num"
 
-thmIND_SUC_0_EXISTS :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmIND_SUC_0_EXISTS :: NumsBCtxt thry => HOL cls thry HOLThm
 thmIND_SUC_0_EXISTS = cacheProof "thmIND_SUC_0_EXISTS" ctxtNumsB $
     prove [str| ?(f:ind->ind) z. (!x1 x2. (f x1 = f x2) = (x1 = x2)) /\ 
                                  (!x. ~(f x = z)) |] $
@@ -60,36 +60,36 @@ thmIND_SUC_0_EXISTS = cacheProof "thmIND_SUC_0_EXISTS" ctxtNumsB $
       tacREWRITE [defONE_ONE, defONTO] `_THEN`
       tacMESON_NIL
 
-thmIND_SUC_SPEC :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmIND_SUC_SPEC :: NumsBCtxt thry => HOL cls thry HOLThm
 thmIND_SUC_SPEC = cacheProof "thmIND_SUC_SPEC" ctxtNumsB $
   do th1 <- ruleGSYM defIND_SUC
      th2 <- ruleREWRITE [th1] =<< ruleSELECT thmIND_SUC_0_EXISTS
      th3 <- ruleGSYM defIND_0
      ruleREWRITE [th3] =<< ruleSELECT th2
 
-thmIND_SUC_INJ :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmIND_SUC_INJ :: NumsBCtxt thry => HOL cls thry HOLThm
 thmIND_SUC_INJ = cacheProof "thmIND_SUC_INJ" ctxtNumsB $
     liftM fst $ ruleCONJ_PAIR thmIND_SUC_SPEC
 
-thmIND_SUC_0 :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmIND_SUC_0 :: NumsBCtxt thry => HOL cls thry HOLThm
 thmIND_SUC_0 = cacheProof "thmIND_SUC_0" ctxtNumsB $
     liftM snd $ ruleCONJ_PAIR thmIND_SUC_SPEC
 
-thmNUM_ZERO_PRIM :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmNUM_ZERO_PRIM :: NumsBCtxt thry => HOL cls thry HOLThm
 thmNUM_ZERO_PRIM = cacheProof "thmNUM_ZERO_PRIM" ctxtNumsB $
     prove [str| _0 = 0 |] $ tacREWRITE [defNUMERAL]
 
-thmNOT_SUC' :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmNOT_SUC' :: NumsBCtxt thry => HOL cls thry HOLThm
 thmNOT_SUC' = cacheProof "thmNOT_SUC'" ctxtNumsB $
       prove [str| !n. ~(SUC n = _0) |]
         (tacREWRITE [defSUC, defZERO] `_THEN`
          tacMESON [rulesNUM_REP, tyDefMkNum, tyDefDestNum, thmIND_SUC_0])
 
-thmNOT_SUC :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmNOT_SUC :: NumsBCtxt thry => HOL cls thry HOLThm
 thmNOT_SUC = cacheProof "thmNOT_SUC" ctxtNumsB $
     ruleGEN_REWRITE convDEPTH [thmNUM_ZERO_PRIM] =<< thmNOT_SUC'
 
-thmSUC_INJ :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmSUC_INJ :: NumsBCtxt thry => HOL cls thry HOLThm
 thmSUC_INJ = cacheProof "thmSUC_INJ" ctxtNumsB $
     do (mk, dest) <- pairMapM toHTm ("mk_num", "dest_num")
        prove [str| !m n. SUC m = SUC n <=> m = n |] $
@@ -106,7 +106,7 @@ thmSUC_INJ = cacheProof "thmSUC_INJ" ctxtNumsB $
          _DISCH_THEN (tacMP . ruleAP_TERM mk) `_THEN`
          tacREWRITE [tyDefMkNum]
 
-inductionNUM' :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+inductionNUM' :: NumsBCtxt thry => HOL cls thry HOLThm
 inductionNUM' = cacheProof "inductionNUM'" ctxtNumsB $
       prove [str| !P. P(_0) /\ (!n. P(n) ==> P(SUC n)) ==> !n. P n |]
         (_REPEAT tacSTRIP `_THEN`
@@ -131,11 +131,11 @@ inductionNUM' = cacheProof "inductionNUM'" ctxtNumsB $
            tacREWRITE [ tyDefMkNum, tyDefDestNum ]
          ])
 
-inductionNUM :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+inductionNUM :: NumsBCtxt thry => HOL cls thry HOLThm
 inductionNUM = cacheProof "inductionNUM" ctxtNumsB $
     ruleGEN_REWRITE convDEPTH [thmNUM_ZERO_PRIM] =<< inductionNUM'
 
-thmNUM_AXIOM' :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmNUM_AXIOM' :: NumsBCtxt thry => HOL cls thry HOLThm
 thmNUM_AXIOM' = cacheProof "thmNUM_AXIOM'" ctxtNumsB $
       prove [str| ! (e:A) f. ?!fn. (fn _0 = e) /\ 
                              (!n. fn (SUC n) = f (fn n) n) |]
@@ -179,17 +179,17 @@ thmNUM_AXIOM' = cacheProof "thmNUM_AXIOM'" ctxtNumsB $
            _REPEAT tacSTRIP `_THEN` tacASM_REWRITE_NIL
          ])
 
-thmNUM_AXIOM :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+thmNUM_AXIOM :: NumsBCtxt thry => HOL cls thry HOLThm
 thmNUM_AXIOM = cacheProof "thmNUM_AXIOM" ctxtNumsB $
     ruleGEN_REWRITE convDEPTH [thmNUM_ZERO_PRIM] =<< thmNUM_AXIOM'
 
-recursionNUM :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+recursionNUM :: NumsBCtxt thry => HOL cls thry HOLThm
 recursionNUM = cacheProof "recursionNUM" ctxtNumsB $
     do pth <- thmNUM_AXIOM
        let avs = fst . stripForall $ concl pth
        ruleGENL avs =<< ruleEXISTENCE =<< ruleSPECL avs pth
 
-recursionStdNUM :: (BasicConvs thry, NumsBCtxt thry) => HOL cls thry HOLThm
+recursionStdNUM :: NumsBCtxt thry => HOL cls thry HOLThm
 recursionStdNUM = cacheProof "recursionStdNUM" ctxtNumsB $
     prove [str| !e:Z f. ?fn. (fn 0 = e) /\ (!n. fn (SUC n) = f n (fn n)) |] $
       _REPEAT tacGEN `_THEN`
@@ -197,10 +197,10 @@ recursionStdNUM = cacheProof "recursionStdNUM" ctxtNumsB $
              recursionNUM) `_THEN`
       tacREWRITE_NIL
 
-defBIT0'' :: (BasicConvs thry, PairCtxt thry) => HOL Theory thry HOLThm
+defBIT0'' :: PairCtxt thry => HOL Theory thry HOLThm
 defBIT0'' = newDefinition "BIT0"
     [str| BIT0 = @fn. fn 0 = 0 /\ (!n. fn (SUC n) = SUC (SUC(fn n))) |]
 
-defBIT1' :: (BasicConvs thry, PairCtxt thry) => HOL Theory thry HOLThm
+defBIT1' :: PairCtxt thry => HOL Theory thry HOLThm
 defBIT1' = newDefinition "BIT1"
     [str| BIT1 n = SUC (BIT0 n) |]

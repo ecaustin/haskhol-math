@@ -24,7 +24,7 @@ import HaskHOL.Lib.CalcNum
 
 import Data.Vector (fromList, (!))
 
-semiring_pth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+semiring_pth :: WFCtxt thry => HOL cls thry HOLThm
 semiring_pth = cacheProof "semiring_pth" ctxtWF .
     prove [str| (!x:A y z. add x (add y z) = add (add x y) z) /\
                 (!x y. add x y = add y x) /\
@@ -115,7 +115,7 @@ semiring_pth = cacheProof "semiring_pth" ctxtWF .
       tacGEN `_THEN` tacGEN `_THEN` tacINDUCT `_THEN` 
       tacASM_REWRITE [thmMULT_CLAUSES]
 
-convSEMIRING_NORMALIZERS :: forall cls thry. (BasicConvs thry, WFCtxt thry)
+convSEMIRING_NORMALIZERS :: forall cls thry. WFCtxt thry
                          => HOLThm -> HOLThm 
                          -> ( HOLTerm -> Bool, Conversion cls thry
                             , Conversion cls thry, Conversion cls thry )
@@ -689,7 +689,7 @@ tmQ' = [wF| q:num |]
 tmZeron' = [wF| 0 |]
 tmOnen' = [wF| 1 |]
 
-convNUM_NORMALIZE_sth :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+convNUM_NORMALIZE_sth :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_NORMALIZE_sth = cacheProof "convNUM_NORMALIZE_sth" ctxtWF $
     prove [str| (!x y z. x + (y + z) = (x + y) + z) /\
                 (!x y. x + y = y + x) /\
@@ -705,7 +705,7 @@ convNUM_NORMALIZE_sth = cacheProof "convNUM_NORMALIZE_sth" ctxtWF $
                  , thmLEFT_ADD_DISTRIB] `_THEN`
       tacREWRITE [thmADD_AC, thmMULT_AC]
 
-convNUM_NORMALIZE :: (BasicConvs thry, WFCtxt thry) => Conversion cls thry
+convNUM_NORMALIZE :: WFCtxt thry => Conversion cls thry
 convNUM_NORMALIZE = Conv $ \ tm ->
     do sth <- convNUM_NORMALIZE_sth
        rth <- thmTRUTH

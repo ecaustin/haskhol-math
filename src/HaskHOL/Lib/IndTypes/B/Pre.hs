@@ -50,17 +50,17 @@ defFCONS = cacheProof "defFCONS" ctxtIndTypesA $ getRecursiveDefinition "FCONS"
 defFNIL :: IndTypesACtxt thry => HOL cls thry HOLThm
 defFNIL = cacheProof "defFNIL" ctxtIndTypesA $ getDefinition "FNIL"
 
-rulesZRECSPACE :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+rulesZRECSPACE :: IndTypesACtxt thry => HOL cls thry HOLThm
 rulesZRECSPACE = cacheProof "rulesZRECSPACE" ctxtIndTypesA $
     do (th, _, _) <- indDefZRECSPACE
        return th
 
-inductZRECSPACE :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+inductZRECSPACE :: IndTypesACtxt thry => HOL cls thry HOLThm
 inductZRECSPACE = cacheProof "inductZRECSPACE" ctxtIndTypesA $
     do (_, th, _) <- indDefZRECSPACE
        return th
 
-casesZRECSPACE :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+casesZRECSPACE :: IndTypesACtxt thry => HOL cls thry HOLThm
 casesZRECSPACE = cacheProof "casesZRECSPACE" ctxtIndTypesA $
     do (_, _, th) <- indDefZRECSPACE
        return th
@@ -69,19 +69,18 @@ indDefZRECSPACE :: IndTypesACtxt thry => HOL cls thry (HOLThm, HOLThm, HOLThm)
 indDefZRECSPACE = getInductiveDefinition "ZRECSPACE"
 
 
-tyDefMkRecspace :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+tyDefMkRecspace :: IndTypesACtxt thry => HOL cls thry HOLThm
 tyDefMkRecspace = cacheProof "tyDefMkRecspace" ctxtIndTypesA $
     liftM fst tyDefRecspace
 
-tyDefDestRecspace :: (BasicConvs thry, IndTypesACtxt thry) 
-                  => HOL cls thry HOLThm
+tyDefDestRecspace :: IndTypesACtxt thry => HOL cls thry HOLThm
 tyDefDestRecspace = cacheProof "tyDefDestRecspace" ctxtIndTypesA $
     liftM snd tyDefRecspace
 
 tyDefRecspace :: IndTypesACtxt thry => HOL cls thry (HOLThm, HOLThm)
 tyDefRecspace = getBasicTypeDefinition "recspace"
 
-thmINJN_INJ :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmINJN_INJ :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmINJN_INJ = cacheProof "thmINJN_INJ" ctxtIndTypesA $
     do tm1 <- toHTm "n1:num"
        tm2 <- toHTm "a:A"
@@ -92,7 +91,7 @@ thmINJN_INJ = cacheProof "thmINJN_INJ" ctxtIndTypesA $
                                   tacMP (ruleAP_THM th' tm1) g) `_THEN`
          _DISCH_THEN (tacMP . flip ruleAP_THM tm2) `_THEN` tacREWRITE [thmBETA]
 
-thmINJA_INJ :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmINJA_INJ :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmINJA_INJ = cacheProof "thmINJA_INJ" ctxtIndTypesA $
     prove "!a1 a2. (INJA a1 = INJA a2) <=> (a1:A = a2)" $
       _REPEAT tacGEN `_THEN` tacREWRITE [defINJA, thmFUN_EQ] `_THEN` 
@@ -101,7 +100,7 @@ thmINJA_INJ = cacheProof "thmINJA_INJ" ctxtIndTypesA $
       , _DISCH_THEN tacSUBST1 `_THEN` tacREWRITE_NIL
       ]
 
-thmINJF_INJ :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmINJF_INJ :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmINJF_INJ = cacheProof "thmINJF_INJ" ctxtIndTypesA $
     do tm1 <- toHTm "a:A"
        tm2 <- toHTm "NUMPAIR n m"
@@ -113,7 +112,7 @@ thmINJF_INJ = cacheProof "thmINJF_INJ" ctxtIndTypesA $
          _DISCH_THEN (tacMP <#< flip ruleAP_THM tm1 <=< flip ruleAP_THM tm2) `_THEN`
          tacREWRITE [specNUMPAIR_DEST]
 
-thmINJP_INJ :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmINJP_INJ :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmINJP_INJ = cacheProof "thmINJP_INJ" ctxtIndTypesA $
     do tm <- toHTm "NUMSUM b n"
        prove [str| !(f1:num->A->bool) f1' f2 f2'.
@@ -127,7 +126,7 @@ thmINJP_INJ = cacheProof "thmINJP_INJ" ctxtIndTypesA $
                               tacMP (ruleSPEC "F" th)) `_THEN`
          tacASM_SIMP [specNUMSUM_DEST, axETA]
 
-thmMK_REC_INJ :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmMK_REC_INJ :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmMK_REC_INJ = cacheProof "thmMK_REC_INJ" ctxtIndTypesA .
     prove [str| !x y. (_mk_rec x :(A)recspace = _mk_rec y) ==> 
                       (ZRECSPACE x /\ ZRECSPACE y ==> (x = y)) |] $
@@ -136,7 +135,7 @@ thmMK_REC_INJ = cacheProof "thmMK_REC_INJ" ctxtIndTypesA .
       _DISCH_THEN (\ th -> tacONCE_REWRITE [ruleGSYM th]) `_THEN`
       tacASM_REWRITE_NIL
 
-thmDEST_REC_INJ :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmDEST_REC_INJ :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmDEST_REC_INJ = cacheProof "thmDEST_REC_INJ" ctxtIndTypesA $
     do tm <- toHTm "_mk_rec:(num->A->bool)->(A)recspace"
        prove "!x y. (_dest_rec x = _dest_rec y) <=> (x:(A)recspace = y)" $
@@ -144,12 +143,12 @@ thmDEST_REC_INJ = cacheProof "thmDEST_REC_INJ" ctxtIndTypesA $
          tacASM_REWRITE_NIL `_THEN` _POP_ASSUM (tacMP . ruleAP_TERM tm) `_THEN`
          tacREWRITE [tyDefMkRecspace]
 
-thmZCONSTR_ZBOT :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmZCONSTR_ZBOT :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmZCONSTR_ZBOT = cacheProof "thmZCONSTR_ZBOT" ctxtIndTypesA .
     prove "!c i r. ~(ZCONSTR c i r :num->A->bool = ZBOT)" $
       tacREWRITE [defZCONSTR, defZBOT, thmINJP_INJ, thmINJN_INJ, thmNOT_SUC]
 
-thmCONSTR_INJ :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmCONSTR_INJ :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmCONSTR_INJ = cacheProof "thmCONSTR_INJ" ctxtIndTypesA .
     prove [str| !c1 i1 r1 c2 i2 r2. 
                 (CONSTR c1 i1 r1 :(A)recspace = CONSTR c2 i2 r2) <=>
@@ -168,7 +167,7 @@ thmCONSTR_INJ = cacheProof "thmCONSTR_INJ" ctxtIndTypesA .
         tacREWRITE [thmSUC_INJ, thmDEST_REC_INJ]
       ]
 
-thmCONSTR_IND :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmCONSTR_IND :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmCONSTR_IND = cacheProof "thmCONSTR_IND" ctxtIndTypesA .
     prove [str| !P. P(BOTTOM) /\
                 (!c i r. (!n. P(r n)) ==> P(CONSTR c i r)) ==> 
@@ -196,7 +195,7 @@ thmCONSTR_IND = cacheProof "thmCONSTR_IND" ctxtIndTypesA .
         tacREWRITE [tyDefMkRecspace, tyDefDestRecspace]
       ]
 
-thmCONSTR_BOT :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmCONSTR_BOT :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmCONSTR_BOT = cacheProof "thmCONSTR_BOT" ctxtIndTypesA .
     prove "!c i r. ~(CONSTR c i r :(A)recspace = BOTTOM)" $
       _REPEAT tacGEN `_THEN` tacREWRITE [defCONSTR, defBOTTOM] `_THEN`
@@ -205,7 +204,7 @@ thmCONSTR_BOT = cacheProof "thmCONSTR_BOT" ctxtIndTypesA .
       tacMATCH_MP (ruleCONJUNCT2 rulesZRECSPACE) `_THEN`
       tacREWRITE [tyDefMkRecspace, tyDefDestRecspace]
 
-thmCONSTR_REC :: (BasicConvs thry, IndTypesACtxt thry) => HOL cls thry HOLThm
+thmCONSTR_REC :: IndTypesACtxt thry => HOL cls thry HOLThm
 thmCONSTR_REC = cacheProof "thmCONSTR_REC" ctxtIndTypesA $
     prove [str| !Fn:num->A->(num->(A)recspace)->(num->B)->B.
                      ?f. (!c i r. f (CONSTR c i r) = 
@@ -288,7 +287,7 @@ parseInductiveTypeSpecification s =
    Returns the induction and recursion theorems separately.
    The parser isn't used.
 -}
-defineTypeRaw :: (BasicConvs thry, IndTypesACtxt thry) 
+defineTypeRaw :: IndTypesACtxt thry
               => [(HOLType, [(Text, [HOLType])])] 
               -> HOL Theory thry (HOLThm, HOLThm)
 defineTypeRaw def =
@@ -327,7 +326,7 @@ ruleSCRUB_EQUATION eq (th, insts) =
        th'' <- flip ruleMP (primREFL r) #<< primINST [(l, r)] th'
        return (th'', (l, r):insts)
 
-justifyInductiveTypeModel :: (BasicConvs thry, WFCtxt thry)
+justifyInductiveTypeModel :: WFCtxt thry
                           => [(HOLType, [(Text, [HOLType])])] 
                           -> HOL cls thry ([HOLThm], HOLThm, HOLThm)
 justifyInductiveTypeModel def =
@@ -475,7 +474,7 @@ defineInductiveType cdefs exth@(Thm asl extm) =
          return (bij1, bij2b)
 defineInductiveType _ _ = error "defineInductiveType: exhaustive warning."
 
-defineInductiveTypeConstructor :: (BasicConvs thry, PairCtxt thry) => [HOLThm] 
+defineInductiveTypeConstructor :: PairCtxt thry => [HOLThm] 
                                -> [(HOLTerm, (HOLTerm, HOLTerm))] 
                                -> HOLThm -> HOL Theory thry HOLThm
 defineInductiveTypeConstructor defs consindex (Thm _ c) =
@@ -712,7 +711,7 @@ createRecursiveFunctions tybijpairs consindex conthms rth =
               do kth <- ruleRIGHT_BETAS tms #<< primASSUME (head $ hyp cth)
                  liftO $ primTRANS fxth =<< ruleAP_TERM fn kth
 
-createRecursionIsoConstructor :: (BasicConvs thry, WFCtxt thry)
+createRecursionIsoConstructor :: WFCtxt thry
                               => [(HOLTerm, (HOLTerm, HOLTerm))] -> HOLThm 
                               -> HOL cls thry HOLTerm
 createRecursionIsoConstructor consindex cth =
@@ -746,7 +745,7 @@ createRecursionIsoConstructor consindex cth =
                        lHand (concl cth)
            funarg = mkVar (funname `snoc` '\'') funty
        liftO $ listMkAbs [i, r, s] =<< listMkComb funarg allargs           
-  where extractArg :: (BasicConvs thry, PairCtxt thry) => HOLTerm -> HOLTerm 
+  where extractArg :: PairCtxt thry => HOLTerm -> HOLTerm 
                    -> HOL cls thry HOLThm
         extractArg tup v
             | v == tup = return $ primREFL tup
@@ -761,7 +760,7 @@ createRecursionIsoConstructor consindex cth =
                         else do th <- extractArg tup' v
                                 ruleSUBS [ruleSYM thPAIR] th
 
-deriveRecursionTheorem :: (BasicConvs thry, IndTypesACtxt thry) 
+deriveRecursionTheorem :: IndTypesACtxt thry
                        => [(HOLThm, HOLThm)] 
                        -> [(HOLTerm, (HOLTerm, HOLTerm))] -> [HOLThm] 
                        -> HOLThm -> HOL cls thry HOLThm
@@ -801,7 +800,7 @@ deriveRecursionTheorem tybijpairs consindex conthms rath =
         convL :: BoolCtxt thry => HOLTerm -> Conversion cls thry
         convL betm = convREWR (primASSUME betm)
 
-        ruleSIMPER :: (BasicConvs thry, IndTypesACtxt thry) => [HOLThm] 
+        ruleSIMPER :: IndTypesACtxt thry => [HOLThm] 
                    -> HOLThm -> HOL cls thry HOLThm
         ruleSIMPER fnths th = 
             let ths1 = fromRight $ mapM ruleSYM fnths
@@ -809,7 +808,7 @@ deriveRecursionTheorem tybijpairs consindex conthms rath =
               do ths3 <- sequence [thmFST, thmSND, defFCONS, thmBETA]
                  rulePURE_REWRITE (ths1++ths2++ths3) th
 
-        hackdownRath :: (BasicConvs thry, IndTypesACtxt thry) => HOLTerm 
+        hackdownRath :: IndTypesACtxt thry => HOLTerm 
                      -> [HOLThm] -> HOLThm 
                      -> HOL cls thry HOLThm
         hackdownRath betm fnths th =

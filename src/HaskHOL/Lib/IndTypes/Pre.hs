@@ -18,22 +18,21 @@ defOUTL = cacheProof "defOUTL" ctxtIndTypesB $ getRecursiveDefinition "OUTL"
 defOUTR :: IndTypesBCtxt thry => HOL cls thry HOLThm
 defOUTR = cacheProof "defOUTR" ctxtIndTypesB $ getRecursiveDefinition "OUTR"
 
-indDefSum :: (BasicConvs thry, IndTypesBCtxt thry) 
-          => HOL cls thry (HOLThm, HOLThm)
+indDefSum :: IndTypesBCtxt thry => HOL cls thry (HOLThm, HOLThm)
 indDefSum =
     do defs <- getIndDefs
        let (_, th1, th2) = fromJust (mapLookup "sum" defs)
        return (th1, th2)
 
-inductSUM :: (BasicConvs thry, IndTypesBCtxt thry) => HOL cls thry HOLThm
+inductSUM :: IndTypesBCtxt thry => HOL cls thry HOLThm
 inductSUM = cacheProof "inductSUM" ctxtIndTypesB $
     liftM fst indDefSum
 
-recursionSUM :: (BasicConvs thry, IndTypesBCtxt thry) => HOL cls thry HOLThm
+recursionSUM :: IndTypesBCtxt thry => HOL cls thry HOLThm
 recursionSUM = cacheProof "recursionSUM" ctxtIndTypesB $
     liftM snd indDefSum
 
-defineTypeRaw :: (BasicConvs thry, IndTypesBCtxt thry) 
+defineTypeRaw :: IndTypesBCtxt thry
               => [(HOLType, [(Text, [HOLType])])] 
               -> HOL Theory thry (HOLThm, HOLThm)
 defineTypeRaw def =
@@ -173,17 +172,16 @@ generalizeRecursionTheorem thm =
               do th' <- ruleSPECL avs t
                  ruleGENL avs =<< ruleBETA #<< ruleAP_TERM outl th'
                 
-proveConstructorsInjective :: (BasicConvs thry, PairCtxt thry) => HOLThm 
+proveConstructorsInjective :: PairCtxt thry => HOLThm 
                            -> HOL cls thry HOLThm
 proveConstructorsInjective ax =
     let cls = conjuncts . snd . stripExists . snd . stripForall $ concl ax
         pats = fromJust $ mapM (rand <=< lHand . snd . stripForall) cls in
       foldr1M ruleCONJ =<< mapFilterM proveDistinctness pats
-  where ruleDEPAIR :: (BasicConvs thry, PairCtxt thry) => HOLThm 
-                   -> HOL cls thry HOLThm
+  where ruleDEPAIR :: PairCtxt thry => HOLThm -> HOL cls thry HOLThm
         ruleDEPAIR = ruleGEN_REWRITE convTOP_SWEEP [thmPAIR_EQ]
 
-        proveDistinctness :: (BasicConvs thry, PairCtxt thry)
+        proveDistinctness :: PairCtxt thry
                           => HOLTerm 
                           -> HOL cls thry HOLThm
         proveDistinctness pat =
@@ -213,12 +211,11 @@ proveConstructorsInjective ax =
                  uth <- ruleGENL args =<< ruleGENL args' tth
                  liftM (rulePROVE_HYP eth) $ ruleSIMPLE_CHOOSE fn uth
 
-proveDistinct_pth :: (BasicConvs thry, IndTypesBCtxt thry) 
-                  => HOL cls thry HOLThm
+proveDistinct_pth :: IndTypesBCtxt thry => HOL cls thry HOLThm
 proveDistinct_pth = cacheProof "proveDistinct_pth" ctxtIndTypesB $ 
     ruleTAUT "a ==> F <=> ~a"
 
-proveConstructorsDistinct :: (BasicConvs thry, IndTypesBCtxt thry) => HOLThm 
+proveConstructorsDistinct :: IndTypesBCtxt thry => HOLThm 
                           -> HOL cls thry HOLThm
 proveConstructorsDistinct ax =
     let cls = conjuncts . snd . stripExists . snd . stripForall $ concl ax
@@ -235,7 +232,7 @@ proveConstructorsDistinct ax =
                return $! xs ++ ys
         allopairs _ _ _ = return []
 
-        ruleNEGATE :: (BasicConvs thry, IndTypesBCtxt thry) => HOLThm 
+        ruleNEGATE :: IndTypesBCtxt thry => HOLThm 
                    -> HOL cls thry HOLThm
         ruleNEGATE = ruleGEN_ALL <=< ruleCONV (convREWR proveDistinct_pth)
 
@@ -245,7 +242,7 @@ proveConstructorsDistinct ax =
             do ths <- ruleCONJUNCTS #<< primASSUME bod
                ruleGEN_REWRITE convONCE_DEPTH ths th
 
-        proveDistinct :: (BasicConvs thry, IndTypesBCtxt thry) 
+        proveDistinct :: IndTypesBCtxt thry
                       => [HOLTerm] -> HOL cls thry [HOLThm]
         proveDistinct pat =
             do tyNum <- mkType "num" []

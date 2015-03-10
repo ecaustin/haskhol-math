@@ -10,7 +10,10 @@
 -}
 module HaskHOL.Lib.Arith 
     ( ArithType
+    , ArithAThry
+    , ArithThry
     , ArithCtxt
+    , ctxtArith
     , defPRE
     , defADD
     , defMULT
@@ -148,6 +151,7 @@ import HaskHOL.Deductive hiding (getSpecification)
 
 import HaskHOL.Lib.Nums
 
+import HaskHOL.Lib.Arith.A
 import HaskHOL.Lib.Arith.Base
 import HaskHOL.Lib.Arith.Context
        
@@ -159,22 +163,22 @@ defMinimal :: ArithCtxt thry => HOL cls thry HOLThm
 defMinimal = cacheProof "defMinimal" ctxtArith $ getDefinition "minimal"
 
 
-thmONE :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmONE :: ArithCtxt thry => HOL cls thry HOLThm
 thmONE = cacheProof "thmONE" ctxtArith $
     prove "1 = SUC 0" $ 
       tacREWRITE [thmBIT1, ruleREWRITE [defNUMERAL] thmADD_CLAUSES, defNUMERAL]
 
-thmTWO :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmTWO :: ArithCtxt thry => HOL cls thry HOLThm
 thmTWO = cacheProof "thmTWO" ctxtArith $
     prove "2 = SUC 1" $ 
       tacREWRITE [ thmBIT0, thmBIT1
                  , ruleREWRITE [defNUMERAL] thmADD_CLAUSES, defNUMERAL ]
 
-thmARITH_GT :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmARITH_GT :: ArithCtxt thry => HOL cls thry HOLThm
 thmARITH_GT = cacheProof "thmARITH_GT" ctxtArith $
     ruleREWRITE [ruleGSYM defGE, ruleGSYM defGT] thmARITH_LT
 
-thmARITH_SUB :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmARITH_SUB :: ArithCtxt thry => HOL cls thry HOLThm
 thmARITH_SUB = cacheProof "thmARITH_SUB" ctxtArith .
     prove [str| (!m n. NUMERAL m - NUMERAL n = NUMERAL(m - n)) /\
                 (_0 - _0 = _0) /\
@@ -197,7 +201,7 @@ thmARITH_SUB = cacheProof "thmARITH_SUB" ctxtArith .
       tacREWRITE [thmADD1, thmLEFT_ADD_DISTRIB] `_THEN`
       tacREWRITE [thmADD_SUB2, ruleGSYM thmADD_ASSOC]
 
-thmARITH_EXP :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmARITH_EXP :: ArithCtxt thry => HOL cls thry HOLThm
 thmARITH_EXP = cacheProof "thmARITH_EXP" ctxtArith $
     prove [str| (!m n. (NUMERAL m) EXP (NUMERAL n) = NUMERAL(m EXP n)) /\
                 (_0 EXP _0 = BIT1 _0) /\
@@ -218,11 +222,11 @@ thmARITH_EXP = cacheProof "thmARITH_EXP" ctxtArith $
       tacREWRITE [ ruleDENUMERAL defEXP, ruleDENUMERAL thmMULT_CLAUSES
                  , thmEXP_ADD ]
 
-thmARITH_0 :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmARITH_0 :: ArithCtxt thry => HOL cls thry HOLThm
 thmARITH_0 = cacheProof "thmARITH_0" ctxtArith $
     ruleMESON [defNUMERAL, thmADD_CLAUSES] [str| m + _0 = m /\ _0 + n = n |]
 
-thmBITS_INJ :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmBITS_INJ :: ArithCtxt thry => HOL cls thry HOLThm
 thmBITS_INJ = cacheProof "thmBITS_INJ" ctxtArith .
     prove [str| (BIT0 m = BIT0 n <=> m = n) /\
                 (BIT1 m = BIT1 n <=> m = n) |] $
@@ -230,7 +234,7 @@ thmBITS_INJ = cacheProof "thmBITS_INJ" ctxtArith .
       tacREWRITE [ruleGSYM thmMULT_2] `_THEN`
       tacREWRITE [thmSUC_INJ, thmEQ_MULT_LCANCEL, thmARITH_EQ]
 
-thmSUB_ELIM :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmSUB_ELIM :: ArithCtxt thry => HOL cls thry HOLThm
 thmSUB_ELIM = cacheProof "thmSUB_ELIM" ctxtArith $
     prove [str| P(a - b) <=> !d. a = b + d \/ a < b /\ d = 0 ==> P d |] $
       tacDISJ_CASES (ruleSPECL ["a:num", "b:num"] =<< thmLTE_CASES) `_THENL`
@@ -243,13 +247,13 @@ thmSUB_ELIM = cacheProof "thmSUB_ELIM" ctxtArith $
               , thmLE_ADD, thmEQ_ADD_LCANCEL ] `_THEN` 
       tacMESON_NIL
 
-thmEXP_2 :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmEXP_2 :: ArithCtxt thry => HOL cls thry HOLThm
 thmEXP_2 = cacheProof "thmEXP_2" ctxtArith .
     prove "!n. n EXP 2 = n * n" $
       tacREWRITE [ thmBIT0_THM, thmBIT1_THM, defEXP
                  , thmEXP_ADD, thmMULT_CLAUSES, thmADD_CLAUSES ]
 
-convNUM_CANCEL :: (BasicConvs thry, ArithCtxt thry) => Conversion cls thry
+convNUM_CANCEL :: ArithCtxt thry => Conversion cls thry
 convNUM_CANCEL = Conv $ \ tm ->
     do tmAdd <- serve [arith| (+) |]
        tmeq <- serve [arith| (=) :num->num->bool |]
@@ -273,26 +277,26 @@ convNUM_CANCEL = Conv $ \ tm ->
             | h1 < h2 = minter i (h1:l1') l2' t1 l2
             | otherwise = minter i l1' (h2:l2') l1 t2
 
-        ruleAC :: (BasicConvs thry, ArithCtxt thry) => HOLTerm 
+        ruleAC :: ArithCtxt thry => HOLTerm 
                -> HOL cls thry HOLThm
         ruleAC = runConv (convAC thmADD_AC)
             
-        convNUM_CANCEL_pth :: (BasicConvs thry, ArithCtxt thry) 
+        convNUM_CANCEL_pth :: ArithCtxt thry 
                            => HOL cls thry HOLThm
         convNUM_CANCEL_pth = cacheProof "convNUM_CANCEL_pth" ctxtArith $
             ruleGEN_REWRITE (funpow 2 convBINDER . convLAND) 
               [thmEQ_SYM_EQ] =<< thmEQ_ADD_LCANCEL_0
 
-ruleLE_IMP :: (BasicConvs thry, ArithCtxt thry, HOLThmRep thm cls thry) => thm 
+ruleLE_IMP :: (ArithCtxt thry, HOLThmRep thm cls thry) => thm 
            -> HOL cls thry HOLThm
 ruleLE_IMP th =
     ruleGEN_ALL =<< ruleMATCH_MP ruleLE_IMP_pth =<< ruleSPEC_ALL th
-  where ruleLE_IMP_pth :: (BasicConvs thry, ArithCtxt thry) 
+  where ruleLE_IMP_pth :: ArithCtxt thry 
                        => HOL cls thry HOLThm
         ruleLE_IMP_pth = cacheProof "ruleLE_IMP_pth" ctxtArith $
             rulePURE_ONCE_REWRITE[thmIMP_CONJ] =<< thmLE_TRANS
 
-thmDIVISION :: (BasicConvs thry, ArithCtxt thry) => HOL cls thry HOLThm
+thmDIVISION :: ArithCtxt thry => HOL cls thry HOLThm
 thmDIVISION = cacheProof "thmDIVISION" ctxtArith .
     prove [str| !m n. ~(n = 0) ==> 
                       (m = m DIV n * n + m MOD n) /\ m MOD n < n |] $

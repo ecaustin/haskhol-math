@@ -2,14 +2,13 @@
              TypeFamilies, TypeSynonymInstances, UndecidableInstances #-}
 module HaskHOL.Lib.WF.Context
     ( WFType
+    , WFThry
     , WFCtxt
     , ctxtWF
     , wF
     ) where
 
 import HaskHOL.Core
-import HaskHOL.Deductive
-import HaskHOL.Lib.Pair
 
 import HaskHOL.Lib.Arith.Context
 import HaskHOL.Lib.WF.Base
@@ -33,6 +32,3 @@ type family WFCtxt a where
     WFCtxt a = (ArithCtxt a, WFContext a ~ True)
 
 type instance PolyTheory WFType b = WFCtxt b
-
-instance BasicConvs WFType where
-    basicConvs _ = basicConvs (undefined :: PairType)

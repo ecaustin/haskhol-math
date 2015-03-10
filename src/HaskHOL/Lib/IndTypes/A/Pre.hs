@@ -7,9 +7,8 @@ import HaskHOL.Lib.Nums
 import HaskHOL.Lib.Arith
 import HaskHOL.Lib.CalcNum
 import HaskHOL.Lib.WF
-import HaskHOL.Lib.WF.Context
 
-thmINJ_INVERSE2 :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+thmINJ_INVERSE2 :: WFCtxt thry => HOL cls thry HOLThm
 thmINJ_INVERSE2 = cacheProof "thmINJ_INVERSE2" ctxtWF $
     prove [str| !P:A->B->C.
                 (!x1 y1 x2 y2. (P x1 y1 = P x2 y2) <=> (x1 = x2) /\ (y1 = y2))
@@ -23,7 +22,7 @@ thmINJ_INVERSE2 = cacheProof "thmINJ_INVERSE2" ctxtWF $
       (\ g@(Goal _ w) -> tacEXISTS 
                           (rand =<< liftM snd (destExists w)) g) `_THEN` tacREFL
 
-thmNUMPAIR_INJ_LEMMA :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+thmNUMPAIR_INJ_LEMMA :: WFCtxt thry => HOL cls thry HOLThm
 thmNUMPAIR_INJ_LEMMA = cacheProof "thmNUMPAIR_INJ_LEMMA" ctxtWF $
     do tm <- toHTm "EVEN"
        prove "!x1 y1 x2 y2. (NUMPAIR x1 y1 = NUMPAIR x2 y2) ==> (x1 = x2)" $
@@ -35,7 +34,7 @@ thmNUMPAIR_INJ_LEMMA = cacheProof "thmNUMPAIR_INJ_LEMMA" ctxtWF $
          _DISCH_THEN (tacMP <#< ruleAP_TERM tm) `_THEN`
          tacREWRITE [thmEVEN_MULT, thmEVEN_ADD, thmARITH]
 
-thmNUMSUM_INJ :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+thmNUMSUM_INJ :: WFCtxt thry => HOL cls thry HOLThm
 thmNUMSUM_INJ = cacheProof "thmNUMSUM_INJ" ctxtWF $
     do tm <- toHTm "EVEN"
        prove [str| !b1 x1 b2 x2. (NUMSUM b1 x1 = NUMSUM b2 x2) <=> 

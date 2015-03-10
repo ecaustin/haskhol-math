@@ -1,5 +1,5 @@
 name:          haskhol-math
-version:       0.0.1
+version:       0.1.0
 synopsis:      HaskHOL libraries for mathematical and structural reasoning.
 description:   More details can be found at the following page:  
                http://haskhol.org. 
@@ -21,8 +21,8 @@ library
                    , template-haskell >=2.9
                    , parsec >=3.1
                    , vector >= 0.10
-                   , haskhol-core >=1.1
-                   , haskhol-deductive >=0.1
+                   , haskhol-core >=1.2
+                   , haskhol-deductive >=0.2
                    , text >= 1.2
 
     exposed-modules:
@@ -87,5 +87,5 @@ library
       HaskHOL.Lib.Lists.Context
              
     ghc-prof-options: -prof -fprof-auto
-    ghc-options: -Wall
+    ghc-options: -Wall -fcontext-stack=200
  

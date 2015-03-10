@@ -13,7 +13,7 @@ import HaskHOL.Lib.CalcNum.Pre
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 
-thmARITH :: (BasicConvs thry, WFCtxt thry) => HOL cls thry HOLThm
+thmARITH :: WFCtxt thry => HOL cls thry HOLThm
 thmARITH = cacheProof "thmARITH" ctxtWF $ foldr1M ruleCONJ =<< 
     sequence [ thmARITH_ZERO, thmARITH_SUC, thmARITH_PRE
              , thmARITH_ADD, thmARITH_MULT, thmARITH_EXP
@@ -85,7 +85,7 @@ putAdcFlags v =
 makeAcidic ''ADCFlags ['getAdcFlags, 'putAdcFlags]
 
 
-addClauses :: (BasicConvs thry, WFCtxt thry) => HOL cls thry (Vector HOLThm)
+addClauses :: WFCtxt thry => HOL cls thry (Vector HOLThm)
 addClauses =
     do acid <- openLocalStateHOLBase (ADDClauses V.empty)
        v <- queryHOL acid GetAddClauses
@@ -103,7 +103,7 @@ addClauses =
                    createCheckpointAndCloseHOL acid2
                    return v'
 
-addFlags :: (BasicConvs thry, WFCtxt thry) => HOL cls thry (Vector Int)
+addFlags :: WFCtxt thry => HOL cls thry (Vector Int)
 addFlags =
     do acid <- openLocalStateHOLBase (ADDFlags V.empty)
        v <- queryHOL acid GetAddFlags
@@ -122,7 +122,7 @@ addFlags =
                    return v'
 
 
-adcClauses :: (BasicConvs thry, WFCtxt thry) => HOL cls thry (Vector HOLThm)
+adcClauses :: WFCtxt thry => HOL cls thry (Vector HOLThm)
 adcClauses =
     do acid <- openLocalStateHOLBase (ADCClauses V.empty)
        v <- queryHOL acid GetAdcClauses
@@ -140,7 +140,7 @@ adcClauses =
                    createCheckpointAndCloseHOL acid2
                    return v'
 
-adcFlags :: (BasicConvs thry, WFCtxt thry) => HOL cls thry (Vector Int)
+adcFlags :: WFCtxt thry => HOL cls thry (Vector Int)
 adcFlags =
     do acid <- openLocalStateHOLBase (ADCFlags V.empty)
        v <- queryHOL acid GetAdcFlags
@@ -222,8 +222,7 @@ putUnshiftpuths2 v =
 makeAcidic ''UNSHIFTpuths2 ['getUnshiftpuths2, 'putUnshiftpuths2]
 
 
-convNUM_SHIFT_pths1 :: (BasicConvs thry, WFCtxt thry) 
-                    => HOL cls thry (Vector HOLThm)
+convNUM_SHIFT_pths1 :: WFCtxt thry => HOL cls thry (Vector HOLThm)
 convNUM_SHIFT_pths1 =
     do acid <- openLocalStateHOLBase (SHIFTPths1 V.empty)
        v <- queryHOL acid GetShiftPths1
@@ -237,8 +236,7 @@ convNUM_SHIFT_pths1 =
                   createCheckpointAndCloseHOL acid'
                   return v'
 
-convNUM_SHIFT_pths0 :: (BasicConvs thry, WFCtxt thry) 
-                    => HOL cls thry (Vector HOLThm)
+convNUM_SHIFT_pths0 :: WFCtxt thry => HOL cls thry (Vector HOLThm)
 convNUM_SHIFT_pths0 =
     do acid <- openLocalStateHOLBase (SHIFTPths0 V.empty)
        v <- queryHOL acid GetShiftPths0
@@ -252,8 +250,7 @@ convNUM_SHIFT_pths0 =
                   createCheckpointAndCloseHOL acid'
                   return v'
 
-convNUM_UNSHIFT_puths1 :: (BasicConvs thry, WFCtxt thry) 
-                       => HOL cls thry (Vector HOLThm)
+convNUM_UNSHIFT_puths1 :: WFCtxt thry => HOL cls thry (Vector HOLThm)
 convNUM_UNSHIFT_puths1 = 
     do acid <- openLocalStateHOLBase (UNSHIFTpuths1 V.empty)
        v <- queryHOL acid GetUnshiftpuths1
@@ -267,8 +264,7 @@ convNUM_UNSHIFT_puths1 =
                   createCheckpointAndCloseHOL acid'
                   return v'
 
-convNUM_UNSHIFT_puths2 :: (BasicConvs thry, WFCtxt thry) 
-                       => HOL cls thry (Vector HOLThm)
+convNUM_UNSHIFT_puths2 :: WFCtxt thry => HOL cls thry (Vector HOLThm)
 convNUM_UNSHIFT_puths2 = 
     do acid <- openLocalStateHOLBase (UNSHIFTpuths2 V.empty)
        v <- queryHOL acid GetUnshiftpuths2
