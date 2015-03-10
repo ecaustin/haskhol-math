@@ -19,7 +19,6 @@ import HaskHOL.Deductive
 import HaskHOL.Lib.Nums
 import HaskHOL.Lib.Arith
 import HaskHOL.Lib.WF
-import HaskHOL.Lib.WF.Context
 import HaskHOL.Lib.CalcNum
 
 import Data.Vector (fromList, (!))

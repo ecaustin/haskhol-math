@@ -16,7 +16,7 @@ import HaskHOL.Lib.Pair.B.Base
 templateTypes ctxtPairA "PairB"
 
 ctxtPairB :: TheoryPath PairBType
-ctxtPairB = extendTheory ctxtPairA $
+ctxtPairB = extendTheory ctxtPairA $(thisModule') $
     do void tyDefProd'
        parseAsInfix (",", (14, "right"))
        sequence_ [ defCOMMA'

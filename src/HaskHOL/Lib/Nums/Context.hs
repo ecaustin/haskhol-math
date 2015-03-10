@@ -17,7 +17,7 @@ import HaskHOL.Lib.Nums.Base
 templateTypes ctxtNumsB "Nums"
 
 ctxtNums :: TheoryPath NumsType
-ctxtNums = extendTheory ctxtNumsB $
+ctxtNums = extendTheory ctxtNumsB $(thisModule') $
     do indth <- inductionNUM
        recth <- recursionStdNUM
        addIndDefs [("num", (2, indth, recth))]

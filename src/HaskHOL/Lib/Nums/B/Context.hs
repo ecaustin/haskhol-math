@@ -16,7 +16,7 @@ import HaskHOL.Lib.Nums.B.Base
 templateTypes ctxtNumsA "NumsB"
 
 ctxtNumsB :: TheoryPath NumsBType
-ctxtNumsB = extendTheory ctxtNumsA $
+ctxtNumsB = extendTheory ctxtNumsA $(thisModule') $
     do sequence_ [defIND_SUC', defIND_0']
        (rep, _, _) <- indDefNUM_REP''
        void $ tyDefNum'' rep

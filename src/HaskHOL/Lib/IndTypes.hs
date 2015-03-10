@@ -9,12 +9,9 @@
   Portability: unknown
 -}
 module HaskHOL.Lib.IndTypes
-    ( IndTypesType
-    , IndTypesAThry
-    , IndTypesBThry
-    , IndTypesThry
-    , IndTypesCtxt
+    ( IndTypesCtxt
     , ctxtIndTypes
+    , indTypes
     , thmINJ_INVERSE2
     , thmNUMPAIR_INJ_LEMMA
     , thmNUMSUM_INJ
@@ -61,7 +58,9 @@ module HaskHOL.Lib.IndTypes
     , defineType
     , getType
     , convFORALL_UNWIND
+    , convMATCH_ONEPATTERN
     , convMATCH_ONEPATTERN_TRIV
+    , convMATCH_SEQPATTERN
     , convMATCH_SEQPATTERN_TRIV
     ) where
 

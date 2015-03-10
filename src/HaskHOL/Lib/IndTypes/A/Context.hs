@@ -16,7 +16,7 @@ import HaskHOL.Lib.IndTypes.A.Base
 templateTypes ctxtWF "IndTypesA"
 
 ctxtIndTypesA :: TheoryPath IndTypesAType
-ctxtIndTypesA = extendTheory ctxtWF $
+ctxtIndTypesA = extendTheory ctxtWF $(thisModule') $
     do sequence_ [ specNUMPAIR_DEST'
                  , specNUMSUM_DEST'
                  , defINJN'

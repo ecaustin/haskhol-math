@@ -1,12 +1,8 @@
 
 module HaskHOL.Lib.Pair
-    ( PairType
-    , PairAThry
-    , PairBThry
-    , PairCThry
-    , PairThry
-    , PairCtxt
+    ( PairCtxt
     , ctxtPair
+    , pair
     , defLET
     , defLET_END
     , defGABS
@@ -46,7 +42,6 @@ module HaskHOL.Lib.Pair
 import HaskHOL.Core
 import HaskHOL.Deductive hiding (newDefinition, getDefinition)
 
-import HaskHOL.Lib.Pair.A
 import HaskHOL.Lib.Pair.B
 import HaskHOL.Lib.Pair.C
 import HaskHOL.Lib.Pair.Base

@@ -30,6 +30,7 @@ module HaskHOL.Math
     --, module HaskHOL.Lib.Grobner
     , module HaskHOL.Lib.IndTypes
     , module HaskHOL.Lib.Lists
+    , module HaskHOL.Lib.Lists.Context
     ) where
 
 import HaskHOL.Core

@@ -8,10 +8,9 @@
   Portability: unknown
 -}
 module HaskHOL.Lib.WF
-    ( WFType
-    , WFThry
-    , WFCtxt
+    ( WFCtxt
     , ctxtWF
+    , wF
     , defWF
     , defMEASURE
     , defNUMPAIR

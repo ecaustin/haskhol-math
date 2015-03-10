@@ -16,7 +16,7 @@ import HaskHOL.Lib.Pair.A.Base
 templateTypes ctxtDeductive "PairA"
 
 ctxtPairA :: TheoryPath PairAType
-ctxtPairA = extendTheory ctxtDeductive $
+ctxtPairA = extendTheory ctxtDeductive $(thisModule') $
     sequence_ [ defLET'
               , defLET_END'
               , defGABS'

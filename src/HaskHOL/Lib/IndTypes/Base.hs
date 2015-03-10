@@ -99,7 +99,7 @@ rehashRectypeNet =
 extendRectypeNet :: IndTypesBCtxt thry => (Text, (Int, HOLThm, HOLThm)) 
                  -> HOL Theory thry ()
 extendRectypeNet (tyname, (_, _, rth)) =
-    do ths1 <- liftM (: []) (proveConstructorsDistinct rth) <|> return []
+    do ths1 <- liftM (:[]) (proveConstructorsDistinct rth) <|> return []
        ths2 <- liftM (:[]) (proveConstructorsInjective rth) <|> return []
        acid1 <- openLocalStateHOL (DistinctnessStore [])
        updateHOL acid1 (AddDistinctnessStore tyname ths1)

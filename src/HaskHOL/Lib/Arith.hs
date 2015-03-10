@@ -9,11 +9,9 @@
   Portability: unknown
 -}
 module HaskHOL.Lib.Arith 
-    ( ArithType
-    , ArithAThry
-    , ArithThry
-    , ArithCtxt
+    ( ArithCtxt
     , ctxtArith
+    , arith
     , defPRE
     , defADD
     , defMULT
@@ -151,7 +149,6 @@ import HaskHOL.Deductive hiding (getSpecification)
 
 import HaskHOL.Lib.Nums
 
-import HaskHOL.Lib.Arith.A
 import HaskHOL.Lib.Arith.Base
 import HaskHOL.Lib.Arith.Context
        

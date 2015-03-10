@@ -17,7 +17,7 @@ import HaskHOL.Lib.Lists.A.Base
 templateTypes ctxtIndTypes "ListsA"
 
 ctxtListsA :: TheoryPath ListsAType
-ctxtListsA = extendTheory ctxtIndTypes $
+ctxtListsA = extendTheory ctxtIndTypes $(thisModule') $
     do sequence_ [ defHD'
                  , defTL'
                  , defAPPEND'

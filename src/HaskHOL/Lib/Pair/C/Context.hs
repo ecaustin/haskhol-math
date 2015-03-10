@@ -17,7 +17,7 @@ import HaskHOL.Lib.Pair.C.Base
 templateTypes ctxtPairB "PairC"
 
 ctxtPairC :: TheoryPath PairCType
-ctxtPairC = extendTheory ctxtPairB $
+ctxtPairC = extendTheory ctxtPairB $(thisModule') $
     do extendBasicRewrites =<< sequence [thmFST, thmSND, thmPAIR]
        ths <- sequence [ defSND, defFST, defCOMMA, defMK_PAIR
                        , defGEQ, defGABS, defLET_END, defLET

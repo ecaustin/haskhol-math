@@ -9,12 +9,9 @@
   Portability: unknown
 -}
 module HaskHOL.Lib.Nums
-    ( NumsType
-    , NumsAThry
-    , NumsBThry
-    , NumsThry
-    , NumsCtxt
+    ( NumsCtxt
     , ctxtNums
+    , nums
     , defONE_ONE -- A
     , defONTO
     , axINFINITY -- B
@@ -59,7 +56,6 @@ module HaskHOL.Lib.Nums
     , pattern BIT1
     ) where
 
-import HaskHOL.Lib.Nums.A
 import HaskHOL.Lib.Nums.B
 import HaskHOL.Lib.Nums.Base
 import HaskHOL.Lib.Nums.Context

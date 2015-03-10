@@ -16,7 +16,7 @@ import HaskHOL.Lib.WF.Base
 templateTypes ctxtArith "WF"
 
 ctxtWF :: TheoryPath WFType
-ctxtWF = extendTheory ctxtArith $
+ctxtWF = extendTheory ctxtArith $(thisModule') $
     do parseAsInfix ("<<", (12, "right"))
        parseAsInfix ("<<<", (12, "right"))
        sequence_ [ defWF'

@@ -17,7 +17,7 @@ import HaskHOL.Lib.IndTypes.B.Base
 templateTypes ctxtIndTypesA "IndTypesB"
 
 ctxtIndTypesB :: TheoryPath IndTypesBType
-ctxtIndTypesB = extendTheory ctxtIndTypesA $
+ctxtIndTypesB = extendTheory ctxtIndTypesA $(thisModule') $
     do (indth, recth) <- indDefSum'
        sequence_ [ defOUTL' recth
                  , defOUTR' recth

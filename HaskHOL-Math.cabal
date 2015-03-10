@@ -16,7 +16,8 @@ homepage:      http://haskhol.org
 library
     default-language:  Haskell2010
     default-extensions: ConstraintKinds, DeriveDataTypeable, OverloadedStrings,
-                        QuasiQuotes, TemplateHaskell, TypeFamilies
+                        PatternSynonyms, QuasiQuotes, TemplateHaskell, 
+                        TypeFamilies
     build-depends:   base >=4.7
                    , template-haskell >=2.9
                    , parsec >=3.1
@@ -28,63 +29,63 @@ library
     exposed-modules:
       HaskHOL.Math
       HaskHOL.Lib.Pair
+      HaskHOL.Lib.Pair.A.Context
+      HaskHOL.Lib.Pair.B.Context
+      HaskHOL.Lib.Pair.C.Context
+      HaskHOL.Lib.Pair.Context
       HaskHOL.Lib.Nums
+      HaskHOL.Lib.Nums.A.Context
+      HaskHOL.Lib.Nums.B.Context
+      HaskHOL.Lib.Nums.Context
       HaskHOL.Lib.Recursion
       HaskHOL.Lib.Arith
+      HaskHOL.Lib.Arith.A.Context
+      HaskHOL.Lib.Arith.Context
       HaskHOL.Lib.WF
+      HaskHOL.Lib.WF.Context
       HaskHOL.Lib.CalcNum
       HaskHOL.Lib.Normalizer
       HaskHOL.Lib.Grobner
       HaskHOL.Lib.IndTypes
+      HaskHOL.Lib.IndTypes.A.Context
+      HaskHOL.Lib.IndTypes.B.Context
+      HaskHOL.Lib.IndTypes.Context
       HaskHOL.Lib.Lists
+      HaskHOL.Lib.Lists.A.Context
+      HaskHOL.Lib.Lists.Context
     exposed: True
     buildable: True
     hs-source-dirs: src
     other-modules:
       HaskHOL.Lib.Pair.A
       HaskHOL.Lib.Pair.A.Base
-      HaskHOL.Lib.Pair.A.Context
       HaskHOL.Lib.Pair.B
       HaskHOL.Lib.Pair.B.Base
-      HaskHOL.Lib.Pair.B.Context
       HaskHOL.Lib.Pair.C
       HaskHOL.Lib.Pair.C.Base
-      HaskHOL.Lib.Pair.C.Context
       HaskHOL.Lib.Pair.Base
-      HaskHOL.Lib.Pair.Context
       HaskHOL.Lib.Nums.A
       HaskHOL.Lib.Nums.A.Base
-      HaskHOL.Lib.Nums.A.Context
       HaskHOL.Lib.Nums.B
       HaskHOL.Lib.Nums.B.Base
-      HaskHOL.Lib.Nums.B.Context
       HaskHOL.Lib.Nums.Base
-      HaskHOL.Lib.Nums.Context
       HaskHOL.Lib.Arith.A
       HaskHOL.Lib.Arith.A.Base
-      HaskHOL.Lib.Arith.A.Context
       HaskHOL.Lib.Arith.Base
-      HaskHOL.Lib.Arith.Context
       HaskHOL.Lib.WF.Base
-      HaskHOL.Lib.WF.Context
       HaskHOL.Lib.CalcNum.Pre
       HaskHOL.Lib.CalcNum.Pre2
       HaskHOL.Lib.IndTypes.A
       HaskHOL.Lib.IndTypes.A.Base
-      HaskHOL.Lib.IndTypes.A.Context
       HaskHOL.Lib.IndTypes.A.Pre
       HaskHOL.Lib.IndTypes.B
       HaskHOL.Lib.IndTypes.B.Base
-      HaskHOL.Lib.IndTypes.B.Context
       HaskHOL.Lib.IndTypes.B.Pre
       HaskHOL.Lib.IndTypes.Base
-      HaskHOL.Lib.IndTypes.Context
       HaskHOL.Lib.IndTypes.Pre
       HaskHOL.Lib.Lists.A
       HaskHOL.Lib.Lists.A.Base
-      HaskHOL.Lib.Lists.A.Context
       HaskHOL.Lib.Lists.Base
-      HaskHOL.Lib.Lists.Context
              
     ghc-prof-options: -prof -fprof-auto
     ghc-options: -Wall -fcontext-stack=200

@@ -8,11 +8,9 @@
   Portability: unknown
 -}
 module HaskHOL.Lib.Lists 
-    ( ListsType
-    , ListsAThry
-    , ListsThry
-    , ListsCtxt
+    ( ListsCtxt
     , ctxtLists
+    , lists
     , defHD
     , defTL
     , defAPPEND
@@ -46,7 +44,6 @@ module HaskHOL.Lib.Lists
 import HaskHOL.Core
 import HaskHOL.Deductive
 
-import HaskHOL.Lib.Lists.A
 import HaskHOL.Lib.Lists.Base
 import HaskHOL.Lib.Lists.Context
 

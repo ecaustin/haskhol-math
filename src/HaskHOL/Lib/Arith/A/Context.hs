@@ -16,7 +16,7 @@ import HaskHOL.Lib.Arith.A.Base
 templateTypes ctxtNums "ArithA"
 
 ctxtArithA :: TheoryPath ArithAType
-ctxtArithA = extendTheory ctxtNums $
+ctxtArithA = extendTheory ctxtNums $(thisModule') $
     do mapM_ parseAsInfix [ ("<", (12, "right"))
                           , ("<=", (12, "right"))
                           , (">", (12, "right"))

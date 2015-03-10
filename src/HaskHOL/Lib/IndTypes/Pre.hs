@@ -198,13 +198,13 @@ proveConstructorsInjective ax =
                      bth = fromRight $ ruleAP_TERM fn ath
                  cth1 <- ruleSPECL args #<< primASSUME #<< 
                            liftM snd (destExists $ concl eth)
-                 let cth2 = fromJust $ primINST (zip args' args) cth1
+                 let cth2 = fromJust $ primINST (zip args args') cth1
                      pth = fromRight $ liftM1 primTRANS 
                              (liftM1 primTRANS (ruleSYM cth1) bth) cth2
                  qth <- ruleDEPAIR pth
                  let qtm = concl qth
                  qths <- ruleCONJUNCTS #<< primASSUME qtm
-                 let rth = fromRight $ foldlM (flip primMK_COMB) (primREFL f) 
+                 let rth = fromRight $ foldlM primMK_COMB (primREFL f) 
                              qths
                  tth <- liftM1 ruleIMP_ANTISYM (ruleDISCH atm qth) =<< 
                           ruleDISCH qtm rth
@@ -246,11 +246,11 @@ proveConstructorsDistinct ax =
                       => [HOLTerm] -> HOL cls thry [HOLThm]
         proveDistinct pat =
             do tyNum <- mkType "num" []
-               nums <- mapM mkNumeral ([0..(length pat -1)] :: [Int])
+               nms <- mapM mkNumeral ([0..(length pat -1)] :: [Int])
                fn <- genVar =<< mkType "fun" [typeOf $ head pat, tyNum]
                let ls = fromRight $ mapM (mkComb fn) pat
                defs <- map2M (\ l r -> let l' = frees . fromJust $ rand l in
-                                         listMkForall l' =<< mkEq l r) ls nums
+                                         listMkForall l' =<< mkEq l r) ls nms
                eth <- proveRecursiveFunctionsExist ax =<< listMkConj defs
                let (ev, bod) = fromJust . destExists $ concl eth
                    pat' = fromRight $ mapM (\ t ->

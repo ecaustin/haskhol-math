@@ -17,12 +17,12 @@ import HaskHOL.Lib.Pair.C
 templateTypes ctxtPairC "Pair"
 
 ctxtPair :: TheoryPath PairType
-ctxtPair = extendTheory ctxtPairC $
+ctxtPair = extendTheory ctxtPairC $(thisModule') $
     do indth <- inductPAIR
        recth <- recursionPAIR
        addIndDefs [("prod", (1, indth, recth))]
        extendBasicConvs  ("convGEN_BETA", ([str| GABS (\ a. b) c |]
-                         , ("convGEN_BETA", ["HaskHOL.Lib.Pair"])))
+                         , ("return convGEN_BETA", ["HaskHOL.Lib.Pair"])))
 
 templateProvers 'ctxtPair
 

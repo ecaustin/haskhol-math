@@ -17,7 +17,7 @@ import HaskHOL.Lib.Lists.Base
 templateTypes ctxtListsA "Lists"
 
 ctxtLists :: TheoryPath ListsType
-ctxtLists = extendTheory ctxtListsA $
+ctxtLists = extendTheory ctxtListsA $(thisModule') $
     mapM_ addMonoThm [thmMONO_ALL, thmMONO_ALL2]
 
 templateProvers 'ctxtLists

@@ -8,7 +8,6 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.Recursion
 import HaskHOL.Lib.Nums
 import HaskHOL.Lib.WF
-import HaskHOL.Lib.WF.Context
 
 import HaskHOL.Lib.IndTypes.A
 

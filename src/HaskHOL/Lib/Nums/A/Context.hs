@@ -10,13 +10,13 @@ module HaskHOL.Lib.Nums.A.Context
 
 import HaskHOL.Core
 
-import HaskHOL.Lib.Pair
+import HaskHOL.Lib.Pair.Context
 import HaskHOL.Lib.Nums.A.Base
 
 templateTypes ctxtPair "NumsA"
 
 ctxtNumsA :: TheoryPath NumsAType
-ctxtNumsA = extendTheory ctxtPair $
+ctxtNumsA = extendTheory ctxtPair $(thisModule') $
     do newType "ind" 0
        sequence_ [defONE_ONE', defONTO']
        void axINFINITY'
