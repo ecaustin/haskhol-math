@@ -41,8 +41,6 @@ ctxtIndTypes = extendTheory ctxtIndTypesB $(thisModule') $
        updateHOL acid2 (PutDistinctnessStore [("bool", th)])
        createCheckpointAndCloseHOL acid2
        mapM_ extendRectypeNet =<< liftM mapToAscList getIndDefs
-       sequence_ [ convUNWIND_pth1, convUNWIND_pth2
-                 , convUNWIND_pth3, convUNWIND_pth4, convUNWIND_pth5 ]
        mapM_ extendBasicConvs 
                 [ ("convMATCH_SEQPATTERN", ("_MATCH x (_SEQPATTERN r s)", 
                    ("return convMATCH_SEQPATTERN_TRIV"

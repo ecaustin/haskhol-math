@@ -86,7 +86,8 @@ makeAcidic ''InjectivityStore ['getInjectivityStore, 'addInjectivityStore]
 
 rehashRectypeNet :: forall cls thry. BoolCtxt thry => HOL cls thry ()
 rehashRectypeNet =
-    do acid1 <- openLocalStateHOL (DistinctnessStore [])
+    do putStrLnHOL "Rehashing Rectype net..."
+       acid1 <- openLocalStateHOL (DistinctnessStore [])
        ths1 <- liftM (map snd) $ queryHOL acid1 GetDistinctnessStore
        closeAcidStateHOL acid1
        acid2 <- openLocalStateHOL (InjectivityStore [])
@@ -193,32 +194,39 @@ convMATCH_SEQPATTERN =
                                , thmAND_CLAUSES
                                ] `_THEN`
      convGEN_REWRITE convDEPTH [thmEXISTS_SIMP]))
+-- need to safely "uninstall" some conversions in case proofs are rebuilt
+  where convUNWIND_pth1 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth1 = cacheProof "convUNWIND_pth1" ctxtIndTypesB $
+          do rewrites <- basicRewrites
+             thl <- sequence [def_MATCH, def_SEQPATTERN, def_FUNCTION]
+             cnvs <- liftM (mapFilter (\ (x, y) -> if x `elem` bad then Nothing
+                                                   else Just y)) basicConvs
+             prove [str| _MATCH x (_SEQPATTERN r s) =
+                         (if ?y. r x y then _MATCH x r else _MATCH x s) /\
+                         _FUNCTION (_SEQPATTERN r s) x =
+                         (if ?y. r x y then _FUNCTION r x else _FUNCTION s x) |]
+               (tacLESS_GEN_REWRITE (rewrites ++ thl) cnvs `_THEN` tacMESON_NIL)
+          where bad = [ "convMATCH_SEQPATTERN", "convFUN_SEQPATTERN"
+                      , "convMATCH_ONEPATTERN", "convFUN_ONEPATTERN"
+                      ]
 
-convUNWIND_pth1 :: IndTypesBCtxt thry => HOL cls thry HOLThm
-convUNWIND_pth1 = cacheProof "convUNWIND_pth1" ctxtIndTypesB $
-    prove [str| _MATCH x (_SEQPATTERN r s) =
-                 (if ?y. r x y then _MATCH x r else _MATCH x s) /\
-                _FUNCTION (_SEQPATTERN r s) x =
-                 (if ?y. r x y then _FUNCTION r x else _FUNCTION s x) |] $
-      tacREWRITE [def_MATCH, def_SEQPATTERN, def_FUNCTION] `_THEN`
-      tacMESON_NIL
-
-convUNWIND_pth2 :: IndTypesBCtxt thry => HOL cls thry HOLThm
-convUNWIND_pth2 = cacheProof "convUNWIND_pth2" ctxtIndTypesB $
-    prove [str|((?y. _UNGUARDED_PATTERN (GEQ s t) (GEQ u y)) <=> s = t) /\
-               ((?y. _GUARDED_PATTERN (GEQ s t) p (GEQ u y)) <=> s = t /\ p)|] $
-      tacREWRITE [ def_UNGUARDED_PATTERN
-                 , def_GUARDED_PATTERN, defGEQ ] `_THEN`
-      tacMESON_NIL
+        convUNWIND_pth2 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth2 = cacheProof "convUNWIND_pth2" ctxtIndTypesB $
+            prove [str| ((?y. _UNGUARDED_PATTERN (GEQ s t) (GEQ u y)) <=> 
+                         s = t) /\
+                        ((?y. _GUARDED_PATTERN (GEQ s t) p (GEQ u y)) <=> 
+                         s = t /\ p) |] $
+              tacREWRITE [ def_UNGUARDED_PATTERN
+                         , def_GUARDED_PATTERN, defGEQ ] `_THEN`
+              tacMESON_NIL
 
 convMATCH_ONEPATTERN_TRIV :: IndTypesBCtxt thry => Conversion cls thry
 convMATCH_ONEPATTERN_TRIV =
     convMATCH_ONEPATTERN `_THEN` convGEN_REWRITE id [convUNWIND_pth5]
-
-convUNWIND_pth5 :: IndTypesBCtxt thry => HOL cls thry HOLThm
-convUNWIND_pth5 = cacheProof "convUNWIND_pth5" ctxtIndTypesB .
-    prove "(if ?!z. z = k then @z. z = k else @x. F) = k" $
-      tacMESON_NIL
+  where convUNWIND_pth5 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth5 = cacheProof "convUNWIND_pth5" ctxtIndTypesB .
+            prove "(if ?!z. z = k then @z. z = k else @x. F) = k" $
+              tacMESON_NIL
 
 convMATCH_ONEPATTERN :: IndTypesBCtxt thry => Conversion cls thry
 convMATCH_ONEPATTERN = Conv $ \ tm ->
@@ -240,21 +248,27 @@ convMATCH_ONEPATTERN = Conv $ \ tm ->
                  (convRATOR 
                   (convCOMB2 (convRAND (convBINDER conv)) 
                    (convBINDER conv)))) th1
+-- need to safely "uninstall" some conversions in case proofs are rebuilt
+  where convUNWIND_pth3 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypesB $ 
+            do rewrites <- basicRewrites
+               thl <- sequence [def_MATCH, def_FUNCTION]
+               cnvs <- liftM (mapFilter (\ (x, y) -> if x `elem` bad 
+                                                     then Nothing
+                                                     else Just y)) basicConvs
+               prove [str| (_MATCH x (\y z. P y z) = 
+                             if ?!z. P x z then @z. P x z else @x. F) /\ 
+                           (_FUNCTION (\y z. P y z) x = 
+                             if ?!z. P x z then @z. P x z else @x. F) |]
+                 (tacLESS_GEN_REWRITE (rewrites ++ thl) cnvs)
+            where bad = [ "convMATCH_ONEPATTERN", "convFUN_ONEPATTERN" ]
 
-convUNWIND_pth3 :: IndTypesBCtxt thry => HOL cls thry HOLThm
-convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypesB $ 
-    prove [str| (_MATCH x (\y z. P y z) = 
-                  if ?!z. P x z then @z. P x z else @x. F) /\ 
-                (_FUNCTION (\y z. P y z) x = 
-                  if ?!z. P x z then @z. P x z else @x. F) |] $
-      tacREWRITE [def_MATCH, def_FUNCTION]
-
-convUNWIND_pth4 :: IndTypesBCtxt thry => HOL cls thry HOLThm
-convUNWIND_pth4 = cacheProof "convUNWIND_pth4" ctxtIndTypesB $
-    prove [str| (_UNGUARDED_PATTERN (GEQ s t) (GEQ u y) <=> 
-                  y = u /\ s = t) /\ 
-                (_GUARDED_PATTERN (GEQ s t) p (GEQ u y) <=> 
-                  y = u /\ s = t /\ p) |] $
-      tacREWRITE [ def_UNGUARDED_PATTERN
-                 , def_GUARDED_PATTERN, defGEQ ] `_THEN`
-      tacMESON_NIL
+        convUNWIND_pth4 :: IndTypesBCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth4 = cacheProof "convUNWIND_pth4" ctxtIndTypesB $
+            prove [str| (_UNGUARDED_PATTERN (GEQ s t) (GEQ u y) <=> 
+                         y = u /\ s = t) /\ 
+                        (_GUARDED_PATTERN (GEQ s t) p (GEQ u y) <=> 
+                         y = u /\ s = t /\ p) |] $
+              tacREWRITE [ def_UNGUARDED_PATTERN, def_GUARDED_PATTERN
+                         , defGEQ ] `_THEN`
+              tacMESON_NIL

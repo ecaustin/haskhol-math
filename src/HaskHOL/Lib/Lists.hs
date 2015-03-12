@@ -36,6 +36,8 @@ module HaskHOL.Lib.Lists
     , recursionCHAR
     , thmMONO_ALL
     , thmMONO_ALL2
+    , thmAPPEND_NIL
+    , thmAPPEND_ASSOC
     , thmREVERSE_APPEND
     , thmREVERSE_APPEND2
     , mkChar
@@ -70,7 +72,7 @@ thmREVERSE_APPEND = cacheProof "thmREVERSE_APPEND" ctxtLists .
 
 thmREVERSE_APPEND2 :: ListsCtxt thry => HOL cls thry HOLThm
 thmREVERSE_APPEND2 = cacheProof "thmREVERSE_APPEND2" ctxtLists .
-    prove [str| !! 'A. ! (xs:A' list) (ys:A' list). 
+    prove [str| !! 'A. ! (xs:'A list) (ys:'A list). 
                 REVERSE (APPEND xs ys) = APPEND (REVERSE ys) (REVERSE xs) |] $
       tacGEN_TY `_THEN` tacLIST_INDUCT `_THEN` 
       tacASM_REWRITE [defAPPEND, defREVERSE, thmAPPEND_NIL, thmAPPEND_ASSOC]
