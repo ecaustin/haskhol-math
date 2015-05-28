@@ -10,13 +10,20 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.IndTypes.B
 import HaskHOL.Lib.IndTypes.Pre
 
-import System.IO.Unsafe (unsafePerformIO)
-import Data.IORef
+--EvNote: need list for distintness and injectivity stores because of dupe keys
+data RectypeNet = RectypeNet !(Net GConversion) deriving Typeable
 
---evnote: need list for distintness and injectivity stores because of dupe keys
-{-# NOINLINE rectypeNet #-}
-rectypeNet :: HOLRef (Maybe (Net (GConversion cls thry)))
-rectypeNet = unsafePerformIO $ newIORef Nothing
+deriveSafeCopy 0 'base ''RectypeNet
+
+getNet :: Query RectypeNet (Net GConversion)
+getNet =
+    do (RectypeNet net) <- ask
+       return net
+
+putNet :: Net GConversion -> Update RectypeNet ()
+putNet net = put (RectypeNet net)
+
+makeAcidic ''RectypeNet ['getNet, 'putNet]
 
 data InductiveTypes = 
     InductiveTypes !(Map Text (HOLThm, HOLThm)) deriving Typeable
@@ -84,18 +91,19 @@ addInjectivityStore tyname ths =
 makeAcidic ''InjectivityStore ['getInjectivityStore, 'addInjectivityStore]
 
 
-rehashRectypeNet :: forall cls thry. BoolCtxt thry => HOL cls thry ()
+rehashRectypeNet :: BoolCtxt thry => HOL Theory thry ()
 rehashRectypeNet =
-    do putStrLnHOL "Rehashing Rectype net..."
-       acid1 <- openLocalStateHOL (DistinctnessStore [])
+    do acid1 <- openLocalStateHOL (DistinctnessStore [])
        ths1 <- liftM (map snd) $ queryHOL acid1 GetDistinctnessStore
        closeAcidStateHOL acid1
        acid2 <- openLocalStateHOL (InjectivityStore [])
        ths2 <- liftM (map snd) $ queryHOL acid2 GetInjectivityStore
        closeAcidStateHOL acid2
        canonThl <- foldrM (mkRewrites False) [] $ ths1 ++ ths2
-       net' <- liftO $ foldrM (netOfThm True) (netEmpty :: Net (GConversion cls thry)) canonThl
-       writeHOLRef rectypeNet (Just net')
+       net' <- liftO $ foldrM (netOfThm True) netEmpty canonThl
+       acid3 <- openLocalStateHOL (RectypeNet netEmpty)
+       updateHOL acid3 (PutNet net')
+       createCheckpointAndCloseHOL acid3
 
 extendRectypeNet :: IndTypesBCtxt thry => (Text, (Int, HOLThm, HOLThm)) 
                  -> HOL Theory thry ()
@@ -110,13 +118,12 @@ extendRectypeNet (tyname, (_, _, rth)) =
        createCheckpointAndCloseHOL acid2
        rehashRectypeNet
 
-basicRectypeNet :: BoolCtxt thry => HOL cls thry (Net (GConversion cls thry))
+basicRectypeNet :: BoolCtxt thry => HOL cls thry (Net GConversion)
 basicRectypeNet =
-    do net <- readHOLRef rectypeNet
-       case net of
-         Just net' -> return net'
-         Nothing -> do rehashRectypeNet
-                       basicRectypeNet
+    do acid <- openLocalStateHOL (RectypeNet netEmpty)
+       net <- queryHOL acid GetNet
+       closeAcidStateHOL acid
+       return net
              
 
 indDefOption' :: IndTypesBCtxt thry => HOL Theory thry (HOLThm, HOLThm)

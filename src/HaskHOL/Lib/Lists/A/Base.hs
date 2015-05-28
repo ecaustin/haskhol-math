@@ -110,6 +110,12 @@ defZIP' = newRecursiveDefinition "ZIP" recursionLIST
     [str| (ZIP [] l2 = []) /\
           (ZIP (CONS h1 t1) l2 = CONS (h1,HD l2) (ZIP t1 (TL l2))) |]
 
+{-
+defCONCAT_MAP' :: HOL Theory thry HOLThm
+defCONCAT_MAP' = newDefinition "CONCAT_MAP"
+    [str| CONCAT_MAP f xs = ITLIST (APPEND o f) xs [] |]
+-}
+
 tyDefCHAR' :: IndTypesCtxt thry
            => HOL Theory thry (HOLThm, HOLThm)
 tyDefCHAR' = defineType "char = ASCII bool bool bool bool bool bool bool bool"

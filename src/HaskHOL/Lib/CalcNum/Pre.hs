@@ -19,7 +19,6 @@ tmP' = [wF| p:num |]
 tmAdd' = [wF| (+) |]
 tmSuc' = [wF| SUC |]
 
-
 mkClauses :: WFCtxt thry => Bool -> HOLTerm -> HOL cls thry (HOLThm, Int)
 mkClauses sucflag t =
     do tmSuc <- serve tmSuc'
@@ -42,9 +41,11 @@ mkClauses sucflag t =
                                                  , thmARITH_0
                                                  , thmBITS_INJ]) tmc
                     return (th, if tmSuc `freeIn` tm1 then 3 else 2)
-  where patadj :: HOLTerm -> HOL cls thry HOLTerm
+  where patadj :: WFCtxt thry => HOLTerm -> HOL cls thry HOLTerm
         patadj tm = 
-            do tms <- mapM (pairMapM toHTm) [("SUC m", "SUC (m + _0)"), ("SUC n", "SUC (_0 + n)")]
+            do tms <- mapM (pairMapM toHTm) 
+                        [ ([wF| SUC m |], [wF| SUC (m + _0) |])
+                        , ([wF| SUC n |], [wF| SUC (_0 + n) |])]
                liftO $ subst tms tm
 
 starts :: WFCtxt thry => HOL cls thry [HOLTerm]

@@ -483,7 +483,7 @@ thmARITH_EVEN = cacheProof "thmARITH_EVEN" ctxtArithA $
     prove [str| (!n. EVEN(NUMERAL n) <=> EVEN n) /\
                 (EVEN _0 <=> T) /\
                 (!n. EVEN(BIT0 n) <=> T) /\
-               (!n. EVEN(BIT1 n) <=> F) |] $
+                (!n. EVEN(BIT1 n) <=> F) |] $
       tacREWRITE [ defNUMERAL, thmBIT1, thmBIT0, ruleDENUMERAL defEVEN
                  , thmEVEN_ADD ]
 

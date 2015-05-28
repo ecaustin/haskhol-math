@@ -22,7 +22,7 @@ ctxtPair = extendTheory ctxtPairC $(thisModule') $
        recth <- recursionPAIR
        addIndDefs [("prod", (1, indth, recth))]
        extendBasicConvs  ("convGEN_BETA", ([str| GABS (\ a. b) c |]
-                         , ("return convGEN_BETA", ["HaskHOL.Lib.Pair"])))
+                         , ("convGEN_BETA", "HaskHOL.Lib.Pair")))
 
 templateProvers 'ctxtPair
 

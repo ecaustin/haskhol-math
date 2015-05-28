@@ -87,6 +87,7 @@ library
       HaskHOL.Lib.Lists.A.Base
       HaskHOL.Lib.Lists.Base
              
-    ghc-prof-options: -prof -fprof-auto
-    ghc-options: -Wall -fcontext-stack=200
+    ghc-prof-options: -O2 -funbox-strict-fields -fcontext-stack=200 -Wall 
+                      -fprof-cafs -fprof-auto -rtsopts
+    ghc-options: -O2 -funbox-strict-fields -fcontext-stack=200 -Wall
  

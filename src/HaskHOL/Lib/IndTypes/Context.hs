@@ -43,17 +43,13 @@ ctxtIndTypes = extendTheory ctxtIndTypesB $(thisModule') $
        mapM_ extendRectypeNet =<< liftM mapToAscList getIndDefs
        mapM_ extendBasicConvs 
                 [ ("convMATCH_SEQPATTERN", ("_MATCH x (_SEQPATTERN r s)", 
-                   ("return convMATCH_SEQPATTERN_TRIV"
-                   , ["HaskHOL.Lib.IndTypes"])))
+                   ("convMATCH_SEQPATTERN_TRIV", "HaskHOL.Lib.IndTypes")))
                 , ("convFUN_SEQPATTERN", ("_FUNCTION (_SEQPATTERN r s) x", 
-                   ("return convMATCH_SEQPATTERN_TRIV"
-                   , ["HaskHOL.Lib.IndTypes"])))
+                   ("convMATCH_SEQPATTERN_TRIV", "HaskHOL.Lib.IndTypes")))
                 , ("convMATCH_ONEPATTERN", ([str| _MATCH x (\y z. P y z) |], 
-                   ("return convMATCH_ONEPATTERN_TRIV"
-                   , ["HaskHOL.Lib.IndTypes"])))
+                   ("convMATCH_ONEPATTERN_TRIV", "HaskHOL.Lib.IndTypes")))
                 , ("convFUN_ONEPATTERN", ([str|_FUNCTION (\y z. P y z) x|], 
-                   ("return convMATCH_ONEPATTERN_TRIV"
-                   , ["HaskHOL.Lib.IndTypes"])))
+                   ("convMATCH_ONEPATTERN_TRIV", "HaskHOL.Lib.IndTypes")))
                 ]
 
 templateProvers 'ctxtIndTypes

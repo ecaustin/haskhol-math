@@ -23,6 +23,8 @@ module HaskHOL.Lib.CalcNum
     , adcClauses
     , adcFlags
     , topsplit
+    , starts
+    , mkClauses
     ) where
 
 import HaskHOL.Core
