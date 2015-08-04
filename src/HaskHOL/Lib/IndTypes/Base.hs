@@ -201,21 +201,14 @@ convMATCH_SEQPATTERN =
                                , thmAND_CLAUSES
                                ] `_THEN`
      convGEN_REWRITE convDEPTH [thmEXISTS_SIMP]))
--- need to safely "uninstall" some conversions in case proofs are rebuilt
   where convUNWIND_pth1 :: IndTypesBCtxt thry => HOL cls thry HOLThm
-        convUNWIND_pth1 = cacheProof "convUNWIND_pth1" ctxtIndTypesB $
-          do rewrites <- basicRewrites
-             thl <- sequence [def_MATCH, def_SEQPATTERN, def_FUNCTION]
-             cnvs <- liftM (mapFilter (\ (x, y) -> if x `elem` bad then Nothing
-                                                   else Just y)) basicConvs
-             prove [str| _MATCH x (_SEQPATTERN r s) =
-                         (if ?y. r x y then _MATCH x r else _MATCH x s) /\
-                         _FUNCTION (_SEQPATTERN r s) x =
-                         (if ?y. r x y then _FUNCTION r x else _FUNCTION s x) |]
-               (tacLESS_GEN_REWRITE (rewrites ++ thl) cnvs `_THEN` tacMESON_NIL)
-          where bad = [ "convMATCH_SEQPATTERN", "convFUN_SEQPATTERN"
-                      , "convMATCH_ONEPATTERN", "convFUN_ONEPATTERN"
-                      ]
+        convUNWIND_pth1 = cacheProof "convUNWIND_pth1" ctxtIndTypesB .
+          prove [str| _MATCH x (_SEQPATTERN r s) =
+                      (if ?y. r x y then _MATCH x r else _MATCH x s) /\
+                      _FUNCTION (_SEQPATTERN r s) x =
+                      (if ?y. r x y then _FUNCTION r x else _FUNCTION s x) |] $
+            tacREWRITE [def_MATCH, def_SEQPATTERN, def_FUNCTION] `_THEN` 
+            tacMESON_NIL
 
         convUNWIND_pth2 :: IndTypesBCtxt thry => HOL cls thry HOLThm
         convUNWIND_pth2 = cacheProof "convUNWIND_pth2" ctxtIndTypesB $
@@ -255,20 +248,13 @@ convMATCH_ONEPATTERN = Conv $ \ tm ->
                  (convRATOR 
                   (convCOMB2 (convRAND (convBINDER conv)) 
                    (convBINDER conv)))) th1
--- need to safely "uninstall" some conversions in case proofs are rebuilt
   where convUNWIND_pth3 :: IndTypesBCtxt thry => HOL cls thry HOLThm
-        convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypesB $ 
-            do rewrites <- basicRewrites
-               thl <- sequence [def_MATCH, def_FUNCTION]
-               cnvs <- liftM (mapFilter (\ (x, y) -> if x `elem` bad 
-                                                     then Nothing
-                                                     else Just y)) basicConvs
-               prove [str| (_MATCH x (\y z. P y z) = 
-                             if ?!z. P x z then @z. P x z else @x. F) /\ 
-                           (_FUNCTION (\y z. P y z) x = 
-                             if ?!z. P x z then @z. P x z else @x. F) |]
-                 (tacLESS_GEN_REWRITE (rewrites ++ thl) cnvs)
-            where bad = [ "convMATCH_ONEPATTERN", "convFUN_ONEPATTERN" ]
+        convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypesB .
+            prove [str| (_MATCH x (\y z. P y z) = 
+                        if ?!z. P x z then @z. P x z else @x. F) /\ 
+                        (_FUNCTION (\y z. P y z) x = 
+                        if ?!z. P x z then @z. P x z else @x. F) |] $
+              tacREWRITE [def_MATCH, def_FUNCTION] 
 
         convUNWIND_pth4 :: IndTypesBCtxt thry => HOL cls thry HOLThm
         convUNWIND_pth4 = cacheProof "convUNWIND_pth4" ctxtIndTypesB $

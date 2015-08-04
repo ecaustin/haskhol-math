@@ -29,10 +29,6 @@ library
     exposed-modules:
       HaskHOL.Math
       HaskHOL.Lib.Pair
-      HaskHOL.Lib.Pair.A.Context
-      HaskHOL.Lib.Pair.B.Context
-      HaskHOL.Lib.Pair.C.Context
-      HaskHOL.Lib.Pair.Context
       HaskHOL.Lib.Nums
       HaskHOL.Lib.Nums.A.Context
       HaskHOL.Lib.Nums.B.Context
@@ -57,13 +53,9 @@ library
     buildable: True
     hs-source-dirs: src
     other-modules:
-      HaskHOL.Lib.Pair.A
-      HaskHOL.Lib.Pair.A.Base
-      HaskHOL.Lib.Pair.B
-      HaskHOL.Lib.Pair.B.Base
-      HaskHOL.Lib.Pair.C
-      HaskHOL.Lib.Pair.C.Base
       HaskHOL.Lib.Pair.Base
+      HaskHOL.Lib.Pair.Context
+      HaskHOL.Lib.Pair.PQ
       HaskHOL.Lib.Nums.A
       HaskHOL.Lib.Nums.A.Base
       HaskHOL.Lib.Nums.B

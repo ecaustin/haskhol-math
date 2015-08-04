@@ -85,6 +85,8 @@ putAdcFlags v =
 makeAcidic ''ADCFlags ['getAdcFlags, 'putAdcFlags]
 
 
+liftProtectedM "addClauses" $ liftM fast (adPairs False)
+       
 addClauses :: WFCtxt thry => HOL cls thry (Vector HOLThm)
 addClauses =
     do acid <- openLocalStateHOLBase (ADDClauses V.empty)

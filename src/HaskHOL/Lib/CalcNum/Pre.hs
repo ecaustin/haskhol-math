@@ -85,6 +85,9 @@ starts =
                        then mkComb tmBIT1 t
                        else mkComb tmBIT0 t
 
+adPairs :: WFCtxt thry => Bool -> HOL cls thry (Vector HOLThm, Vector Int)
+adPairs fl = liftM unzip $ mapM (mkClauses fl) =<< starts
+
 convNUM_SHIFT_pths1' :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_SHIFT_pths1' = cacheProof "convNUM_SHIFT_pths1'" ctxtWF .
     prove [str| (n = a + p * b <=>
