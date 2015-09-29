@@ -20,8 +20,32 @@ import HaskHOL.Lib.IndTypes.Base
 templateTypes ctxtIndTypesB "IndTypes"
 
 ctxtIndTypes :: TheoryPath IndTypesType
-ctxtIndTypes = extendTheory ctxtIndTypesB $(thisModule') $
-    do (oindth, orecth) <- indDefOption'
+ctxtIndTypes = extendTheory ctxtWF $(thisModule') $
+-- Stage 1
+    do sequence_ [ specNUMPAIR_DEST'
+                 , specNUMSUM_DEST'
+                 , defINJN'
+                 , defINJA'
+                 , defINJF'
+                 , defINJP'
+                 , defZCONSTR'
+                 , defZBOT'
+                 ]
+       (rep, _, _) <- indDefZRECSPACE'
+       _ <- tyDefRecspace' rep
+       sequence_ [ defBOTTOM'
+                 , defCONSTR'
+                 , defFCONS'
+                 , defFNIL'
+                 ]
+-- Stage 2
+       (indth, recth) <- indDefSum'
+       sequence_ [ defOUTL' recth
+                 , defOUTR' recth
+                 ]
+       addIndDefs [("sum", (2, indth, recth))]
+-- Stage3
+       (oindth, orecth) <- indDefOption'
        (lindth, lrecth) <- indDefList'
        addIndDefs [ ("option", (2, oindth, orecth))
                   , ("list", (2, lindth, lrecth))

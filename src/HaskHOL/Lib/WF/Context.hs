@@ -1,34 +1,42 @@
-{-# LANGUAGE DataKinds, EmptyDataDecls, FlexibleInstances, TemplateHaskell, 
-             TypeFamilies, TypeSynonymInstances, UndecidableInstances #-}
+{-# LANGUAGE DataKinds, EmptyDataDecls, TypeOperators, UndecidableInstances #-}
 module HaskHOL.Lib.WF.Context
     ( WFType
     , WFThry
     , WFCtxt
     , ctxtWF
-    , wF
     ) where
 
 import HaskHOL.Core
 
-import HaskHOL.Lib.Arith.Context
-import HaskHOL.Lib.WF.Base
+import HaskHOL.Lib.Pair
 
-templateTypes ctxtArith "WF"
+import HaskHOL.Lib.Arith.Context
+
+data WFThry
+type instance WFThry == WFThry = 'True
+
+instance CtxtName WFThry where
+    ctxtName _ = "WFCtxt"
+
+type instance PolyTheory WFType b = WFCtxt b
+
+type family WFCtxt a :: Constraint where
+    WFCtxt a = (Typeable a, ArithCtxt a, WFContext a ~ 'True)
+
+type WFType = ExtThry WFThry ArithType
+
+type family WFContext a :: Bool where
+    WFContext BaseThry = 'False
+    WFContext (ExtThry a b) = WFContext b || (a == WFThry)
 
 ctxtWF :: TheoryPath WFType
 ctxtWF = extendTheory ctxtArith $(thisModule') $
     do parseAsInfix ("<<", (12, "right"))
        parseAsInfix ("<<<", (12, "right"))
-       sequence_ [ defWF'
-                 , defMEASURE'
-                 , defNUMPAIR'
-                 , defNUMSUM'
-                 ]
-
-templateProvers 'ctxtWF
-
--- have to manually write this, for now
-type family WFCtxt a where
-    WFCtxt a = (ArithCtxt a, WFContext a ~ True)
-
-type instance PolyTheory WFType b = WFCtxt b
+       mapM_ newDefinition
+         [ ("WF", [str| WF(<<) <=> !P:A->bool. (?x. P(x)) ==> 
+                                   (?x. P(x) /\ !y. y << x ==> ~P(y)) |])
+         , ("MEASURE", [str| MEASURE m = \x y. m(x) < m(y) |])
+         , ("NUMPAIR", [str| NUMPAIR x y = (2 EXP x) * (2 * y + 1) |])
+         , ("NUMSUM", "NUMSUM b x = if b then SUC(2 * x) else 2 * x")
+         ]

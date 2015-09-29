@@ -30,15 +30,9 @@ library
       HaskHOL.Math
       HaskHOL.Lib.Pair
       HaskHOL.Lib.Nums
-      HaskHOL.Lib.Nums.A.Context
-      HaskHOL.Lib.Nums.B.Context
-      HaskHOL.Lib.Nums.Context
       HaskHOL.Lib.Recursion
       HaskHOL.Lib.Arith
-      HaskHOL.Lib.Arith.A.Context
-      HaskHOL.Lib.Arith.Context
       HaskHOL.Lib.WF
-      HaskHOL.Lib.WF.Context
       HaskHOL.Lib.CalcNum
       HaskHOL.Lib.Normalizer
       HaskHOL.Lib.Grobner
@@ -56,15 +50,14 @@ library
       HaskHOL.Lib.Pair.Base
       HaskHOL.Lib.Pair.Context
       HaskHOL.Lib.Pair.PQ
-      HaskHOL.Lib.Nums.A
-      HaskHOL.Lib.Nums.A.Base
-      HaskHOL.Lib.Nums.B
-      HaskHOL.Lib.Nums.B.Base
-      HaskHOL.Lib.Nums.Base
-      HaskHOL.Lib.Arith.A
-      HaskHOL.Lib.Arith.A.Base
+      HaskHOL.Lib.Pair.Base
+      HaskHOL.Lib.Nums.Context
+      HaskHOL.Lib.Nums.PQ
       HaskHOL.Lib.Arith.Base
-      HaskHOL.Lib.WF.Base
+      HaskHOL.Lib.Arith.Context
+      HaskHOL.Lib.Arith.PQ
+      HaskHOL.Lib.WF.Context
+      HaskHOL.Lib.WF.PQ
       HaskHOL.Lib.CalcNum.Pre
       HaskHOL.Lib.CalcNum.Pre2
       HaskHOL.Lib.IndTypes.A

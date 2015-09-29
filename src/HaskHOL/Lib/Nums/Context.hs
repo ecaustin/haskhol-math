@@ -1,32 +1,69 @@
-{-# LANGUAGE DataKinds, EmptyDataDecls, FlexibleInstances, TemplateHaskell, 
-             TypeFamilies, TypeSynonymInstances, UndecidableInstances #-}
+{-# LANGUAGE DataKinds, EmptyDataDecls, TypeOperators, UndecidableInstances #-}
 module HaskHOL.Lib.Nums.Context
     ( NumsType
     , NumsThry
     , NumsCtxt
     , ctxtNums
-    , nums
     ) where
 
 import HaskHOL.Core
-import HaskHOL.Deductive
+import HaskHOL.Deductive hiding (newDefinition)
+import HaskHOL.Lib.Pair
 
-import HaskHOL.Lib.Nums.B.Context
+import HaskHOL.Lib.Pair.Context
 import HaskHOL.Lib.Nums.Base
 
-templateTypes ctxtNumsB "Nums"
+data NumsThry
+type instance NumsThry == NumsThry = 'True
 
-ctxtNums :: TheoryPath NumsType
-ctxtNums = extendTheory ctxtNumsB $(thisModule') $
-    do indth <- inductionNUM
-       recth <- recursionStdNUM
-       addIndDefs [("num", (2, indth, recth))]
-       sequence_ [defBIT0'', defBIT1']
-
-templateProvers 'ctxtNums
-
--- have to manually write this, for now
-type family NumsCtxt a where
-    NumsCtxt a = (NumsBCtxt a, NumsContext a ~ True)
+instance CtxtName NumsThry where
+    ctxtName _ = "NumsCtxt"
 
 type instance PolyTheory NumsType b = NumsCtxt b
+
+type family NumsCtxt a :: Constraint where
+    NumsCtxt a = (Typeable a, PairCtxt a, NumsContext a ~ 'True)
+
+type NumsType = ExtThry NumsThry PairType
+
+type family NumsContext a :: Bool where
+    NumsContext BaseThry = 'False
+    NumsContext (ExtThry a b) = NumsContext b || (a == NumsThry)
+
+ctxtNums :: TheoryPath NumsType
+ctxtNums = extendTheory ctxtPair $(thisModule') $
+-- Stage 1
+    do newType "ind" 0
+       mapM_ newDefinition
+         [ ("ONE_ONE", [str| ONE_ONE(f:A->B) = !x1 x2. (f x1 = f x2) ==> 
+                                                       (x1 = x2) |])
+         , ("ONTO", [str| ONTO(f:A->B) = !y. ?x. y = f x |])
+         ]
+       void $ newAxiom 
+         ("axINFINITY", [str| ?f:ind->ind. ONE_ONE f /\ ~(ONTO f) |])
+-- Stage 2
+       mapM_ newDefinition
+         [ ("IND_SUC", [str| IND_SUC = @f:ind->ind. ?z. 
+                                       (!x1 x2. (f x1 = f x2) = (x1 = x2)) /\ 
+                                       (!x. ~(f x = z)) |])
+         , ("IND_0", [str| IND_0 = @z:ind. 
+                                (!x1 x2. IND_SUC x1 = IND_SUC x2 <=> x1 = x2) /\
+                                (!x. ~(IND_SUC x = z)) |]) 
+         ]
+       (rep, _, _) <- newInductiveDefinition "NUM_REP"
+                        [str| NUM_REP IND_0 /\ 
+                              (!i. NUM_REP i ==> NUM_REP (IND_SUC i)) |]
+       void $ newBasicTypeDefinition "num" "mk_num" "dest_num" =<< 
+                ruleCONJUNCT1 rep
+       mapM_ newDefinition
+         [ ("_0", [str| _0 = mk_num IND_0 |])
+         , ("SUC", [str| SUC n = mk_num (IND_SUC (dest_num n)) |])
+         , ("NUMERAL", [str| NUMERAL (n:num) = n |])
+         ]
+-- Stage 3
+       addIndDef ("num", (2, inductionNUM, recursionStdNUM))
+       mapM_ newDefinition
+         [ ("BIT0", [str| BIT0 = @fn. fn 0 = 0 /\ 
+                                      (!n. fn (SUC n) = SUC (SUC(fn n))) |])
+         , ("BIT1", [str| BIT1 n = SUC (BIT0 n) |])
+         ]

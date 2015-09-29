@@ -40,14 +40,14 @@ import HaskHOL.Lib.CalcNum.Pre2
 import qualified Data.Vector as V
 
 tmA', tmB', tmC', tmD', tmE', tmH', tmL', tmMul' :: WFCtxt thry => PTerm thry
-tmA' = [wF| a:num |]
-tmB' = [wF| b:num |]
-tmC' = [wF| c:num |]
-tmD' = [wF| d:num |]
-tmE' = [wF| e:num |]
-tmH' = [wF| h:num |]
-tmL' = [wF| l:num |]
-tmMul' = [wF| (*) |]
+tmA' = [wf| a:num |]
+tmB' = [wf| b:num |]
+tmC' = [wf| c:num |]
+tmD' = [wf| d:num |]
+tmE' = [wf| e:num |]
+tmH' = [wf| h:num |]
+tmL' = [wf| l:num |]
+tmMul' = [wf| (*) |]
 
 -- numeral conversions
 convNUM_EVEN :: WFCtxt thry => Conversion cls thry
@@ -1005,7 +1005,7 @@ ruleNUM_SQUARE tm =
                 case mtm of
                   (BIT1 (BIT1 ntm)) ->
                       do tmBIT0 <- serve tmBIT0'
-                         tmOne <- serve [wF| BIT1 _0 |]
+                         tmOne <- serve [wf| BIT1 _0 |]
                          th1 <- ruleNUM_ADD ntm tmOne
                          let mtm' = fromJust . rand $ concl th1
                          th2 <- ruleNUM_SQUARE mtm'

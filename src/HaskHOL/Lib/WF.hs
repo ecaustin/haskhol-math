@@ -10,7 +10,7 @@
 module HaskHOL.Lib.WF
     ( WFCtxt
     , ctxtWF
-    , wF
+    , wf
     , defWF
     , defMEASURE
     , defNUMPAIR
@@ -32,6 +32,7 @@ import HaskHOL.Lib.Pair
 import HaskHOL.Lib.Arith
 
 import HaskHOL.Lib.WF.Context
+import HaskHOL.Lib.WF.PQ
 
 defWF :: WFCtxt thry => HOL cls thry HOLThm
 defWF = cacheProof "defWF" ctxtWF $ getDefinition "WF"
@@ -84,7 +85,7 @@ thmWF_MEASURE_GEN = cacheProof "thmWF_MEASURE_GEN" ctxtWF .
 
 wfNUM :: WFCtxt thry => HOL cls thry HOLThm
 wfNUM = cacheProof "wfNUM" ctxtWF . 
-    prove "WF(<)" $ tacREWRITE [thmWF_IND, wfNUM']
+    prove "WF(<)" $ tacREWRITE [thmWF_IND, wfNUM_PRIM]
 
 thmWF_LEX :: WFCtxt thry => HOL cls thry HOLThm
 thmWF_LEX = cacheProof "thmWF_LEX" ctxtWF .

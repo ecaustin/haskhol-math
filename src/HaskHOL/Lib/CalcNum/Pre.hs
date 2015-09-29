@@ -5,19 +5,18 @@ import HaskHOL.Deductive
 
 import HaskHOL.Lib.Nums
 import HaskHOL.Lib.Arith
-import HaskHOL.Lib.WF.Context
-
+import HaskHOL.Lib.WF
 
 -- Build up lookup table for numeral conversions.
 tmZero', tmBIT0', tmBIT1', tmM', tmN', tmP', tmAdd', tmSuc' :: WFCtxt thry => PTerm thry
-tmZero' = [wF| _0 |]
-tmBIT0' = [wF| BIT0 |]
-tmBIT1' = [wF| BIT1 |]
-tmM' = [wF| m:num |]
-tmN' = [wF| n:num |]
-tmP' = [wF| p:num |]
-tmAdd' = [wF| (+) |]
-tmSuc' = [wF| SUC |]
+tmZero' = [wf| _0 |]
+tmBIT0' = [wf| BIT0 |]
+tmBIT1' = [wf| BIT1 |]
+tmM' = [wf| m:num |]
+tmN' = [wf| n:num |]
+tmP' = [wf| p:num |]
+tmAdd' = [wf| (+) |]
+tmSuc' = [wf| SUC |]
 
 mkClauses :: WFCtxt thry => Bool -> HOLTerm -> HOL cls thry (HOLThm, Int)
 mkClauses sucflag t =
@@ -44,8 +43,8 @@ mkClauses sucflag t =
   where patadj :: WFCtxt thry => HOLTerm -> HOL cls thry HOLTerm
         patadj tm = 
             do tms <- mapM (pairMapM toHTm) 
-                        [ ([wF| SUC m |], [wF| SUC (m + _0) |])
-                        , ([wF| SUC n |], [wF| SUC (_0 + n) |])]
+                        [ ([wf| SUC m |], [wf| SUC (m + _0) |])
+                        , ([wf| SUC n |], [wf| SUC (_0 + n) |])]
                liftO $ subst tms tm
 
 starts :: WFCtxt thry => HOL cls thry [HOLTerm]
@@ -85,7 +84,7 @@ starts =
                        then mkComb tmBIT1 t
                        else mkComb tmBIT0 t
 
-adPairs :: WFCtxt thry => Bool -> HOL cls thry (Vector HOLThm, Vector Int)
+adPairs :: WFCtxt thry => Bool -> HOL cls thry ([HOLThm], [Int])
 adPairs fl = liftM unzip $ mapM (mkClauses fl) =<< starts
 
 convNUM_SHIFT_pths1' :: WFCtxt thry => HOL cls thry HOLThm

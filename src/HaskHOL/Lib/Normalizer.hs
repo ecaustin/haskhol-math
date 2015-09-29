@@ -682,11 +682,11 @@ convSEMIRING_NORMALIZERS sth rth ( isSemiringConstant, convSEMIRING_ADD
            , convPOLYNOMIAL_MUL, convPOLYNOMIAL_POW, convPOLYNOMIAL )
 
 tmTrue', tmP', tmQ', tmZeron', tmOnen' :: WFCtxt thry => PTerm thry
-tmTrue' = [wF| T |]
-tmP' = [wF| p:num |]
-tmQ' = [wF| q:num |]
-tmZeron' = [wF| 0 |]
-tmOnen' = [wF| 1 |]
+tmTrue' = [wf| T |]
+tmP' = [wf| p:num |]
+tmQ' = [wf| q:num |]
+tmZeron' = [wf| 0 |]
+tmOnen' = [wf| 1 |]
 
 convNUM_NORMALIZE_sth :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_NORMALIZE_sth = cacheProof "convNUM_NORMALIZE_sth" ctxtWF $

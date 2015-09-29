@@ -20,11 +20,11 @@ import HaskHOL.Deductive hiding (newSpecification)
 import HaskHOL.Lib.Nums
 
 data TheRecursiveDefinitions = 
-    TheRecursiveDefinitions !(Map String HOLThm) deriving Typeable
+    TheRecursiveDefinitions !(Map Text HOLThm) deriving Typeable
 
 deriveSafeCopy 0 'base ''TheRecursiveDefinitions
 
-insertDefinition :: String -> HOLThm -> Update TheRecursiveDefinitions ()
+insertDefinition :: Text -> HOLThm -> Update TheRecursiveDefinitions ()
 insertDefinition lbl thm =
     do TheRecursiveDefinitions defs <- get
        put (TheRecursiveDefinitions (mapInsert lbl thm defs))
@@ -34,7 +34,7 @@ getDefinitions =
     do TheRecursiveDefinitions defs <- ask
        return $! mapElems defs
 
-getADefinition :: String -> Query TheRecursiveDefinitions (Maybe HOLThm)
+getADefinition :: Text -> Query TheRecursiveDefinitions (Maybe HOLThm)
 getADefinition name =
     do (TheRecursiveDefinitions defs) <- ask
        return $! name `mapLookup` defs
@@ -153,9 +153,9 @@ proveRecursiveFunctionsExist ax tm =
 
 newRecursiveDefinition :: (NumsCtxt thry, 
                            HOLThmRep thm Theory thry,
-                           HOLTermRep tm Theory thry) => String -> thm -> tm 
+                           HOLTermRep tm Theory thry) => thm -> (Text, tm)
                        -> HOL Theory thry HOLThm
-newRecursiveDefinition lbl pax ptm =
+newRecursiveDefinition pax (lbl, ptm) =
     (do acid <- openLocalStateHOL (TheRecursiveDefinitions mapEmpty) 
         ths <- queryHOL acid GetDefinitions
         closeAcidStateHOL acid
@@ -189,11 +189,11 @@ newRecursiveDefinition lbl pax ptm =
                _ <- rulePART_MATCH return th' $ concl th
                return th'
             
-getRecursiveDefinition :: String -> HOL cls thry HOLThm
+getRecursiveDefinition :: Text -> HOL cls thry HOLThm
 getRecursiveDefinition lbl =
     do acid <- openLocalStateHOL (TheRecursiveDefinitions mapEmpty)
        qth <- queryHOL acid (GetADefinition lbl)
        closeAcidStateHOL acid
-       liftMaybe ("getRecursiveDefinition: definition for " ++ lbl ++ 
+       liftMaybe ("getRecursiveDefinition: definition for " ++ unpack lbl ++ 
                   " not found.") qth
 
