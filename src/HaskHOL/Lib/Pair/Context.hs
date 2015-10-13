@@ -59,8 +59,7 @@ ctxtPair = extendTheory ctxtDeductive $(thisModule') $
                   , ("SND", [str| SND (p:A#B) = @ y. ? x. p = (x, y) |])
                   ]
 -- stage3
-       ths@(thmfst:thmsnd:_) <- sequence [thmFST, thmSND, thmPAIR] 
-       extendBasicRewrites ths
+       extendBasicRewrites [thmFST, thmSND, thmPAIR]
        defs3 <- sequence [ def_one, defI, defO, defCOND, def_FALSITY_
                          , defTY_EXISTS, defTY_FORALL
                          , defEXISTS_UNIQUE, defEXISTS, defFORALL
@@ -76,8 +75,7 @@ ctxtPair = extendTheory ctxtDeductive $(thisModule') $
        acid <- openLocalStateHOL (Definitions mapEmpty)
        updateHOL acid (AddDefinitions ths')
        closeAcidStateHOL acid
-       let newDef = newDefinition (thmfst, thmsnd)
-       mapM_ newDef
+       mapM_ newDefinition
          [ ("CURRY", [str| CURRY(f:A#B->C) x y = f(x,y) |])
          , ("UNCURRY", [str| !f x y. UNCURRY(f:A->B->C)(x,y) = f x y |])
          , ("PASSOC", [str| !f x y z. PASSOC (f:(A#B)#C->D) (x,y,z) = 

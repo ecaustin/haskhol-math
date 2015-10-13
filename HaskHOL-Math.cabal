@@ -37,12 +37,7 @@ library
       HaskHOL.Lib.Normalizer
       HaskHOL.Lib.Grobner
       HaskHOL.Lib.IndTypes
-      HaskHOL.Lib.IndTypes.A.Context
-      HaskHOL.Lib.IndTypes.B.Context
-      HaskHOL.Lib.IndTypes.Context
-      HaskHOL.Lib.Lists
-      HaskHOL.Lib.Lists.A.Context
-      HaskHOL.Lib.Lists.Context
+      -- HaskHOL.Lib.Lists
     exposed: True
     buildable: True
     hs-source-dirs: src
@@ -51,6 +46,7 @@ library
       HaskHOL.Lib.Pair.Context
       HaskHOL.Lib.Pair.PQ
       HaskHOL.Lib.Pair.Base
+      HaskHOL.Lib.Nums.Base
       HaskHOL.Lib.Nums.Context
       HaskHOL.Lib.Nums.PQ
       HaskHOL.Lib.Arith.Base
@@ -60,17 +56,14 @@ library
       HaskHOL.Lib.WF.PQ
       HaskHOL.Lib.CalcNum.Pre
       HaskHOL.Lib.CalcNum.Pre2
-      HaskHOL.Lib.IndTypes.A
-      HaskHOL.Lib.IndTypes.A.Base
-      HaskHOL.Lib.IndTypes.A.Pre
-      HaskHOL.Lib.IndTypes.B
-      HaskHOL.Lib.IndTypes.B.Base
-      HaskHOL.Lib.IndTypes.B.Pre
       HaskHOL.Lib.IndTypes.Base
+      HaskHOL.Lib.IndTypes.Context
       HaskHOL.Lib.IndTypes.Pre
-      HaskHOL.Lib.Lists.A
-      HaskHOL.Lib.Lists.A.Base
-      HaskHOL.Lib.Lists.Base
+      HaskHOL.Lib.IndTypes.Pre2
+      HaskHOL.Lib.IndTypes.PQ
+      -- HaskHOL.Lib.Lists.Base
+      -- HaskHOL.Lib.Lists.Context
+      -- HaskHOL.Lib.Lists.PQ
              
     ghc-prof-options: -O2 -funbox-strict-fields -fcontext-stack=200 -Wall 
                       -fprof-cafs -fprof-auto -rtsopts

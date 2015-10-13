@@ -29,8 +29,7 @@ module HaskHOL.Math
     , module HaskHOL.Lib.Normalizer
     --, module HaskHOL.Lib.Grobner
     , module HaskHOL.Lib.IndTypes
-    , module HaskHOL.Lib.Lists
-    , module HaskHOL.Lib.Lists.Context
+    --, module HaskHOL.Lib.Lists
     ) where
 
 import HaskHOL.Core
@@ -44,9 +43,10 @@ import HaskHOL.Lib.CalcNum
 import HaskHOL.Lib.Normalizer
 --import HaskHOL.Lib.Grobner
 import HaskHOL.Lib.IndTypes
-import HaskHOL.Lib.Lists
+--import HaskHOL.Lib.Lists
 
-import HaskHOL.Lib.Lists.Context
+import HaskHOL.Lib.IndTypes.Context
+--import HaskHOL.Lib.Lists.Context
 
 {- $ThryCtxt
   See 'extendCtxt' in the "HaskHOL.Core.Ext" module for more information.
@@ -56,16 +56,16 @@ import HaskHOL.Lib.Lists.Context
   The theory context type for the math libraries.  
   An alias to 'ListsType'.
 -}
-type MathType = ListsType
-type MathCtxt a = ListsCtxt a
+type MathType = IndTypesType
+type MathCtxt a = IndTypesCtxt a
 
 {-| 
   The theory context for the math libraries.  
-  An alias to 'ctxtLists'.
+  An alias to 'ctxtIndTypes'.
 -}
 ctxtMath :: TheoryPath MathType
-ctxtMath = ctxtLists
+ctxtMath = ctxtIndTypes
 
 -- | The quasi-quoter for the math libraries.  An alias to 'wF'.
 math :: QuasiQuoter
-math = lists
+math = indTypes

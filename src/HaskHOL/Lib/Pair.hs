@@ -32,7 +32,7 @@ module HaskHOL.Lib.Pair
     , convGEN_BETA
     , mkPair
     , destPair
-    , newDefinition
+    , Base.newDefinition
     , getDefinition
     , thmFORALL_PAIR
     , createIteratedProjections
@@ -47,10 +47,6 @@ import HaskHOL.Lib.Pair.Context
 import HaskHOL.Lib.Pair.PQ
 
 -- Definition mechanics
-newDefinition :: (PairCtxt thry, HOLTermRep tm Theory thry) 
-              => (Text, tm) -> HOL Theory thry HOLThm
-newDefinition = Base.newDefinition (thmFST, thmSND)
-
 getDefinition :: Text -> HOL cls thry HOLThm
 getDefinition lbl =
     do acid <- openLocalStateHOL (Base.Definitions mapEmpty)
@@ -61,6 +57,9 @@ getDefinition lbl =
 
 
 -- Definitions
+tyDefProd :: PairCtxt thry => HOL cls thry HOLThm
+tyDefProd = Base.tyDefProd
+
 defLET :: PairCtxt thry => HOL cls thry HOLThm
 defLET = cacheProof "defLET" ctxtPair $ getDefinition "LET"
 
@@ -92,16 +91,16 @@ def_FUNCTION :: PairCtxt thry => HOL cls thry HOLThm
 def_FUNCTION = cacheProof "def_FUNCTION" ctxtPair $ getDefinition "_FUNCTION"
 
 defMK_PAIR :: PairCtxt thry => HOL cls thry HOLThm
-defMK_PAIR = cacheProof "defMK_PAIR" ctxtPair $ getDefinition "mk_pair"
+defMK_PAIR = Base.defMK_PAIR
 
 defCOMMA :: PairCtxt thry => HOL cls thry HOLThm
-defCOMMA = cacheProof "defCOMMA" ctxtPair $ getDefinition ","
+defCOMMA = Base.defCOMMA
 
 defFST :: PairCtxt thry => HOL cls thry HOLThm
-defFST = cacheProof "defFST" ctxtPair $ getDefinition "FST"
+defFST = Base.defFST
 
 defSND :: PairCtxt thry => HOL cls thry HOLThm
-defSND = cacheProof "defSND" ctxtPair $ getDefinition "SND"
+defSND = Base.defSND
 
 defCURRY :: PairCtxt thry => HOL cls thry HOLThm
 defCURRY = cacheProof "defCURRY" ctxtPair $ getDefinition "CURRY"
@@ -112,9 +111,6 @@ defUNCURRY = cacheProof "defUNCURRY" ctxtPair $ getDefinition "UNCURRY"
 defPASSOC :: PairCtxt thry => HOL cls thry HOLThm
 defPASSOC = cacheProof "defPASSOC" ctxtPair $ getDefinition "PASSOC"
 
-tyDefProd :: PairCtxt thry => HOL cls thry HOLThm
-tyDefProd = cacheProof "tyDefProd" ctxtPair $ getTypeDefinition "prod"
-
 -- syntax
 mkPair :: HOLTerm -> HOLTerm -> HOL cls thry HOLTerm
 mkPair = mkBinary ","
@@ -124,7 +120,7 @@ destPair = destBinary ","
 
 -- theorems
 thmPAIR_EXISTS :: PairCtxt thry => HOL cls thry HOLThm
-thmPAIR_EXISTS = cacheProof "thmPAIR_EXISTS" ctxtPair Base.thmPAIR_EXISTS
+thmPAIR_EXISTS = Base.thmPAIR_EXISTS
 
 thmFORALL_PAIR :: PairCtxt thry => HOL cls thry HOLThm
 thmFORALL_PAIR = cacheProof "thmFORALL_PAIR" ctxtPair $
@@ -132,29 +128,28 @@ thmFORALL_PAIR = cacheProof "thmFORALL_PAIR" ctxtPair $
       tacMESON [thmPAIR]
 
 thmREP_ABS_PAIR :: PairCtxt thry => HOL cls thry HOLThm
-thmREP_ABS_PAIR = cacheProof "thmREP_ABS_PAIR" ctxtPair Base.thmREP_ABS_PAIR
+thmREP_ABS_PAIR = Base.thmREP_ABS_PAIR
 
 thmPAIR_SURJECTIVE :: PairCtxt thry => HOL cls thry HOLThm
-thmPAIR_SURJECTIVE = 
-    cacheProof "thmPAIR_SURJECTIVE" ctxtPair Base.thmPAIR_SURJECTIVE
+thmPAIR_SURJECTIVE = Base.thmPAIR_SURJECTIVE
 
 thmPAIR_EQ :: PairCtxt thry => HOL cls thry HOLThm
-thmPAIR_EQ = cacheProof "thmPAIR_EQ" ctxtPair Base.thmPAIR_EQ
+thmPAIR_EQ = Base.thmPAIR_EQ
 
 thmFST :: PairCtxt thry => HOL cls thry HOLThm
-thmFST = cacheProof "thmFST" ctxtPair Base.thmFST
+thmFST = Base.thmFST
 
 thmSND :: PairCtxt thry => HOL cls thry HOLThm
-thmSND = cacheProof "thmSND" ctxtPair Base.thmSND
+thmSND = Base.thmSND
 
 thmPAIR :: PairCtxt thry => HOL cls thry HOLThm
-thmPAIR = cacheProof "thmPAIR" ctxtPair Base.thmPAIR
+thmPAIR = Base.thmPAIR
 
 recursionPAIR :: PairCtxt thry => HOL cls thry HOLThm
-recursionPAIR = cacheProof "recursionPAIR" ctxtPair Base.recursionPAIR
+recursionPAIR = Base.recursionPAIR
 
 inductPAIR :: PairCtxt thry => HOL cls thry HOLThm
-inductPAIR = cacheProof "inductPAIR" ctxtPair Base.inductPAIR
+inductPAIR = Base.inductPAIR
 
 -- conversions and derived rules
 convGEQ :: PairCtxt thry => Conversion cls thry

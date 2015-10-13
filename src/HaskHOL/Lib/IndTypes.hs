@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-|
   Module:    HaskHOL.Lib.IndTypes
   Copyright: (c) The University of Kansas 2013
@@ -12,9 +11,10 @@ module HaskHOL.Lib.IndTypes
     ( IndTypesCtxt
     , ctxtIndTypes
     , indTypes
-    , thmINJ_INVERSE2
-    , thmNUMPAIR_INJ_LEMMA
-    , thmNUMSUM_INJ
+    , Base.thmINJ_INVERSE2
+    , Base.thmNUMPAIR_INJ_LEMMA
+    , Base.thmNUMSUM_INJ
+    , Base.thmNUMPAIR_INJ
     , specNUMPAIR_DEST
     , specNUMSUM_DEST
     , defINJN
@@ -32,27 +32,27 @@ module HaskHOL.Lib.IndTypes
     , defCONSTR
     , defFCONS
     , defFNIL
-    , thmINJN_INJ -- stage2
+    , thmINJN_INJ
     , thmINJA_INJ
     , thmINJF_INJ
     , thmINJP_INJ
     , thmMK_REC_INJ
     , thmDEST_REC_INJ
-    , thmZCONSTR_ZBOT --stage3
+    , thmZCONSTR_ZBOT
     , thmCONSTR_INJ
     , thmCONSTR_IND
-    , thmCONSTR_BOT --stage4
-    , thmCONSTR_REC --stage5
-    , Pre.inductSUM
-    , Pre.recursionSUM
-    , Pre.defOUTL
-    , Pre.defOUTR
-    , inductOPTION -- stage1
+    , thmCONSTR_BOT
+    , thmCONSTR_REC
+    , inductSUM
+    , recursionSUM
+    , defOUTL
+    , defOUTR
+    , inductOPTION
     , recursionOPTION
     , inductLIST
     , recursionLIST
     , defISO
-    , thmISO_REFL -- stage2
+    , thmISO_REFL
     , thmISO_FUN
     , thmISO_USAGE
     , defineType
@@ -68,15 +68,122 @@ import HaskHOL.Core
 import HaskHOL.Deductive hiding (getDefinition, newDefinition)
 
 import HaskHOL.Lib.Pair
+import HaskHOL.Lib.Recursion
 
-import HaskHOL.Lib.IndTypes.A
-import HaskHOL.Lib.IndTypes.B
-import qualified HaskHOL.Lib.IndTypes.Pre as Pre
+import HaskHOL.Lib.IndTypes.Pre (parseInductiveTypeSpecification)
+import qualified HaskHOL.Lib.IndTypes.Pre2 as Pre (defineTypeRaw)
 
-import HaskHOL.Lib.IndTypes.Base
+import qualified HaskHOL.Lib.IndTypes.Base as Base
 import HaskHOL.Lib.IndTypes.Context
+import HaskHOL.Lib.IndTypes.PQ
 
 import qualified Data.Text.Lazy as T (words)
+
+
+defINJN :: IndTypesCtxt thry => HOL cls thry HOLThm
+defINJN = cacheProof "defINJN" ctxtIndTypes $ getDefinition "INJN"
+
+defINJA :: IndTypesCtxt thry => HOL cls thry HOLThm
+defINJA = cacheProof "defINJA" ctxtIndTypes $ getDefinition "INJA"
+
+defINJF :: IndTypesCtxt thry => HOL cls thry HOLThm
+defINJF = cacheProof "defINJF" ctxtIndTypes $ getDefinition "INJF"
+
+defINJP :: IndTypesCtxt thry => HOL cls thry HOLThm
+defINJP = cacheProof "defINJP" ctxtIndTypes $ getDefinition "INJP"
+
+defZCONSTR :: IndTypesCtxt thry => HOL cls thry HOLThm
+defZCONSTR = Base.defZCONSTR
+
+defZBOT :: IndTypesCtxt thry => HOL cls thry HOLThm
+defZBOT = Base.defZBOT
+
+tyDefMkRecspace :: IndTypesCtxt thry => HOL cls thry HOLThm
+tyDefMkRecspace = Base.tyDefMkRecspace
+
+tyDefDestRecspace :: IndTypesCtxt thry => HOL cls thry HOLThm
+tyDefDestRecspace = Base.tyDefDestRecspace
+
+rulesZRECSPACE :: IndTypesCtxt thry => HOL cls thry HOLThm
+rulesZRECSPACE = Base.rulesZRECSPACE
+
+inductZRECSPACE :: IndTypesCtxt thry => HOL cls thry HOLThm
+inductZRECSPACE = Base.inductZRECSPACE
+
+casesZRECSPACE :: IndTypesCtxt thry => HOL cls thry HOLThm
+casesZRECSPACE = cacheProof "casesZRECSPACE" ctxtIndTypes $
+    do (_, _, th) <- getInductiveDefinition "ZRECSPACE"
+       return th
+
+defBOTTOM :: IndTypesCtxt thry => HOL cls thry HOLThm
+defBOTTOM = Base.defBOTTOM
+
+defCONSTR :: IndTypesCtxt thry => HOL cls thry HOLThm
+defCONSTR = Base.defCONSTR
+
+defFNIL :: IndTypesCtxt thry => HOL cls thry HOLThm
+defFNIL = cacheProof "defFNIL" ctxtIndTypes $ getDefinition "FNIL"
+
+defFCONS :: IndTypesCtxt thry => HOL cls thry HOLThm
+defFCONS = cacheProof "defFCONS" ctxtIndTypes $ getRecursiveDefinition "FCONS"
+
+
+thmINJN_INJ :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmINJN_INJ = Base.thmINJN_INJ
+
+thmINJA_INJ :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmINJA_INJ = Base.thmINJA_INJ
+
+thmINJF_INJ :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmINJF_INJ = Base.thmINJF_INJ
+
+thmINJP_INJ :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmINJP_INJ = Base.thmINJP_INJ
+
+thmMK_REC_INJ :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmMK_REC_INJ = Base.thmMK_REC_INJ
+
+thmDEST_REC_INJ :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmDEST_REC_INJ = Base.thmDEST_REC_INJ
+
+thmZCONSTR_ZBOT :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmZCONSTR_ZBOT = Base.thmZCONSTR_ZBOT
+
+thmCONSTR_INJ :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmCONSTR_INJ = Base.thmCONSTR_INJ
+
+thmCONSTR_IND :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmCONSTR_IND = Base.thmCONSTR_IND
+
+thmCONSTR_BOT :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmCONSTR_BOT = Base.thmCONSTR_BOT
+
+thmCONSTR_REC :: IndTypesCtxt thry => HOL cls thry HOLThm
+thmCONSTR_REC = Base.thmCONSTR_REC
+
+defOUTL :: IndTypesCtxt thry => HOL cls thry HOLThm
+defOUTL = cacheProof "defOUTL" ctxtIndTypes $ getRecursiveDefinition "OUTL"
+
+defOUTR :: IndTypesCtxt thry => HOL cls thry HOLThm
+defOUTR = cacheProof "defOUTR" ctxtIndTypes $ getRecursiveDefinition "OUTR"
+
+inductSUM :: IndTypesCtxt thry => HOL cls thry HOLThm
+inductSUM = cacheProof "inductSUM" ctxtIndTypes $
+    do defs <- getIndDefs
+       let (_, th, _) = fromJust $ mapLookup "sum" defs
+       return th
+
+recursionSUM :: IndTypesCtxt thry => HOL cls thry HOLThm
+recursionSUM = cacheProof "recursionSUM" ctxtIndTypes $
+    do defs <- getIndDefs
+       let (_, _, th) = fromJust $ mapLookup "sum" defs
+       return th
+
+specNUMPAIR_DEST :: IndTypesCtxt thry => HOL cls thry HOLThm
+specNUMPAIR_DEST = Base.specNUMPAIR_DEST
+
+specNUMSUM_DEST :: IndTypesCtxt thry => HOL cls thry HOLThm
+specNUMSUM_DEST = Base.specNUMSUM_DEST
 
 defISO :: IndTypesCtxt thry => HOL cls thry HOLThm
 defISO = cacheProof "defISO" ctxtIndTypes $ getDefinition "ISO"
@@ -95,20 +202,17 @@ recursionOPTION :: IndTypesCtxt thry => HOL cls thry HOLThm
 recursionOPTION = cacheProof "recursionOPTION" ctxtIndTypes $
     liftM snd indDefOption
 
-
-indDefList :: IndTypesCtxt thry => HOL cls thry (HOLThm, HOLThm)
-indDefList =
-    do defs <- getIndDefs
-       let (_, th1, th2) = fromJust (mapLookup "list" defs)
-       return (th1, th2)
-
 inductLIST :: IndTypesCtxt thry => HOL cls thry HOLThm
 inductLIST = cacheProof "inductLIST" ctxtIndTypes $
-    liftM fst indDefList
+    do defs <- getIndDefs
+       let (_, th, _) = fromJust (mapLookup "list" defs)
+       return th
 
 recursionLIST :: IndTypesCtxt thry => HOL cls thry HOLThm
 recursionLIST = cacheProof "recursionLIST" ctxtIndTypes $
-    liftM snd indDefList
+    do defs <- getIndDefs
+       let (_, _, th) = fromJust (mapLookup "list" defs)
+       return th
 
 
 thmISO_REFL :: IndTypesCtxt thry => HOL cls thry HOLThm
@@ -138,15 +242,16 @@ proveITT_pth = cacheProof "proveITT_pth" ctxtIndTypes .
 
 defineType :: IndTypesCtxt thry => Text -> HOL Theory thry (HOLThm, HOLThm)
 defineType s =
-    do acid <- openLocalStateHOL (InductiveTypes mapEmpty)
-       indTys <- queryHOL acid GetInductiveTypes
+    do acid <- openLocalStateHOL (Base.InductiveTypes mapEmpty)
+       indTys <- queryHOL acid Base.GetInductiveTypes
        closeAcidStateHOL acid
        let s' = head $ T.words s
        case mapLookup s' indTys of
          Just retval -> 
              return retval
          Nothing ->
-             do defspec <- parseInductiveTypeSpecification s
+             do ctxt <- parseContext
+                defspec <- liftO $ parseInductiveTypeSpecification ctxt s
                 let newtypes = map fst defspec
                     constructors = foldr ((++) . map fst) [] $ map snd defspec
                 failWhen (return $ (length (setify newtypes)) /= 
@@ -168,15 +273,15 @@ defineType s =
                                 fail $ "defineType: constant " ++ show t ++ 
                                        " already defined."
                         else do retval <- defineTypeRaw defspec
-                                acid' <- openLocalStateHOL (InductiveTypes mapEmpty)
-                                updateHOL acid' (AddInductiveType s' retval)
+                                acid' <- openLocalStateHOL (Base.InductiveTypes mapEmpty)
+                                updateHOL acid' (Base.AddInductiveType s' retval)
                                 createCheckpointAndCloseHOL acid'
                                 return retval
 
 getType :: Text -> HOL cls thry (HOLThm, HOLThm)
 getType name =
-    do acid <- openLocalStateHOL (InductiveTypes mapEmpty)
-       qth <- queryHOL acid (GetInductiveType name)
+    do acid <- openLocalStateHOL (Base.InductiveTypes mapEmpty)
+       qth <- queryHOL acid (Base.GetInductiveType name)
        closeAcidStateHOL acid
        liftMaybe ("getType: type " ++ show name ++ 
                   " not found.") qth
@@ -194,16 +299,16 @@ defineTypeRaw def =
              relcls = fst . fromJust $ chopList (length truecons) allcls
              gencons = fromJust $ mapM (repeatM rator <=< rand <=< lHand .
                                         snd . stripForall) relcls
-         cdefs <- map2M (\ s r -> do dth <- newDefinition s =<< 
-                                              mkEq (mkVar s $ typeOf r) r
+         cdefs <- map2M (\ s r -> do deftm <- mkEq (mkVar s $ typeOf r) r
+                                     dth <- newDefinition (s, deftm)
                                      liftO $ ruleSYM dth) truecons gencons
          let tavs = mkArgs "f" [] $ map typeOf avs
          ith1 <- ruleSUBS cdefs ith0
          rth1 <- ruleGENL tavs =<< ruleSUBS cdefs =<< ruleSPECL tavs rth0
          let retval = (p, ith1, rth1)
              newentries = map (\s -> (fromJust $ destVarType s, retval)) newtys
-         addIndDefs newentries
-         mapM_ extendRectypeNet newentries
+         mapM_ addIndDef newentries
+         mapM_ Base.extendRectypeNet newentries
          return (ith1, rth1)
 
 defineTypeNested :: IndTypesCtxt thry 
@@ -306,7 +411,7 @@ defineTypeNested def =
             let addId _ = liftM (fst . fromJust . destVar) $ genVar tyBool in
               do def' <- mapM (return `ffCombM` (mapM (addId `ffCombM` return)))
                            def
-                 Pre.defineTypeRaw def'
+                 Pre.defineTypeRaw thmCONSTR_REC def'
 
         mkNewcon :: PairCtxt thry => HOLTerm -> HOL Theory thry HOLThm
         mkNewcon tm =
@@ -315,7 +420,7 @@ defineTypeNested def =
                 rdef = fromRight $ listMkAbs vs rdeb in
               do newname <- liftM (fst . fromJust . destVar) $ genVar tyBool
                  def' <- mkEq (mkVar newname $ typeOf rdef) rdef
-                 dth <- newDefinition newname def'
+                 dth <- newDefinition (newname, def')
                  ruleSIMPLE_BETA dth
 
         createAuxiliaryClauses :: HOLType -> 
@@ -576,6 +681,55 @@ liftTypeBijections iths cty =
                                 ++ show tycon
 
 
+convPUSH_EXISTS :: TheoremsCtxt thry => Conversion cls thry 
+                -> Conversion cls thry
+convPUSH_EXISTS bc = Conv $ \ tm -> 
+    runConv (convREWR thmSWAP_EXISTS `_THEN` convBINDER (convPUSH_EXISTS bc)) tm
+      <|> runConv bc tm
+
+convBREAK_CONS :: TheoremsCtxt thry => Conversion cls thry
+convBREAK_CONS = Conv $ \ tm ->
+    do net <- Base.basicRectypeNet
+       let conv0 = convTOP_SWEEP (convREWRITES net)
+           conv1 = if isConj tm then convLAND conv0 else conv0
+       runConv (conv1 `_THEN` (convGEN_REWRITE convDEPTH 
+                                 [ thmAND_CLAUSES, thmOR_CLAUSES ] `_THEN` 
+                               convASSOC thmCONJ_ASSOC)) tm
+
+convUNWIND :: IndTypesCtxt thry => Conversion cls thry
+convUNWIND = Conv $ \ tm ->
+    let (evs, bod) = stripExists tm
+        eqs = conjuncts bod in
+      (do eq <- liftO $ find (\ x ->
+                  case x of
+                    (l := r) -> (l `elem` evs && not (l `freeIn` r)) ||
+                                (r `elem` evs && not (r `freeIn` l))
+                    _ -> False) eqs
+          (l, r) <- liftO $ destEq eq
+          let v = if l `elem` evs && not (l `freeIn` r) then l else r
+              cjs' = eq : (eqs \\ [eq])
+              n = length evs - (1 + fromJust (index v (reverse evs)))
+          th1 <- ruleCONJ_ACI =<< mkEq bod =<< listMkConj cjs'
+          th2 <- foldrM ruleMK_EXISTS th1 evs
+          th3 <- runConv (funpow n convBINDER (convPUSH_EXISTS baseconv)) #<< 
+                   rand (concl th2)
+          ruleCONV (convRAND convUNWIND) #<< primTRANS th2 th3) <|>
+      (return $! primREFL tm)
+  where baseconv :: IndTypesCtxt thry => Conversion cls thry
+        baseconv =
+            convGEN_REWRITE id 
+              [ thmUNWIND1, thmUNWIND2
+              , convUNWIND_pth1, convUNWIND_pth2
+              ]
+        
+        convUNWIND_pth1 :: IndTypesCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth1 = cacheProof "convUNWIND_pth1" ctxtIndTypes $
+            ruleEQT_INTRO =<< ruleSPEC_ALL thmEXISTS_REFL
+
+        convUNWIND_pth2 :: IndTypesCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth2 = cacheProof "convUNWIND_pth2" ctxtIndTypes $
+            ruleEQT_INTRO =<< ruleGSYM (ruleSPEC_ALL thmEXISTS_REFL)
+
 convFORALL_UNWIND :: IndTypesCtxt thry => Conversion cls thry
 convFORALL_UNWIND = Conv $ \ tm ->
     let (avs, bod) = stripForall tm
@@ -622,3 +776,91 @@ convFORALL_UNWIND = Conv $ \ tm ->
         convFORALL_UNWIND_pth4 :: IndTypesCtxt thry => HOL cls thry HOLThm
         convFORALL_UNWIND_pth4 = cacheProof "convFORALL_UNWIND_pth4"  ctxtIndTypes $
             ruleMESON_NIL [str| (!x. a = x ==> q x) <=> q a |]
+
+
+convMATCH_ONEPATTERN_TRIV :: IndTypesCtxt thry => Conversion cls thry
+convMATCH_ONEPATTERN_TRIV =
+    convMATCH_ONEPATTERN `_THEN` convGEN_REWRITE id [convUNWIND_pth5]
+  where convUNWIND_pth5 :: IndTypesCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth5 = cacheProof "convUNWIND_pth5" ctxtIndTypes .
+            prove "(if ?!z. z = k then @z. z = k else @x. F) = k" $
+              tacMESON_NIL
+
+convMATCH_ONEPATTERN :: IndTypesCtxt thry => Conversion cls thry
+convMATCH_ONEPATTERN = Conv $ \ tm ->
+    do th1 <- runConv (convGEN_REWRITE id [convUNWIND_pth3]) tm
+       let tm' = fromJust $ body =<< rand =<< lHand =<< rand (concl th1)
+       th2 <- runConv (convINSIDE_EXISTS
+                       (convGEN_REWRITE id [convUNWIND_pth4] `_THEN`
+                        convRAND convBREAK_CONS) `_THEN`
+                       convUNWIND `_THEN`
+                       convGEN_REWRITE convDEPTH
+                       [ ruleEQT_INTRO =<< ruleSPEC_ALL thmEQ_REFL
+                       , thmAND_CLAUSES
+                       ] `_THEN`
+                       convGEN_REWRITE convDEPTH [thmEXISTS_SIMP]) tm'
+       let conv = Conv $ \ x -> if lHand (concl th2) == Just x
+                                then return th2
+                                else fail ""
+       ruleCONV (convRAND 
+                 (convRATOR 
+                  (convCOMB2 (convRAND (convBINDER conv)) 
+                   (convBINDER conv)))) th1
+  where convINSIDE_EXISTS :: Conversion cls thry -> Conversion cls thry
+        convINSIDE_EXISTS conv = Conv $ \ tm ->
+            if isExists tm 
+            then runConv (convBINDER (convINSIDE_EXISTS conv)) tm
+            else runConv conv tm
+
+        convUNWIND_pth3 :: IndTypesCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth3 = cacheProof "convUNWIND_pth3" ctxtIndTypes .
+            prove [str| (_MATCH x (\y z. P y z) = 
+                        if ?!z. P x z then @z. P x z else @x. F) /\ 
+                        (_FUNCTION (\y z. P y z) x = 
+                        if ?!z. P x z then @z. P x z else @x. F) |] $
+              tacREWRITE [def_MATCH, def_FUNCTION] 
+
+        convUNWIND_pth4 :: IndTypesCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth4 = cacheProof "convUNWIND_pth4" ctxtIndTypes $
+            prove [str| (_UNGUARDED_PATTERN (GEQ s t) (GEQ u y) <=> 
+                         y = u /\ s = t) /\ 
+                        (_GUARDED_PATTERN (GEQ s t) p (GEQ u y) <=> 
+                         y = u /\ s = t /\ p) |] $
+              tacREWRITE [ def_UNGUARDED_PATTERN, def_GUARDED_PATTERN
+                         , defGEQ ] `_THEN`
+              tacMESON_NIL
+
+convMATCH_SEQPATTERN_TRIV :: IndTypesCtxt thry => Conversion cls thry
+convMATCH_SEQPATTERN_TRIV = 
+    convMATCH_SEQPATTERN `_THEN` convGEN_REWRITE id [thmCOND_CLAUSES]
+
+convMATCH_SEQPATTERN :: IndTypesCtxt thry => Conversion cls thry
+convMATCH_SEQPATTERN =
+    convGEN_REWRITE id [convUNWIND_pth1] `_THEN`
+    convRATOR (convLAND 
+    (convBINDER (convRATOR convBETA `_THEN` convBETA) `_THEN`
+     convPUSH_EXISTS (convGEN_REWRITE id [convUNWIND_pth2] `_THEN` 
+                      convBREAK_CONS) `_THEN`
+     convUNWIND `_THEN`
+     convGEN_REWRITE convDEPTH [ ruleEQT_INTRO =<< ruleSPEC_ALL thmEQ_REFL
+                               , thmAND_CLAUSES
+                               ] `_THEN`
+     convGEN_REWRITE convDEPTH [thmEXISTS_SIMP]))
+  where convUNWIND_pth1 :: IndTypesCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth1 = cacheProof "convUNWIND_pth1" ctxtIndTypes .
+          prove [str| _MATCH x (_SEQPATTERN r s) =
+                      (if ?y. r x y then _MATCH x r else _MATCH x s) /\
+                      _FUNCTION (_SEQPATTERN r s) x =
+                      (if ?y. r x y then _FUNCTION r x else _FUNCTION s x) |] $
+            tacREWRITE [def_MATCH, def_SEQPATTERN, def_FUNCTION] `_THEN` 
+            tacMESON_NIL
+
+        convUNWIND_pth2 :: IndTypesCtxt thry => HOL cls thry HOLThm
+        convUNWIND_pth2 = cacheProof "convUNWIND_pth2" ctxtIndTypes $
+            prove [str| ((?y. _UNGUARDED_PATTERN (GEQ s t) (GEQ u y)) <=> 
+                         s = t) /\
+                        ((?y. _GUARDED_PATTERN (GEQ s t) p (GEQ u y)) <=> 
+                         s = t /\ p) |] $
+              tacREWRITE [ def_UNGUARDED_PATTERN
+                         , def_GUARDED_PATTERN, defGEQ ] `_THEN`
+              tacMESON_NIL

@@ -154,24 +154,24 @@ import qualified HaskHOL.Lib.Arith.Base as Base
 import HaskHOL.Lib.Arith.Context
 import HaskHOL.Lib.Arith.PQ
 
-
+-- definitions
 defPRE :: ArithCtxt thry => HOL cls thry HOLThm
-defPRE = cacheProof "defPRE" ctxtArith $ getRecursiveDefinition "PRE"
+defPRE = Base.defPRE
 
 defADD :: ArithCtxt thry => HOL cls thry HOLThm
-defADD = cacheProof "defADD" ctxtArith $ getRecursiveDefinition "+"
+defADD = Base.defADD
 
 defMULT :: ArithCtxt thry => HOL cls thry HOLThm
-defMULT = cacheProof "defMULT" ctxtArith $ getRecursiveDefinition "*"
+defMULT = Base.defMULT
 
 defEXP :: ArithCtxt thry => HOL cls thry HOLThm
 defEXP = cacheProof "defEXP" ctxtArith $ getRecursiveDefinition "EXP"
 
 defLE :: ArithCtxt thry => HOL cls thry HOLThm
-defLE = cacheProof "defLE" ctxtArith $ getRecursiveDefinition "<="
+defLE = Base.defLE
 
 defLT :: ArithCtxt thry => HOL cls thry HOLThm
-defLT = cacheProof "defLT" ctxtArith $ getRecursiveDefinition "<"
+defLT = Base.defLT
 
 defGE :: ArithCtxt thry => HOL cls thry HOLThm
 defGE = cacheProof "defGE" ctxtArith $ getDefinition ">="
@@ -207,326 +207,660 @@ defMinimal = cacheProof "defMinimal" ctxtArith $ getDefinition "minimal"
 
 -- theorems
 thmADD_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_0 = cacheProof "thmADD_0" ctxtArith Base.thmADD_0
+thmADD_0 = Base.thmADD_0
 
 thmADD_SUC :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_SUC = cacheProof "thmADD_SUC" ctxtArith Base.thmADD_SUC
+thmADD_SUC = Base.thmADD_SUC
 
 thmLE_SUC_LT :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_SUC_LT = cacheProof "thmLE_SUC_LT" ctxtArith Base.thmLE_SUC_LT
+thmLE_SUC_LT = Base.thmLE_SUC_LT
 
 thmLT_SUC_LE :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_SUC_LE = cacheProof "thmLT_SUC_LE" ctxtArith Base.thmLT_SUC_LE
+thmLT_SUC_LE = Base.thmLT_SUC_LE
 
 thmLE_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_0 = cacheProof "thmLE_0" ctxtArith Base.thmLE_0
+thmLE_0 = Base.thmLE_0
 
 wfNUM_PRIM :: ArithCtxt thry => HOL cls thry HOLThm
-wfNUM_PRIM = cacheProof "wfNUM_PRIM" ctxtArith Base.wfNUM_PRIM
+wfNUM_PRIM = Base.wfNUM_PRIM
 
 thmSUB_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmSUB_0 = cacheProof "thmSUB_0" ctxtArith Base.thmSUB_0
+thmSUB_0 = cacheProof "thmSUB_0" ctxtArith .
+    prove [str| !m. (0 - m = 0) /\ (m - 0 = m) |] $
+      tacREWRITE [defSUB] `_THEN` tacINDUCT `_THEN` 
+      tacASM_REWRITE [defSUB, defPRE]
 
 thmSUB_PRESUC :: ArithCtxt thry => HOL cls thry HOLThm
-thmSUB_PRESUC = cacheProof "thmSUB_PRESUC" ctxtArith Base.thmSUB_PRESUC
+thmSUB_PRESUC = cacheProof "thmSUB_PRESUC" ctxtArith .
+    prove "!m n. PRE(SUC m - n) = m - n" $
+      tacGEN `_THEN` tacINDUCT `_THEN` 
+      tacASM_REWRITE [defSUB, defPRE]
 
 thmLE_REFL :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_REFL = cacheProof "thmLE_REFL" ctxtArith Base.thmLE_REFL
+thmLE_REFL = cacheProof "thmLE_REFL" ctxtArith .
+    prove "!n. n <= n" $ tacINDUCT `_THEN` 
+    tacREWRITE [defLE]
 
 thmNOT_EVEN :: ArithCtxt thry => HOL cls thry HOLThm
-thmNOT_EVEN = cacheProof "thmNOT_EVEN" ctxtArith Base.thmNOT_EVEN
+thmNOT_EVEN = cacheProof "thmNOT_EVEN" ctxtArith .
+    prove "!n. ~(EVEN n) <=> ODD n" $
+      tacINDUCT `_THEN` 
+      tacASM_REWRITE [defEVEN, defODD]
 
 thmNOT_ODD :: ArithCtxt thry => HOL cls thry HOLThm
-thmNOT_ODD = cacheProof "thmNOT_ODD" ctxtArith Base.thmNOT_ODD
+thmNOT_ODD = cacheProof "thmNOT_ODD" ctxtArith .
+    prove "!n. ~(ODD n) <=> EVEN n" $
+      tacINDUCT `_THEN` 
+      tacASM_REWRITE [defEVEN, defODD]
 
 thmADD_CLAUSES :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_CLAUSES = cacheProof "thmADD_CLAUSES" ctxtArith Base.thmADD_CLAUSES
+thmADD_CLAUSES = Base.thmADD_CLAUSES
 
 thmLE_SUC :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_SUC = cacheProof "thmLE_SUC" ctxtArith Base.thmLE_SUC
+thmLE_SUC = Base.thmLE_SUC
 
 thmLT_SUC :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_SUC = cacheProof "thmLT_SUC" ctxtArith Base.thmLT_SUC
+thmLT_SUC = Base.thmLT_SUC
 
 wopNUM :: ArithCtxt thry => HOL cls thry HOLThm
-wopNUM = cacheProof "wopNUM" ctxtArith Base.wopNUM
+wopNUM = Base.wopNUM
 
 thmSUB_SUC :: ArithCtxt thry => HOL cls thry HOLThm
-thmSUB_SUC = cacheProof "thmSUB_SUC" ctxtArith Base.thmSUB_SUC
+thmSUB_SUC = cacheProof "thmSUB_SUC" ctxtArith .
+    prove "!m n. SUC m - SUC n = m - n" $
+      _REPEAT tacINDUCT `_THEN` 
+      tacASM_REWRITE [ defSUB, defPRE, thmSUB_PRESUC ]
 
 thmEVEN_OR_ODD :: ArithCtxt thry => HOL cls thry HOLThm
-thmEVEN_OR_ODD = cacheProof "thmEVEN_OR_ODD" ctxtArith Base.thmEVEN_OR_ODD
+thmEVEN_OR_ODD = cacheProof "thmEVEN_OR_ODD" ctxtArith .
+    prove [str| !n. EVEN n \/ ODD n |] $
+      tacINDUCT `_THEN` 
+      tacREWRITE [ defEVEN, defODD, thmNOT_EVEN, thmNOT_ODD ] `_THEN`
+      tacONCE_REWRITE [thmDISJ_SYM] `_THEN` tacASM_REWRITE_NIL
 
 thmEVEN_AND_ODD :: ArithCtxt thry => HOL cls thry HOLThm
-thmEVEN_AND_ODD = cacheProof "thmEVEN_AND_ODD" ctxtArith Base.thmEVEN_AND_ODD
+thmEVEN_AND_ODD = cacheProof "thmEVEN_AND_ODD" ctxtArith .
+    prove [str| !n. ~(EVEN n /\ ODD n) |] $
+      tacREWRITE [ruleGSYM thmNOT_EVEN, ruleITAUT [str| ~(p /\ ~p) |]]
 
 thmLET_CASES :: ArithCtxt thry => HOL cls thry HOLThm
-thmLET_CASES = cacheProof "thmLET_CASES" ctxtArith Base.thmLET_CASES
+thmLET_CASES = cacheProof "thmLET_CASES" ctxtArith .
+    prove [str| !m n. m <= n \/ n < m |] $
+      _REPEAT tacINDUCT `_THEN` 
+      tacASM_REWRITE [thmLE_SUC_LT, thmLT_SUC_LE, thmLE_0]
 
 thmEQ_IMP_LE :: ArithCtxt thry => HOL cls thry HOLThm
-thmEQ_IMP_LE = cacheProof "thmEQ_IMP_LE" ctxtArith Base.thmEQ_IMP_LE
+thmEQ_IMP_LE = cacheProof "thmEQ_IMP_LE" ctxtArith .
+    prove "!m n. (m = n) ==> m <= n" $
+      _REPEAT tacSTRIP `_THEN` tacASM_REWRITE [thmLE_REFL]
 
 thmADD_SYM :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_SYM = cacheProof "thmADD_SYM" ctxtArith Base.thmADD_SYM
+thmADD_SYM = Base.thmADD_SYM
 
 thmEQ_ADD_LCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmEQ_ADD_LCANCEL = 
-    cacheProof "thmEQ_ADD_LCANCEL" ctxtArith Base.thmEQ_ADD_LCANCEL
+thmEQ_ADD_LCANCEL = Base.thmEQ_ADD_LCANCEL
 
 thmBIT0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmBIT0 = cacheProof "thmBIT0" ctxtArith Base.thmBIT0
+thmBIT0 = Base.thmBIT0
 
 thmMULT_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmMULT_0 = cacheProof "thmMULT_0" ctxtArith Base.thmMULT_0
+thmMULT_0 = Base.thmMULT_0
 
 thmADD_ASSOC :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_ASSOC = cacheProof "thmADD_ASSOC" ctxtArith Base.thmADD_ASSOC
+thmADD_ASSOC = Base.thmADD_ASSOC
 
 thmADD_EQ_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_EQ_0 = cacheProof "thmADD_EQ_0" ctxtArith Base.thmADD_EQ_0
+thmADD_EQ_0 = Base.thmADD_EQ_0
 
 thmLT_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_0 = cacheProof "thmLT_0" ctxtArith Base.thmLT_0
+thmLT_0 = Base.thmLT_0
 
 thmLT_ADD :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_ADD = cacheProof "thmLT_ADD" ctxtArith Base.thmLT_ADD
+thmLT_ADD = Base.thmLT_ADD
 
 thmADD_SUB :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_SUB = cacheProof "thmADD_SUB" ctxtArith Base.thmADD_SUB
+thmADD_SUB = cacheProof "thmADD_SUB" ctxtArith .
+    prove "!m n. (m + n) - n = m" $
+      tacGEN `_THEN` tacINDUCT `_THEN` 
+      tacASM_REWRITE [thmADD_CLAUSES, thmSUB_SUC, thmSUB_0]
 
 thmLT_REFL :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_REFL = cacheProof "thmLT_REFL" ctxtArith Base.thmLT_REFL
+thmLT_REFL = cacheProof "thmLT_REFL" ctxtArith .
+    prove "!n. ~(n < n)" $
+      tacINDUCT `_THEN` tacASM_REWRITE [thmLT_SUC] `_THEN` 
+      tacREWRITE [defLT]
 
 thmSUB_EQ_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmSUB_EQ_0 = cacheProof "thmSUB_EQ_0" ctxtArith Base.thmSUB_EQ_0
+thmSUB_EQ_0 = cacheProof "thmSUB_EQ_0" ctxtArith .
+    prove "!m n. (m - n = 0) <=> m <= n" $
+      _REPEAT tacINDUCT `_THEN` 
+      tacASM_REWRITE [thmSUB_SUC, thmLE_SUC, thmSUB_0] `_THEN`
+      tacREWRITE [defLE, thmLE_0]
 
 thmLE_CASES :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_CASES = cacheProof "thmLE_CASES" ctxtArith Base.thmLE_CASES
+thmLE_CASES = cacheProof "thmLE_CASES" ctxtArith .
+    prove [str| !m n. m <= n \/ n <= m |] $
+      _REPEAT tacINDUCT `_THEN` tacASM_REWRITE [thmLE_0, thmLE_SUC]
 
 thmLE_ANTISYM :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_ANTISYM = cacheProof "thmLE_ANTISYM" ctxtArith Base.thmLE_ANTISYM
+thmLE_ANTISYM = cacheProof "thmLE_ANTISYM" ctxtArith .
+    prove [str| !m n. (m <= n /\ n <= m) <=> (m = n) |] $
+       _REPEAT tacINDUCT `_THEN` 
+       tacASM_REWRITE [thmLE_SUC, thmSUC_INJ] `_THEN`
+       tacREWRITE [defLE, thmNOT_SUC, ruleGSYM thmNOT_SUC]
 
 thmLET_ANTISYM :: ArithCtxt thry => HOL cls thry HOLThm
-thmLET_ANTISYM = cacheProof "thmLET_ANTISYM" ctxtArith Base.thmLET_ANTISYM
+thmLET_ANTISYM = cacheProof "thmLET_ANTISYM" ctxtArith .
+    prove [str| !m n. ~(m <= n /\ n < m) |] $
+      _REPEAT tacINDUCT `_THEN` tacASM_REWRITE [thmLE_SUC, thmLT_SUC] `_THEN`
+      tacREWRITE [ defLE, defLT, thmNOT_SUC ]
 
 thmEVEN_ADD :: ArithCtxt thry => HOL cls thry HOLThm
-thmEVEN_ADD = cacheProof "thmEVEN_ADD" ctxtArith Base.thmEVEN_ADD
+thmEVEN_ADD = cacheProof "thmEVEN_ADD" ctxtArith .
+    prove "!m n. EVEN(m + n) <=> (EVEN m <=> EVEN n)" $
+      tacINDUCT `_THEN` 
+      tacASM_REWRITE [defEVEN, thmADD_CLAUSES] `_THEN`
+      tacX_GEN "p:num" `_THEN`
+      _DISJ_CASES_THEN tacMP (ruleSPEC "n:num" thmEVEN_OR_ODD) `_THEN`
+      _DISJ_CASES_THEN tacMP (ruleSPEC "p:num" thmEVEN_OR_ODD) `_THEN`
+      tacREWRITE [ruleGSYM thmNOT_EVEN] `_THEN` tacDISCH `_THEN`
+      tacASM_REWRITE_NIL
 
 thmLE_TRANS :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_TRANS = cacheProof "thmLE_TRANS" ctxtArith Base.thmLE_TRANS
+thmLE_TRANS = cacheProof "thmLE_TRANS" ctxtArith .
+    prove [str| !m n p. m <= n /\ n <= p ==> m <= p |] $
+      _REPEAT tacINDUCT `_THEN` tacASM_REWRITE [thmLE_SUC, thmLE_0] `_THEN`
+      tacREWRITE [defLE, thmNOT_SUC]
 
 thmSUB_REFL :: ArithCtxt thry => HOL cls thry HOLThm
-thmSUB_REFL = cacheProof "thmSUB_REFL" ctxtArith Base.thmSUB_REFL
+thmSUB_REFL = cacheProof "thmSUB_REFL" ctxtArith .
+    prove "!n. n - n = 0" $ 
+      tacINDUCT `_THEN` tacASM_REWRITE [thmSUB_SUC, thmSUB_0]
 
 thmLE_ADD :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_ADD = cacheProof "thmLE_ADD" ctxtArith Base.thmLE_ADD
+thmLE_ADD = cacheProof "thmLE_ADD" ctxtArith .
+    prove "!m n. m <= m + n" $
+      tacGEN `_THEN` tacINDUCT `_THEN`
+      tacASM_REWRITE [defLE, thmADD_CLAUSES, thmLE_REFL]
 
 thmLTE_CASES :: ArithCtxt thry => HOL cls thry HOLThm
-thmLTE_CASES = cacheProof "thmLTE_CASES" ctxtArith Base.thmLTE_CASES
+thmLTE_CASES = cacheProof "thmLTE_CASES" ctxtArith .
+    prove [str| !m n. m < n \/ n <= m |] $
+      tacONCE_REWRITE [thmDISJ_SYM] `_THEN` tacMATCH_ACCEPT thmLET_CASES
 
 thmSUB_ADD_LCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmSUB_ADD_LCANCEL = 
-    cacheProof "thmSUB_ADD_LCANCEL" ctxtArith Base.thmSUB_ADD_LCANCEL
+thmSUB_ADD_LCANCEL = cacheProof "thmSUB_ADD_LCANCEL" ctxtArith .
+    prove "!m n p. (m + n) - (m + p) = n - p" $
+      tacINDUCT `_THEN` 
+      tacASM_REWRITE [thmADD_CLAUSES, thmSUB_0, thmSUB_SUC]
 
 thmBIT0_THM :: ArithCtxt thry => HOL cls thry HOLThm
-thmBIT0_THM = cacheProof "thmBIT0_THM" ctxtArith Base.thmBIT0_THM
+thmBIT0_THM = cacheProof "thmBIT0_THM" ctxtArith .
+    prove "!n. NUMERAL (BIT0 n) = NUMERAL n + NUMERAL n" $
+      tacREWRITE [defNUMERAL, thmBIT0]
 
 thmBIT1 :: ArithCtxt thry => HOL cls thry HOLThm
-thmBIT1 = cacheProof "thmBIT1" ctxtArith Base.thmBIT1
+thmBIT1 = Base.thmBIT1
 
 thmMULT_SUC :: ArithCtxt thry => HOL cls thry HOLThm
-thmMULT_SUC = cacheProof "thmMULT_SUC" ctxtArith Base.thmMULT_SUC
+thmMULT_SUC = Base.thmMULT_SUC
 
 thmNOT_LE :: ArithCtxt thry => HOL cls thry HOLThm
-thmNOT_LE = cacheProof "thmNOT_LE" ctxtArith Base.thmNOT_LE
+thmNOT_LE = Base.thmNOT_LE
 
 thmNOT_LT :: ArithCtxt thry => HOL cls thry HOLThm
-thmNOT_LT = cacheProof "thmNOT_LT" ctxtArith Base.thmNOT_LT
+thmNOT_LT = Base.thmNOT_LT
 
 thmLE_EXISTS :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_EXISTS = cacheProof "thmLE_EXISTS" ctxtArith Base.thmLE_EXISTS
+thmLE_EXISTS = Base.thmLE_EXISTS
 
 thmLT_EXISTS :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_EXISTS = cacheProof "thmLT_EXISTS" ctxtArith Base.thmLT_EXISTS
+thmLT_EXISTS = cacheProof "thmLT_EXISTS" ctxtArith .
+    prove "!m n. (m < n) <=> (?d. n = m + SUC d)" $
+      tacGEN `_THEN` tacINDUCT `_THEN` 
+      tacREWRITE [ defLT, thmADD_CLAUSES, ruleGSYM thmNOT_SUC ] `_THEN`
+      tacASM_REWRITE [thmSUC_INJ] `_THEN` tacEQ `_THENL`
+      [ _DISCH_THEN (_DISJ_CASES_THEN2 tacSUBST1 tacMP) `_THENL`
+        [ tacEXISTS "0" `_THEN` tacREWRITE [thmADD_CLAUSES]
+        , _DISCH_THEN (_X_CHOOSE_THEN "d:num" tacSUBST1) `_THEN`
+          tacEXISTS "SUC d" `_THEN` tacREWRITE [thmADD_CLAUSES]
+        ]
+      , tacONCE_REWRITE [thmLEFT_IMP_EXISTS] `_THEN`
+        tacINDUCT `_THEN` tacREWRITE [thmADD_CLAUSES, thmSUC_INJ] `_THEN`
+        _DISCH_THEN tacSUBST1 `_THEN` tacREWRITE_NIL `_THEN` 
+        tacDISJ2 `_THEN` tacREWRITE [ thmSUC_INJ, thmEQ_ADD_LCANCEL
+                                    , ruleGSYM thmEXISTS_REFL ]
+      ]
 
 thmLT_ADDR :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_ADDR = cacheProof "thmLT_ADDR" ctxtArith Base.thmLT_ADDR
+thmLT_ADDR = Base.thmLT_ADDR
 
 thmADD_SUB2 :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_SUB2 = cacheProof "thmADD_SUB2" ctxtArith Base.thmADD_SUB2
+thmADD_SUB2 = cacheProof "thmADD_SUB2" ctxtArith .
+    prove "!m n. (m + n) - m = n" $
+      tacONCE_REWRITE [thmADD_SYM] `_THEN` tacMATCH_ACCEPT thmADD_SUB
 
 thmLTE_ANTISYM :: ArithCtxt thry => HOL cls thry HOLThm
-thmLTE_ANTISYM = cacheProof "thmLTE_ANTISYM" ctxtArith Base.thmLTE_ANTISYM
+thmLTE_ANTISYM = cacheProof "thmLTE_ANTISYM" ctxtArith .
+    prove [str| !m n. ~(m < n /\ n <= m) |] $
+      tacONCE_REWRITE [thmCONJ_SYM] `_THEN` tacREWRITE [thmLET_ANTISYM]
 
 thmLE_LT :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_LT = cacheProof "thmLE_LT" ctxtArith Base.thmLE_LT
+thmLE_LT = cacheProof "thmLE_LT" ctxtArith .
+    prove [str| !m n. (m <= n) <=> (m < n) \/ (m = n) |] $
+      _REPEAT tacINDUCT `_THEN` 
+      tacASM_REWRITE [ thmLE_SUC, thmLT_SUC
+                     , thmSUC_INJ, thmLE_0, thmLT_0 ] `_THEN`
+      tacREWRITE [defLE, defLT]
 
 thmARITH_ZERO :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_ZERO = cacheProof "thmARITH_ZERO" ctxtArith Base.thmARITH_ZERO
+thmARITH_ZERO = cacheProof "thmARITH_ZERO" ctxtArith .
+    prove [str| (NUMERAL 0 = 0) /\ (BIT0 _0 = _0) |] $
+      tacREWRITE [defNUMERAL, thmBIT0, ruleDENUMERAL thmADD_CLAUSES]
 
 thmADD_AC :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_AC = cacheProof "thmADD_AC" ctxtArith Base.thmADD_AC
+thmADD_AC = cacheProof "thmADD_AC" ctxtArith .
+    prove [str| (m + n = n + m) /\
+                ((m + n) + p = m + (n + p)) /\
+                (m + (n + p) = n + (m + p)) |] $
+      tacMESON [thmADD_ASSOC, thmADD_SYM]
 
 thmODD_ADD :: ArithCtxt thry => HOL cls thry HOLThm
-thmODD_ADD = cacheProof "thmODD_ADD" ctxtArith Base.thmODD_ADD
+thmODD_ADD = cacheProof "thmODD_ADD" ctxtArith .
+    prove "!m n. ODD(m + n) <=> ~(ODD m <=> ODD n)" $
+      _REPEAT tacGEN `_THEN` 
+      tacREWRITE [ruleGSYM thmNOT_EVEN, thmEVEN_ADD] `_THEN`
+      tacCONV (Conv ruleITAUT)
 
 thmEQ_ADD_RCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmEQ_ADD_RCANCEL = 
-    cacheProof "thmEQ_ADD_RCANCEL" ctxtArith Base.thmEQ_ADD_RCANCEL
+thmEQ_ADD_RCANCEL = cacheProof "thmEQ_ADD_RCANCEL" ctxtArith .
+    prove "!m n p. (m + p = n + p) <=> (m = n)" $
+      tacONCE_REWRITE [thmADD_SYM] `_THEN` 
+      tacMATCH_ACCEPT thmEQ_ADD_LCANCEL
 
 thmLTE_TRANS :: ArithCtxt thry => HOL cls thry HOLThm
-thmLTE_TRANS = cacheProof "thmLTE_TRANS" ctxtArith Base.thmLTE_TRANS
+thmLTE_TRANS = cacheProof "thmLTE_TRANS" ctxtArith .
+    prove [str| !m n p. m < n /\ n <= p ==> m < p |] $
+      _REPEAT tacINDUCT `_THEN` 
+      tacASM_REWRITE [thmLE_SUC, thmLT_SUC, thmLT_0] `_THEN`
+      tacREWRITE [ defLT, defLE, thmNOT_SUC ]
 
 thmADD_SUBR2 :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_SUBR2 = cacheProof "thmADD_SUBR2" ctxtArith Base.thmADD_SUBR2
+thmADD_SUBR2 = cacheProof "thmADD_SUBR2" ctxtArith .
+    prove "!m n. m - (m + n) = 0" $
+      tacREWRITE [thmSUB_EQ_0, thmLE_ADD]
 
 thmEQ_ADD_LCANCEL_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmEQ_ADD_LCANCEL_0 = 
-    cacheProof "thmEQ_ADD_LCANCEL_0" ctxtArith Base.thmEQ_ADD_LCANCEL_0
+thmEQ_ADD_LCANCEL_0 = cacheProof "thmEQ_ADD_LCANCEL_0" ctxtArith .
+    prove "!m n. (m + n = m) <=> (n = 0)" $
+      tacINDUCT `_THEN` tacASM_REWRITE [thmADD_CLAUSES, thmSUC_INJ]
 
 thmLE_ADDR :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_ADDR = cacheProof "thmLE_ADDR" ctxtArith Base.thmLE_ADDR
+thmLE_ADDR = cacheProof "thmLE_ADDR" ctxtArith .
+    prove "!m n. n <= m + n" $
+      tacONCE_REWRITE [thmADD_SYM] `_THEN` tacMATCH_ACCEPT thmLE_ADD
 
 thmBIT1_THM :: ArithCtxt thry => HOL cls thry HOLThm
-thmBIT1_THM = cacheProof "thmBIT1_THM" ctxtArith Base.thmBIT1_THM
+thmBIT1_THM = Base.thmBIT1_THM
 
 thmLT_ADD_LCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_ADD_LCANCEL = 
-    cacheProof "thmLT_ADD_LCANCEL" ctxtArith Base.thmLT_ADD_LCANCEL
+thmLT_ADD_LCANCEL = cacheProof "thmLT_ADD_LCANCEL" ctxtArith .
+    prove "!m n p. (m + n) < (m + p) <=> n < p" $
+      tacREWRITE [ thmLT_EXISTS, ruleGSYM thmADD_ASSOC
+                 , thmEQ_ADD_LCANCEL, thmSUC_INJ ]
 
 thmLE_ADD_LCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_ADD_LCANCEL = 
-    cacheProof "thmLE_ADD_LCANCEL" ctxtArith Base.thmLE_ADD_LCANCEL
+thmLE_ADD_LCANCEL = cacheProof "thmLE_ADD_LCANCEL" ctxtArith .
+    prove "!m n p. (m + n) <= (m + p) <=> n <= p" $
+      tacREWRITE [thmLE_EXISTS, ruleGSYM thmADD_ASSOC, thmEQ_ADD_LCANCEL]
 
 thmARITH_SUC :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_SUC = cacheProof "thmARITH_SUC" ctxtArith Base.thmARITH_SUC
+thmARITH_SUC = cacheProof "thmARITH_SUC" ctxtArith .
+    prove [str| (!n. SUC(NUMERAL n) = NUMERAL(SUC n)) /\
+                (SUC _0 = BIT1 _0) /\
+                (!n. SUC (BIT0 n) = BIT1 n) /\
+                (!n. SUC (BIT1 n) = BIT0 (SUC n)) |] $
+      tacREWRITE [defNUMERAL, thmBIT0, thmBIT1, ruleDENUMERAL thmADD_CLAUSES]
 
 thmARITH_PRE :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_PRE = cacheProof "thmARITH_PRE" ctxtArith Base.thmARITH_PRE
+thmARITH_PRE = cacheProof "thmARITH_PRE" ctxtArith $
+    do th <- ruleDENUMERAL defPRE
+       prove [str| (!n. PRE(NUMERAL n) = NUMERAL(PRE n)) /\
+                   (PRE _0 = _0) /\
+                   (!n. PRE(BIT0 n) = if n = _0 then _0 else BIT1 (PRE n)) /\
+                   (!n. PRE(BIT1 n) = BIT0 n) |] $
+         tacREWRITE [defNUMERAL, thmBIT1, thmBIT0, return th ] `_THEN` 
+         tacINDUCT `_THEN` tacREWRITE [ defNUMERAL, return th
+                                      , ruleDENUMERAL thmADD_CLAUSES
+                                      , ruleDENUMERAL thmNOT_SUC, thmARITH_ZERO 
+                                      ]
 
 thmARITH_ADD :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_ADD = cacheProof "thmARITH_ADD" ctxtArith Base.thmARITH_ADD
+thmARITH_ADD = cacheProof "thmARITH_ADD" ctxtArith .
+    prove [str| (!m n. NUMERAL(m) + NUMERAL(n) = NUMERAL(m + n)) /\
+                (_0 + _0 = _0) /\
+                (!n. _0 + BIT0 n = BIT0 n) /\
+                (!n. _0 + BIT1 n = BIT1 n) /\
+                (!n. BIT0 n + _0 = BIT0 n) /\
+                (!n. BIT1 n + _0 = BIT1 n) /\
+                (!m n. BIT0 m + BIT0 n = BIT0 (m + n)) /\
+                (!m n. BIT0 m + BIT1 n = BIT1 (m + n)) /\
+                (!m n. BIT1 m + BIT0 n = BIT1 (m + n)) /\
+                (!m n. BIT1 m + BIT1 n = BIT0 (SUC(m + n))) |] $
+      tacPURE_REWRITE [ defNUMERAL, thmBIT0, thmBIT1
+                      , ruleDENUMERAL thmADD_CLAUSES, thmSUC_INJ ] `_THEN`
+      tacREWRITE [thmADD_AC]
 
 thmARITH_EVEN :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_EVEN = cacheProof "thmARITH_EVEN" ctxtArith Base.thmARITH_EVEN
+thmARITH_EVEN = cacheProof "thmARITH_EVEN" ctxtArith .
+    prove [str| (!n. EVEN(NUMERAL n) <=> EVEN n) /\
+                (EVEN _0 <=> T) /\
+                (!n. EVEN(BIT0 n) <=> T) /\
+                (!n. EVEN(BIT1 n) <=> F) |] $
+      tacREWRITE [ defNUMERAL, thmBIT1, thmBIT0
+                 , ruleDENUMERAL defEVEN
+                 , thmEVEN_ADD ]
 
 thmARITH_ODD :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_ODD = cacheProof "thmARITH_ODD" ctxtArith Base.thmARITH_ODD
+thmARITH_ODD = cacheProof "thmARITH_ODD" ctxtArith .
+    prove [str| (!n. ODD(NUMERAL n) <=> ODD n) /\
+                (ODD _0 <=> F) /\
+                (!n. ODD(BIT0 n) <=> F) /\
+                (!n. ODD(BIT1 n) <=> T) |] $
+      tacREWRITE [ defNUMERAL, thmBIT1, thmBIT0
+                 , ruleDENUMERAL defODD, thmODD_ADD ]
 
 thmLE_ADD2 :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_ADD2 = cacheProof "thmLE_ADD2" ctxtArith Base.thmLE_ADD2
+thmLE_ADD2 = cacheProof "thmLE_ADD2" ctxtArith .
+    prove [str| !m n p q. m <= p /\ n <= q ==> m + n <= p + q |] $
+      _REPEAT tacGEN `_THEN` tacREWRITE [thmLE_EXISTS] `_THEN`
+      _DISCH_THEN 
+        (_CONJUNCTS_THEN2 (tacX_CHOOSE "a:num") 
+         (tacX_CHOOSE "b:num")) `_THEN`
+      tacEXISTS "a + b" `_THEN` tacASM_REWRITE [thmADD_AC]
 
 thmADD_SUBR :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD_SUBR = cacheProof "thmADD_SUBR" ctxtArith Base.thmADD_SUBR
+thmADD_SUBR = cacheProof "thmADD_SUBR" ctxtArith .
+    prove "!m n. n - (m + n) = 0" $
+      tacONCE_REWRITE [thmADD_SYM] `_THEN` tacMATCH_ACCEPT thmADD_SUBR2
 
 thmLT_LE :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_LE = cacheProof "thmLT_LE" ctxtArith Base.thmLT_LE
+thmLT_LE = cacheProof "thmLT_LE" ctxtArith .
+    prove [str| !m n. (m < n) <=> (m <= n) /\ ~(m = n) |] $
+      tacREWRITE [thmLE_LT] `_THEN` _REPEAT tacGEN `_THEN` tacEQ `_THENL`
+      [ tacDISCH `_THEN` tacASM_REWRITE_NIL `_THEN` 
+        _DISCH_THEN tacSUBST_ALL `_THEN` _POP_ASSUM tacMP `_THEN`
+        tacREWRITE [thmLT_REFL]
+      , _DISCH_THEN (_CONJUNCTS_THEN2 tacSTRIP_ASSUME tacMP) `_THEN`
+        tacASM_REWRITE_NIL
+      ]
 
 thmLET_ADD2 :: ArithCtxt thry => HOL cls thry HOLThm
-thmLET_ADD2 = cacheProof "thmLET_ADD2" ctxtArith Base.thmLET_ADD2
+thmLET_ADD2 = cacheProof "thmLET_ADD2" ctxtArith .
+    prove [str| !m n p q. m <= p /\ n < q ==> m + n < p + q |] $
+      _REPEAT tacGEN `_THEN` tacREWRITE [thmLE_EXISTS, thmLT_EXISTS] `_THEN`
+      _DISCH_THEN (_CONJUNCTS_THEN2 (tacX_CHOOSE "a:num") 
+                     (tacX_CHOOSE "b:num")) `_THEN`
+      tacEXISTS "a + b" `_THEN` 
+      tacASM_REWRITE [thmSUC_INJ, thmADD_CLAUSES, thmADD_AC]
 
 thmADD1 :: ArithCtxt thry => HOL cls thry HOLThm
-thmADD1 = cacheProof "thmADD1" ctxtArith Base.thmADD1
+thmADD1 = cacheProof "thmADD1" ctxtArith .
+    prove "!m. SUC m = m + 1" $
+      tacREWRITE [thmBIT1_THM, thmADD_CLAUSES]
 
 thmMULT_CLAUSES :: ArithCtxt thry => HOL cls thry HOLThm
-thmMULT_CLAUSES = cacheProof "thmMULT_CLAUSES" ctxtArith Base.thmMULT_CLAUSES
+thmMULT_CLAUSES = Base.thmMULT_CLAUSES
 
 thmLT_IMP_LE :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_IMP_LE = cacheProof "thmLT_IMP_LE" ctxtArith Base.thmLT_IMP_LE
+thmLT_IMP_LE = cacheProof "thmLT_IMP_LE" ctxtArith .
+    prove "!m n. m < n ==> m <= n" $
+      tacREWRITE [thmLT_LE] `_THEN` _REPEAT tacSTRIP `_THEN` 
+      tacASM_REWRITE_NIL
 
 thmLE_ADD_RCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_ADD_RCANCEL = 
-    cacheProof "thmLE_ADD_RCANCEL" ctxtArith Base.thmLE_ADD_RCANCEL
+thmLE_ADD_RCANCEL = cacheProof "thmLE_ADD_RCANCEL" ctxtArith .
+    prove "!m n p. (m + p) <= (n + p) <=> (m <= n)" $
+      tacONCE_REWRITE [thmADD_SYM] `_THEN` 
+      tacMATCH_ACCEPT thmLE_ADD_LCANCEL
 
 thmLTE_ADD2 :: ArithCtxt thry => HOL cls thry HOLThm
-thmLTE_ADD2 = cacheProof "thmLTE_ADD2" ctxtArith Base.thmLTE_ADD2
+thmLTE_ADD2 = cacheProof "thmLTE_ADD2" ctxtArith .
+    prove [str| !m n p q. m < p /\ n <= q ==> m + n < p + q |] $
+      tacONCE_REWRITE [thmADD_SYM, thmCONJ_SYM] `_THEN`
+      tacMATCH_ACCEPT thmLET_ADD2
 
 thmMULT_SYM :: ArithCtxt thry => HOL cls thry HOLThm
-thmMULT_SYM = cacheProof "thmMULT_SYM" ctxtArith Base.thmMULT_SYM
+thmMULT_SYM = Base.thmMULT_SYM
 
 thmLEFT_ADD_DISTRIB :: ArithCtxt thry => HOL cls thry HOLThm
-thmLEFT_ADD_DISTRIB = 
-    cacheProof "thmLEFT_ADD_DISTRIB" ctxtArith Base.thmLEFT_ADD_DISTRIB
+thmLEFT_ADD_DISTRIB = Base.thmLEFT_ADD_DISTRIB
 
 thmLE_MULT_LCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_MULT_LCANCEL = 
-    cacheProof "thmLE_MULT_LCANCEL" ctxtArith Base.thmLE_MULT_LCANCEL
+thmLE_MULT_LCANCEL = cacheProof "thmLE_MULT_LCANCEL" ctxtArith $
+    do cths <- ruleCONJUNCTS thmMULT_CLAUSES
+       prove [str| !m n p. (m * n) <= (m * p) <=> (m = 0) \/ n <= p |] $
+         _REPEAT tacINDUCT `_THEN`
+         tacASM_REWRITE [ thmMULT_CLAUSES, thmADD_CLAUSES
+                         , thmLE_REFL, thmLE_0, thmNOT_SUC ] `_THEN`
+         tacREWRITE [thmLE_SUC] `_THEN`
+         tacREWRITE [ defLE, thmLE_ADD_LCANCEL, ruleGSYM thmADD_ASSOC ] `_THEN`
+         tacASM_REWRITE [ruleGSYM (cths !! 4), thmNOT_SUC]
 
 thmLT_MULT_LCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_MULT_LCANCEL = 
-    cacheProof "thmLT_MULT_LCANCEL" ctxtArith Base.thmLT_MULT_LCANCEL
+thmLT_MULT_LCANCEL = cacheProof "thmLT_MULT_LCANCEL" ctxtArith $
+    do cths <- ruleCONJUNCTS thmMULT_CLAUSES
+       prove [str| !m n p. (m * n) < (m * p) <=> ~(m = 0) /\ n < p |] $
+         _REPEAT tacINDUCT `_THEN`
+         tacASM_REWRITE [ thmMULT_CLAUSES, thmADD_CLAUSES
+                        , thmLT_REFL, thmLT_0, thmNOT_SUC] `_THEN`
+         tacREWRITE [thmLT_SUC] `_THEN`
+         tacREWRITE [ defLT, thmLT_ADD_LCANCEL, ruleGSYM thmADD_ASSOC ] `_THEN`
+         tacASM_REWRITE [ruleGSYM (cths !! 4), thmNOT_SUC]
 
 thmMULT_EQ_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmMULT_EQ_0 = cacheProof "thmMULT_EQ_0" ctxtArith Base.thmMULT_EQ_0
+thmMULT_EQ_0 = cacheProof "thmMULT_EQ_0" ctxtArith .
+    prove [str| !m n. (m * n = 0) <=> (m = 0) \/ (n = 0) |] $
+      _REPEAT tacINDUCT `_THEN` 
+      tacREWRITE [thmMULT_CLAUSES, thmADD_CLAUSES, thmNOT_SUC]
 
 thmEQ_MULT_LCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmEQ_MULT_LCANCEL = 
-    cacheProof "thmEQ_MULT_LCANCEL" ctxtArith Base.thmEQ_MULT_LCANCEL
+thmEQ_MULT_LCANCEL = cacheProof "thmEQ_MULT_LCANCEL" ctxtArith .
+    prove [str| !m n p. (m * n = m * p) <=> (m = 0) \/ (n = p) |] $
+      tacINDUCT `_THEN` tacREWRITE [thmMULT_CLAUSES, thmNOT_SUC] `_THEN`
+      _REPEAT tacINDUCT `_THEN`
+      tacASM_REWRITE [ thmMULT_CLAUSES, thmADD_CLAUSES
+                     , ruleGSYM thmNOT_SUC, thmNOT_SUC ] `_THEN`
+      tacASM_REWRITE [thmSUC_INJ, ruleGSYM thmADD_ASSOC, thmEQ_ADD_LCANCEL]
 
 thmEVEN_MULT :: ArithCtxt thry => HOL cls thry HOLThm
-thmEVEN_MULT = cacheProof "thmEVEN_MULT" ctxtArith Base.thmEVEN_MULT
+thmEVEN_MULT = cacheProof "thmEVEN_MULT" ctxtArith .
+    prove [str| !m n. EVEN(m * n) <=> EVEN(m) \/ EVEN(n) |] $
+      tacINDUCT `_THEN` 
+      tacASM_REWRITE [ thmMULT_CLAUSES, thmEVEN_ADD, defEVEN ] `_THEN`
+      tacX_GEN "p:num" `_THEN`
+      _DISJ_CASES_THEN tacMP (ruleSPEC "n:num" thmEVEN_OR_ODD) `_THEN`
+      _DISJ_CASES_THEN tacMP (ruleSPEC "p:num" thmEVEN_OR_ODD) `_THEN`
+      tacREWRITE [ruleGSYM thmNOT_EVEN] `_THEN` tacDISCH `_THEN`
+      tacASM_REWRITE_NIL
 
 thmEXP_EQ_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmEXP_EQ_0 = cacheProof "thmEXP_EQ_0" ctxtArith Base.thmEXP_EQ_0
+thmEXP_EQ_0 = cacheProof "thmEXP_EQ_0" ctxtArith .
+     prove [str| !m n. (m EXP n = 0) <=> (m = 0) /\ ~(n = 0) |] $
+      _REPEAT tacINDUCT `_THEN` 
+      tacASM_REWRITE [ thmBIT1_THM, thmNOT_SUC, defEXP
+                     , thmMULT_CLAUSES, thmADD_CLAUSES, thmADD_EQ_0 ]
 
 thmLT_ADD2 :: ArithCtxt thry => HOL cls thry HOLThm
-thmLT_ADD2 = cacheProof "thmLT_ADD2" ctxtArith Base.thmLT_ADD2
+thmLT_ADD2 = cacheProof "thmLT_ADD2" ctxtArith .
+    prove [str| !m n p q. m < p /\ n < q ==> m + n < p + q |] $
+      _REPEAT tacSTRIP `_THEN` tacMATCH_MP thmLTE_ADD2 `_THEN`
+      tacASM_REWRITE_NIL `_THEN` tacMATCH_MP thmLT_IMP_LE `_THEN`
+      tacASM_REWRITE_NIL
 
 thmRIGHT_ADD_DISTRIB :: ArithCtxt thry => HOL cls thry HOLThm
-thmRIGHT_ADD_DISTRIB = 
-    cacheProof "thmRIGHT_ADD_DISTRIB" ctxtArith Base.thmRIGHT_ADD_DISTRIB
+thmRIGHT_ADD_DISTRIB = Base.thmRIGHT_ADD_DISTRIB
 
 thmLEFT_SUB_DISTRIB :: ArithCtxt thry => HOL cls thry HOLThm
-thmLEFT_SUB_DISTRIB = 
-    cacheProof "thmLEFT_SUB_DISTRIB" ctxtArith Base.thmLEFT_SUB_DISTRIB
+thmLEFT_SUB_DISTRIB = cacheProof "thmLEFT_SUB_DISTRIB" ctxtArith .
+    prove "!m n p. m * (n - p) = m * n - m * p" $
+      _REPEAT tacGEN `_THEN` tacCONV convSYM `_THEN`
+      tacDISJ_CASES (ruleSPECL ["n:num", "p:num"] thmLE_CASES) `_THENL`
+      [ _FIRST_ASSUM 
+          (\ th -> tacREWRITE [ruleREWRITE [ruleGSYM thmSUB_EQ_0] th])`_THEN`
+        tacASM_REWRITE [thmMULT_CLAUSES, thmSUB_EQ_0, thmLE_MULT_LCANCEL]
+      , _POP_ASSUM (_CHOOSE_THEN tacSUBST1 . ruleREWRITE [thmLE_EXISTS]) `_THEN`
+        tacREWRITE [thmLEFT_ADD_DISTRIB] `_THEN`
+        tacREWRITE [ruleONCE_REWRITE [thmADD_SYM] thmADD_SUB]
+      ]
 
 thmEVEN_DOUBLE :: ArithCtxt thry => HOL cls thry HOLThm
-thmEVEN_DOUBLE = cacheProof "thmEVEN_DOUBLE" ctxtArith Base.thmEVEN_DOUBLE
+thmEVEN_DOUBLE = cacheProof "thmEVEN_DOUBLE" ctxtArith .
+    prove "!n. EVEN(2 * n)" $
+      tacGEN `_THEN` tacREWRITE [thmEVEN_MULT] `_THEN` tacDISJ1 `_THEN`
+      tacPURE_REWRITE [thmBIT0_THM, thmBIT1_THM] `_THEN` 
+      tacREWRITE [defEVEN, thmEVEN_ADD]
 
 thmLE_MULT_RCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_MULT_RCANCEL = 
-    cacheProof "thmLE_MULT_RCANCEL" ctxtArith Base.thmLE_MULT_RCANCEL
+thmLE_MULT_RCANCEL = cacheProof "thmLE_MULT_RCANCEL" ctxtArith .
+    prove [str| !m n p. (m * p) <= (n * p) <=> (m <= n) \/ (p = 0) |] $
+      tacONCE_REWRITE [thmMULT_SYM, thmDISJ_SYM] `_THEN`
+      tacMATCH_ACCEPT thmLE_MULT_LCANCEL
 
 thmDIVMOD_EXIST :: ArithCtxt thry => HOL cls thry HOLThm
-thmDIVMOD_EXIST = cacheProof "thmDIVMOD_EXIST" ctxtArith Base.thmDIVMOD_EXIST
+thmDIVMOD_EXIST = Base.thmDIVMOD_EXIST
 
 thmMULT_2 :: ArithCtxt thry => HOL cls thry HOLThm
-thmMULT_2 = cacheProof "thmMULT_2" ctxtArith Base.thmMULT_2
+thmMULT_2 = cacheProof "thmMULT_2" ctxtArith .
+    prove "!n. 2 * n = n + n" $
+      tacGEN `_THEN` 
+      tacREWRITE [thmBIT0_THM, thmMULT_CLAUSES, thmRIGHT_ADD_DISTRIB]
 
 thmARITH_MULT :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_MULT = cacheProof "thmARITH_MULT" ctxtArith Base.thmARITH_MULT
+thmARITH_MULT = cacheProof "thmARITH_MULT" ctxtArith .
+    prove [str| (!m n. NUMERAL(m) * NUMERAL(n) = NUMERAL(m * n)) /\
+                (_0 * _0 = _0) /\
+                (!n. _0 * BIT0 n = _0) /\
+                (!n. _0 * BIT1 n = _0) /\
+                (!n. BIT0 n * _0 = _0) /\
+                (!n. BIT1 n * _0 = _0) /\
+                (!m n. BIT0 m * BIT0 n = BIT0 (BIT0 (m * n))) /\
+                (!m n. BIT0 m * BIT1 n = BIT0 m + BIT0 (BIT0 (m * n))) /\
+                (!m n. BIT1 m * BIT0 n = BIT0 n + BIT0 (BIT0 (m * n))) /\
+                (!m n. BIT1 m * BIT1 n = 
+                       BIT1 m + BIT0 n + BIT0 (BIT0 (m * n))) |] $
+      tacPURE_REWRITE [ defNUMERAL, thmBIT0, thmBIT1
+                      , ruleDENUMERAL thmMULT_CLAUSES
+                      , ruleDENUMERAL thmADD_CLAUSES, thmSUC_INJ ] `_THEN`
+      tacREWRITE [thmLEFT_ADD_DISTRIB, thmRIGHT_ADD_DISTRIB, thmADD_AC]
 
 thmMULT_ASSOC :: ArithCtxt thry => HOL cls thry HOLThm
-thmMULT_ASSOC = cacheProof "thmMULT_ASSOC" ctxtArith Base.thmMULT_ASSOC
+thmMULT_ASSOC = cacheProof "thmMULT_ASSOC" ctxtArith .
+    prove "!m n p. m * (n * p) = (m * n) * p" $
+      tacINDUCT `_THEN` tacASM_REWRITE [thmMULT_CLAUSES, thmRIGHT_ADD_DISTRIB]
 
 thmLE_MULT2 :: ArithCtxt thry => HOL cls thry HOLThm
-thmLE_MULT2 = cacheProof "thmLE_MULT2" ctxtArith Base.thmLE_MULT2
+thmLE_MULT2 = cacheProof "thmLE_MULT2" ctxtArith .
+    prove [str| !m n p q. m <= n /\ p <= q ==> m * p <= n * q |] $
+      _REPEAT tacGEN `_THEN` tacREWRITE [thmLE_EXISTS] `_THEN`
+      _DISCH_THEN (_CONJUNCTS_THEN2 (tacX_CHOOSE "a:num") 
+                     (tacX_CHOOSE "b:num")) `_THEN`
+      tacEXISTS "a * p + m * b + a * b" `_THEN`
+      tacASM_REWRITE [thmLEFT_ADD_DISTRIB] `_THEN`
+      tacREWRITE [thmLEFT_ADD_DISTRIB, thmRIGHT_ADD_DISTRIB, thmADD_ASSOC]
 
 thmRIGHT_SUB_DISTRIB :: ArithCtxt thry => HOL cls thry HOLThm
-thmRIGHT_SUB_DISTRIB = 
-    cacheProof "thmRIGHT_SUB_DISTRIB" ctxtArith Base.thmRIGHT_SUB_DISTRIB
+thmRIGHT_SUB_DISTRIB = cacheProof "thmRIGHT_SUB_DISTRIB" ctxtArith .
+    prove "!m n p. (m - n) * p = m * p - n * p" $
+      tacONCE_REWRITE [thmMULT_SYM] `_THEN` tacMATCH_ACCEPT thmLEFT_SUB_DISTRIB
 
 thmARITH_LE :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_LE = cacheProof "thmARITH_LE" ctxtArith Base.thmARITH_LE
+thmARITH_LE = cacheProof "thmARITH_LE" ctxtArith $
+    do tm <- toHTm "EVEN"
+       prove [str| (!m n. NUMERAL m <= NUMERAL n <=> m <= n) /\
+                   ((_0 <= _0) <=> T) /\
+                   (!n. (BIT0 n <= _0) <=> n <= _0) /\
+                   (!n. (BIT1 n <= _0) <=> F) /\
+                   (!n. (_0 <= BIT0 n) <=> T) /\
+                   (!n. (_0 <= BIT1 n) <=> T) /\
+                   (!m n. (BIT0 m <= BIT0 n) <=> m <= n) /\
+                   (!m n. (BIT0 m <= BIT1 n) <=> m <= n) /\
+                   (!m n. (BIT1 m <= BIT0 n) <=> m < n) /\
+                   (!m n. (BIT1 m <= BIT1 n) <=> m <= n) |] $
+         tacREWRITE [ defNUMERAL, thmBIT1, thmBIT0
+                    , ruleDENUMERAL thmNOT_SUC
+                    , ruleDENUMERAL =<< ruleGSYM thmNOT_SUC, thmSUC_INJ] `_THEN`
+         tacREWRITE [ruleDENUMERAL thmLE_0] `_THEN` 
+         tacREWRITE [ ruleDENUMERAL defLE
+                    , ruleGSYM thmMULT_2 ] `_THEN`
+         tacREWRITE [ thmLE_MULT_LCANCEL, thmSUC_INJ, ruleDENUMERAL thmMULT_EQ_0
+                    , ruleDENUMERAL thmNOT_SUC ] `_THEN`
+         tacREWRITE [ruleDENUMERAL thmNOT_SUC] `_THEN` 
+         tacREWRITE [thmLE_SUC_LT] `_THEN`
+         tacREWRITE [thmLT_MULT_LCANCEL] `_THEN`
+         _SUBGOAL_THEN "2 = SUC 1" (\ th -> tacREWRITE [th]) `_THENL`
+         [ tacREWRITE [ defNUMERAL, thmBIT0, thmBIT1
+                      , ruleDENUMERAL thmADD_CLAUSES ]
+         , tacREWRITE [ ruleDENUMERAL thmNOT_SUC
+                      , thmNOT_SUC, thmEQ_MULT_LCANCEL ] `_THEN`
+           tacREWRITE [ruleONCE_REWRITE [thmDISJ_SYM] thmLE_LT] `_THEN`
+           _MAP_EVERY tacX_GEN ["m:num", "n:num"] `_THEN`
+           _SUBGOAL_THEN "~(SUC 1 * m = SUC (SUC 1 * n))" 
+             (\ th -> tacREWRITE [th]) `_THEN`
+           _DISCH_THEN (tacMP <#< ruleAP_TERM tm) `_THEN`
+           tacREWRITE [ thmEVEN_MULT, thmEVEN_ADD, defNUMERAL, thmBIT1
+                      , defEVEN ]
+         ]
 
 thmMULT_AC :: ArithCtxt thry => HOL cls thry HOLThm
-thmMULT_AC = cacheProof "thmMULT_AC" ctxtArith Base.thmMULT_AC
+thmMULT_AC = cacheProof "thmMULT_AC" ctxtArith .
+    prove [str| (m * n = n * m) /\
+                ((m * n) * p = m * (n * p)) /\
+                (m * (n * p) = n * (m * p)) |] $
+      tacMESON [thmMULT_ASSOC, thmMULT_SYM]
 
 thmARITH_LT :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_LT = cacheProof "thmARITH_LT" ctxtArith Base.thmARITH_LT
+thmARITH_LT = cacheProof "thmARITH_LT" ctxtArith .
+    prove [str| (!m n. NUMERAL m < NUMERAL n <=> m < n) /\
+                ((_0 < _0) <=> F) /\
+                (!n. (BIT0 n < _0) <=> F) /\
+                (!n. (BIT1 n < _0) <=> F) /\
+                (!n. (_0 < BIT0 n) <=> _0 < n) /\
+                (!n. (_0 < BIT1 n) <=> T) /\
+                (!m n. (BIT0 m < BIT0 n) <=> m < n) /\
+                (!m n. (BIT0 m < BIT1 n) <=> m <= n) /\
+                (!m n. (BIT1 m < BIT0 n) <=> m < n) /\
+                (!m n. (BIT1 m < BIT1 n) <=> m < n) |] $
+      tacREWRITE [defNUMERAL, ruleGSYM thmNOT_LE, thmARITH_LE] `_THEN`
+      tacREWRITE [ruleDENUMERAL defLE]
 
 thmARITH_GE :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_GE = cacheProof "thmARITH_GE" ctxtArith Base.thmARITH_GE
+thmARITH_GE = cacheProof "thmARITH_GE" ctxtArith $
+    ruleREWRITE [defGE, defGT] thmARITH_LE
 
 thmARITH_EQ :: ArithCtxt thry => HOL cls thry HOLThm
-thmARITH_EQ = cacheProof "thmARITH_EQ" ctxtArith Base.thmARITH_EQ
+thmARITH_EQ = cacheProof "thmARITH_EQ" ctxtArith .
+    prove [str| (!m n. (NUMERAL m = NUMERAL n) <=> (m = n)) /\
+                ((_0 = _0) <=> T) /\
+                 (!n. (BIT0 n = _0) <=> (n = _0)) /\
+                 (!n. (BIT1 n = _0) <=> F) /\
+                 (!n. (_0 = BIT0 n) <=> (_0 = n)) /\
+                 (!n. (_0 = BIT1 n) <=> F) /\
+                 (!m n. (BIT0 m = BIT0 n) <=> (m = n)) /\
+                 (!m n. (BIT0 m = BIT1 n) <=> F) /\
+                 (!m n. (BIT1 m = BIT0 n) <=> F) /\
+                 (!m n. (BIT1 m = BIT1 n) <=> (m = n)) |] $
+      tacREWRITE [defNUMERAL, ruleGSYM thmLE_ANTISYM, thmARITH_LE] `_THEN`
+      tacREWRITE [thmLET_ANTISYM, thmLTE_ANTISYM, ruleDENUMERAL thmLE_0]
 
 thmEXP_ADD :: ArithCtxt thry => HOL cls thry HOLThm
-thmEXP_ADD = cacheProof "thmEXP_ADD" ctxtArith Base.thmARITH_EQ
+thmEXP_ADD = cacheProof "thmEXP_ADD" ctxtArith .
+    prove "!m n p. m EXP (n + p) = (m EXP n) * (m EXP p)" $
+      tacGEN `_THEN` tacGEN `_THEN` tacINDUCT `_THEN`
+      tacASM_REWRITE [ defEXP, thmADD_CLAUSES, thmMULT_CLAUSES, thmMULT_AC ]
 
 thmDIVMOD_EXIST_0 :: ArithCtxt thry => HOL cls thry HOLThm
-thmDIVMOD_EXIST_0 = 
-    cacheProof "thmDIVMOD_EXIST_0" ctxtArith Base.thmDIVMOD_EXIST_0
+thmDIVMOD_EXIST_0 = Base.thmDIVMOD_EXIST_0
 
 thmONE :: ArithCtxt thry => HOL cls thry HOLThm
 thmONE = cacheProof "thmONE" ctxtArith $
