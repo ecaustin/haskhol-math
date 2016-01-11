@@ -35,35 +35,35 @@ ctxtNums = extendTheory ctxtPair $(thisModule') $
 -- Stage 1
     do newType "ind" 0
        mapM_ newDefinition
-         [ ("ONE_ONE", [str| ONE_ONE(f:A->B) = !x1 x2. (f x1 = f x2) ==> 
+         [ ("ONE_ONE", [txt| ONE_ONE(f:A->B) = !x1 x2. (f x1 = f x2) ==> 
                                                        (x1 = x2) |])
-         , ("ONTO", [str| ONTO(f:A->B) = !y. ?x. y = f x |])
+         , ("ONTO", [txt| ONTO(f:A->B) = !y. ?x. y = f x |])
          ]
        void $ newAxiom 
-         ("axINFINITY", [str| ?f:ind->ind. ONE_ONE f /\ ~(ONTO f) |])
+         ("axINFINITY", [txt| ?f:ind->ind. ONE_ONE f /\ ~(ONTO f) |])
 -- Stage 2
        mapM_ newDefinition
-         [ ("IND_SUC", [str| IND_SUC = @f:ind->ind. ?z. 
+         [ ("IND_SUC", [txt| IND_SUC = @f:ind->ind. ?z. 
                                        (!x1 x2. (f x1 = f x2) = (x1 = x2)) /\ 
                                        (!x. ~(f x = z)) |])
-         , ("IND_0", [str| IND_0 = @z:ind. 
+         , ("IND_0", [txt| IND_0 = @z:ind. 
                                 (!x1 x2. IND_SUC x1 = IND_SUC x2 <=> x1 = x2) /\
                                 (!x. ~(IND_SUC x = z)) |]) 
          ]
        (rep, _, _) <- newInductiveDefinition "NUM_REP"
-                        [str| NUM_REP IND_0 /\ 
+                        [txt| NUM_REP IND_0 /\ 
                               (!i. NUM_REP i ==> NUM_REP (IND_SUC i)) |]
        void $ newBasicTypeDefinition "num" "mk_num" "dest_num" =<< 
                 ruleCONJUNCT1 rep
        mapM_ newDefinition
-         [ ("_0", [str| _0 = mk_num IND_0 |])
-         , ("SUC", [str| SUC n = mk_num (IND_SUC (dest_num n)) |])
-         , ("NUMERAL", [str| NUMERAL (n:num) = n |])
+         [ ("_0", [txt| _0 = mk_num IND_0 |])
+         , ("SUC", [txt| SUC n = mk_num (IND_SUC (dest_num n)) |])
+         , ("NUMERAL", [txt| NUMERAL (n:num) = n |])
          ]
 -- Stage 3
        addIndDef ("num", (2, inductionNUM, recursionStdNUM))
        mapM_ newDefinition
-         [ ("BIT0", [str| BIT0 = @fn. fn 0 = 0 /\ 
+         [ ("BIT0", [txt| BIT0 = @fn. fn 0 = 0 /\ 
                                       (!n. fn (SUC n) = SUC (SUC(fn n))) |])
-         , ("BIT1", [str| BIT1 n = SUC (BIT0 n) |])
+         , ("BIT1", [txt| BIT1 n = SUC (BIT0 n) |])
          ]

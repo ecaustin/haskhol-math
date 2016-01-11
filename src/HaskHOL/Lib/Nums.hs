@@ -188,9 +188,10 @@ makeAcidic ''TheSpecifications
 
 defBIT0 :: NumsCtxt thry => HOL cls thry HOLThm
 defBIT0 = cacheProof "defBIT0" ctxtNums $
-    do th <- ruleBETA =<< 
-               ruleISPECL ["0", "\\m n:num. SUC (SUC m)"] recursionNUM
-       ruleREWRITE [ruleGSYM defBIT0_PRIM] =<< ruleSELECT th
+    do th <- ruleBETA $ 
+               ruleISPECL [[txt| 0 |], [txt| \m n:num. SUC (SUC m) |]] 
+                 recursionNUM
+       ruleREWRITE [ruleGSYM defBIT0_PRIM] $ ruleSELECT th
 
 tacINDUCT :: NumsCtxt thry => Tactic cls thry
 tacINDUCT = tacMATCH_MP inductionNUM `_THEN` tacCONJ `_THENL` 
@@ -202,7 +203,7 @@ mkNumeral n
     | otherwise = 
           do numeral <- serve [nums| NUMERAL |]
              n' <- mkNum n
-             liftO $ mkComb numeral n'
+             mkComb numeral n'
   where mkNum :: (Integral i, NumsCtxt thry) => i -> HOL cls thry HOLTerm
         mkNum x
             | x == 0 = serve [nums| _0 |]
@@ -210,7 +211,7 @@ mkNumeral n
                 do l <- if x `mod` 2 == 0 then serve [nums| BIT0 |]
                         else serve [nums| BIT1 |]
                    r <- mkNum $ x `div` 2
-                   liftO $ mkComb l r
+                   mkComb l r
 
 mkSmallNumeral :: NumsCtxt thry => Int -> HOL cls thry HOLTerm
 mkSmallNumeral = mkNumeral
@@ -219,7 +220,7 @@ destSmallNumeral :: HOLTerm -> Maybe Int
 destSmallNumeral = liftM fromInteger . destNumeral
 
 isNumeral :: HOLTerm -> Bool
-isNumeral = isJust . destNumeral
+isNumeral = try' . can destNumeral
 
 newSpecification :: NumsCtxt thry => [Text] -> HOLThm -> HOL Theory thry HOLThm
 newSpecification [] _ = fail "newSpecification: no constant names provided."
@@ -246,7 +247,7 @@ newSpecification names th@(Thm asl c)
                _ -> do sth <- specifies names th
                        acid' <- openLocalStateHOL (TheSpecifications [])
                        updateHOL acid' (AddSpecification names th sth)
-                       createCheckpointAndCloseHOL acid'
+                       closeAcidStateHOL acid'
                        return sth
   where specifies :: NumsCtxt thry => [Text] -> HOLThm -> HOL Theory thry HOLThm
         specifies [] thm = return thm
@@ -258,15 +259,15 @@ newSpecification names th@(Thm asl c)
         specify name thm =
             do ntm <- mkCode $ unpack name
                gv <- genVar $ typeOf ntm
-               th0 <- ruleCONV (convREWR thmSKOLEM) =<< ruleGEN gv thm
+               th0 <- ruleCONV (convREWR thmSKOLEM) $ ruleGEN gv thm
                th1 <- ruleCONV (convRATOR (convREWR thmEXISTS) `_THEN` 
                                 convBETA) th0
-               let (_, r) = fromJust . destComb $ concl th1
-                   rn = fromRight $ mkComb r ntm
+               (_, r) <- destComb $ concl th1
+               rn <- mkComb r ntm
                tm <- mkEq (mkVar name $ typeOf rn) rn
                th2 <- newDefinition (name, tm)
                th3 <- ruleGSYM th2
-               ruleGEN_REWRITE convONCE_DEPTH [th3] =<< ruleSPEC ntm =<< 
+               ruleGEN_REWRITE convONCE_DEPTH [th3] . ruleSPEC ntm $ 
                  ruleCONV convBETA th1
 
         mkCode :: NumsCtxt thry => String -> HOL cls thry HOLTerm
@@ -277,9 +278,11 @@ newSpecification _ _ = fail "newSpecification: exhausting warning."
 getSpecification :: [Text] -> HOL cls thry HOLThm
 getSpecification names =
     do acid <- openLocalStateHOL (TheSpecifications [])
-       th <- queryHOL acid (GetASpecification names)
+       qth <- queryHOL acid (GetASpecification names)
        closeAcidStateHOL acid
-       liftMaybe "getSpecification: constants not found." th
+       case qth of
+         Just res -> return res
+         _ -> fail "getSpecification: constants not found."
 
 ruleDENUMERAL :: (NumsCtxt thry, HOLThmRep thm cls thry) => thm 
               -> HOL cls thry HOLThm

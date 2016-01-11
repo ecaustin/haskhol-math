@@ -24,28 +24,27 @@ mkClauses sucflag t =
        tmAdd <- serve tmAdd'
        tmM <- serve tmM'
        tmP <- serve tmP'
-       let tm = if sucflag then fromRight $ mkComb tmSuc t else t
+       tm <- if sucflag then mkComb tmSuc t else return t
        th1 <- runConv (convPURE_REWRITE 
                          [thmARITH_ADD, thmARITH_SUC, thmARITH_0]) tm
-       tm1 <- patadj #<< rand (concl th1)
+       tm1 <- patadj =<< rand (concl th1)
        if not (tmAdd `freeIn` tm1)
           then return (th1, if tmM `freeIn` tm1 then 0 else 1)
-          else let ptm = fromJust $ rand =<< rand =<< rand =<< 
-                                      rand tm1 in
-                 do tmc <- liftM1 mkEq (mkEq ptm tmP) =<< mkEq tm #<<
-                             subst [(ptm, tmP)] tm1
-                    th <- ruleEQT_ELIM =<< 
-                            runConv (convREWRITE [ thmARITH_ADD
-                                                 , thmARITH_SUC
-                                                 , thmARITH_0
-                                                 , thmBITS_INJ]) tmc
-                    return (th, if tmSuc `freeIn` tm1 then 3 else 2)
+          else do ptm <- rand =<< rand =<< rand =<< rand tm1
+                  ptm' <- mkEq ptm tmP
+                  tmc <- mkEq ptm' =<< mkEq tm =<< subst [(ptm, tmP)] tm1
+                  th <- ruleEQT_ELIM =<< 
+                          runConv (convREWRITE [ thmARITH_ADD
+                                               , thmARITH_SUC
+                                               , thmARITH_0
+                                               , thmBITS_INJ]) tmc
+                  return (th, if tmSuc `freeIn` tm1 then 3 else 2)
   where patadj :: WFCtxt thry => HOLTerm -> HOL cls thry HOLTerm
         patadj tm = 
             do tms <- mapM (pairMapM toHTm) 
                         [ ([wf| SUC m |], [wf| SUC (m + _0) |])
                         , ([wf| SUC n |], [wf| SUC (_0 + n) |])]
-               liftO $ subst tms tm
+               subst tms tm
 
 starts :: WFCtxt thry => HOL cls thry [HOLTerm]
 starts = 
@@ -54,7 +53,7 @@ starts =
        tmAdd <- serve tmAdd'
        ms <- bases tmM
        ns <- bases tmN
-       return $! allpairsV (\ mtm ntm -> fromRight $
+       return $! allpairsV (\ mtm ntm -> try' $
                    flip mkComb ntm =<< mkComb tmAdd mtm) ms ns
   where allpairsV :: (a -> b -> c) -> [a] -> [b] -> [c]
         allpairsV _ [] _ = []
@@ -67,10 +66,10 @@ starts =
             do tmBIT1 <- serve tmBIT1'
                tmBIT0 <- serve tmBIT0'
                tmZero <- serve tmZero'
-               let v0 = fromRight $ mkComb tmBIT0 v
-                   v1 = fromRight $ mkComb tmBIT1 v
+               v0 <- mkComb tmBIT0 v
+               v1 <- mkComb tmBIT1 v
                part2 <- mapM (`mkCompnumeral` v) [8..15]
-               part1 <- mapM (liftO . subst [(v1, v0)]) part2
+               part1 <- mapM (subst [(v1, v0)]) part2
                part0 <- mapM (`mkCompnumeral` tmZero) [0..15]
                return $! part0 ++ part1 ++ part2
 
@@ -80,16 +79,16 @@ starts =
             do tmBIT1 <- serve tmBIT1'
                tmBIT0 <- serve tmBIT0'
                t <- mkCompnumeral (k `div` 2) base
-               liftO $ if k `mod` 2 == 1
-                       then mkComb tmBIT1 t
-                       else mkComb tmBIT0 t
+               if k `mod` 2 == 1
+                  then mkComb tmBIT1 t
+                  else mkComb tmBIT0 t
 
 adPairs :: WFCtxt thry => Bool -> HOL cls thry ([HOLThm], [Int])
 adPairs fl = liftM unzip $ mapM (mkClauses fl) =<< starts
 
 convNUM_SHIFT_pths1' :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_SHIFT_pths1' = cacheProof "convNUM_SHIFT_pths1'" ctxtWF .
-    prove [str| (n = a + p * b <=>
+    prove [txt| (n = a + p * b <=>
                  BIT0(BIT0(BIT0(BIT0 n))) =
                  BIT0(BIT0(BIT0(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
                 (n = a + p * b <=>
@@ -149,7 +148,7 @@ convNUM_SHIFT_pths1' = cacheProof "convNUM_SHIFT_pths1'" ctxtWF .
 
 convNUM_SHIFT_pths0' :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_SHIFT_pths0' = cacheProof "convNUM_SHIFT_pths0'" ctxtWF .
-    prove [str| (n = _0 + p * b <=>
+    prove [txt| (n = _0 + p * b <=>
                  BIT0(BIT0(BIT0(BIT0 n))) =
                  _0 + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
                 (n = _0 + p * b <=>
@@ -210,7 +209,7 @@ convNUM_SHIFT_pths0' = cacheProof "convNUM_SHIFT_pths0'" ctxtWF .
 
 convNUM_UNSHIFT_puths1' :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_UNSHIFT_puths1' = cacheProof "convNUM_UNSHIFT_puths1'" ctxtWF .
-    prove [str| (a + p * b = n <=>
+    prove [txt| (a + p * b = n <=>
                  BIT0(BIT0(BIT0(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b =
                  BIT0(BIT0(BIT0(BIT0 n)))) /\
                 (a + p * b = n <=>

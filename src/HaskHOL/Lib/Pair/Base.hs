@@ -5,6 +5,12 @@ import HaskHOL.Core
 import HaskHOL.Deductive hiding (getDefinition, newDefinition)
 import qualified HaskHOL.Deductive as D (getDefinition, newDefinition)
 
+tmA, tmB, tmX, tmY :: BaseCtxt thry => HOL cls thry HOLTerm
+tmA = serve [baseQQ| a:A |]
+tmB = serve [baseQQ| b:B |]
+tmX = serve [baseQQ| x:A |]
+tmY = serve [baseQQ| y:B |]
+
 tyDefProd :: HOL cls thry HOLThm
 tyDefProd = unsafeCacheProof "tyDefProd" $ getTypeDefinition "prod"
 
@@ -23,35 +29,36 @@ defSND = unsafeCacheProof "defSND" $ D.getDefinition "SND"
 -- stage2
 thmPAIR_EXISTS :: TriviaCtxt thry => HOL cls thry HOLThm
 thmPAIR_EXISTS = unsafeCacheProof "thmPAIR_EXISTS" $
-    prove "? x. ? (a:A) (b:B). x = mk_pair a b" tacMESON_NIL
+    prove [txt| ? x. ? (a:A) (b:B). x = mk_pair a b |] tacMESON_NIL
 
 -- stage3
 thmREP_ABS_PAIR :: TriviaCtxt thry => HOL cls thry HOLThm
 thmREP_ABS_PAIR = unsafeCacheProof "thmREP_ABS_PAIR" $
-    prove "!(x:A) (y:B). REP_prod (ABS_prod (mk_pair x y)) = mk_pair x y" $
+    prove [txt| !(x:A) (y:B). REP_prod (ABS_prod (mk_pair x y)) = 
+                              mk_pair x y |] $
       tacMESON [tyDefProd]
 
 thmPAIR_SURJECTIVE :: BoolCtxt thry => HOL cls thry HOLThm
 thmPAIR_SURJECTIVE = unsafeCacheProof "thmPAIR_SURJECTIVE" $
-    do tm <- toHTm "ABS_prod:(A->B->bool)->A#B"
-       (th1, th2) <- ruleCONJ_PAIR tyDefProd
-       prove "!p:A#B. ?x y. p = x,y" $
+    do (th1, th2) <- ruleCONJ_PAIR tyDefProd
+       prove [txt| !p:A#B. ?x y. p = x,y |] $
          tacGEN `_THEN` tacREWRITE [defCOMMA] `_THEN`
-         tacMP (ruleSPEC "REP_prod p :A->B->bool" th2) `_THEN` 
+         tacMP (ruleSPEC [txt| REP_prod p :A->B->bool |] th2) `_THEN` 
          tacREWRITE [th1] `_THEN`
-         _DISCH_THEN (_X_CHOOSE_THEN "a:A" 
-                      (_X_CHOOSE_THEN "b:B" tacMP)) `_THEN`
-         _DISCH_THEN (tacMP . ruleAP_TERM tm) `_THEN`
+         _DISCH_THEN (_X_CHOOSE_THEN tmA 
+                      (_X_CHOOSE_THEN tmB tacMP)) `_THEN`
+         _DISCH_THEN (tacMP . 
+                      ruleAP_TERM [txt| ABS_prod:(A->B->bool)->A#B |]) `_THEN`
          tacREWRITE [th1] `_THEN` _DISCH_THEN tacSUBST1 `_THEN`
-         _MAP_EVERY tacEXISTS ["a:A", "b:B"] `_THEN` tacREFL
+         _MAP_EVERY tacEXISTS [tmA, tmB] `_THEN` tacREFL
 
 thmPAIR_EQ :: TriviaCtxt thry => HOL cls thry HOLThm
 thmPAIR_EQ = unsafeCacheProof "thmPAIR_EQ" $
-    do tm <- toHTm "REP_prod:A#B->A->B->bool"
-       prove [str| !(x:A) (y:B) a b. (x,y = a,b) <=> (x = a) /\ (y = b) |] $
+    do prove [txt| !(x:A) (y:B) a b. (x,y = a,b) <=> (x = a) /\ (y = b) |] $
          _REPEAT tacGEN `_THEN` tacEQ `_THENL`
          [ tacREWRITE [defCOMMA] `_THEN`
-           _DISCH_THEN (tacMP . ruleAP_TERM tm) `_THEN`
+           _DISCH_THEN (tacMP . 
+                        ruleAP_TERM [txt| REP_prod:A#B->A->B->bool |]) `_THEN`
            tacREWRITE [thmREP_ABS_PAIR] `_THEN` 
            tacREWRITE [defMK_PAIR, thmFUN_EQ]
          , _ALL
@@ -60,43 +67,38 @@ thmPAIR_EQ = unsafeCacheProof "thmPAIR_EQ" $
 
 thmFST :: TriviaCtxt thry => HOL cls thry HOLThm
 thmFST = unsafeCacheProof "thmFST" .
-    prove "!(x:A) (y:B). FST(x,y) = x" $
+    prove [txt| !(x:A) (y:B). FST(x,y) = x |] $
       _REPEAT tacGEN `_THEN` tacREWRITE[defFST] `_THEN`
       tacMATCH_MP thmSELECT_UNIQUE `_THEN` tacGEN `_THEN` tacBETA `_THEN`
       tacREWRITE [thmPAIR_EQ] `_THEN` tacEQ `_THEN`
       tacSTRIP `_THEN` tacASM_REWRITE_NIL `_THEN`
-      tacEXISTS "y:B" `_THEN` tacASM_REWRITE_NIL
+      tacEXISTS tmY `_THEN` tacASM_REWRITE_NIL
 
 thmSND :: TriviaCtxt thry => HOL cls thry HOLThm
 thmSND = unsafeCacheProof "thmSND" .
-    prove "!(x:A) (y:B). SND(x,y) = y" $
+    prove [txt| !(x:A) (y:B). SND(x,y) = y |] $
       _REPEAT tacGEN `_THEN` tacREWRITE [defSND] `_THEN`
       tacMATCH_MP thmSELECT_UNIQUE `_THEN` tacGEN `_THEN` tacBETA `_THEN`
       tacREWRITE [thmPAIR_EQ] `_THEN` tacEQ `_THEN`
       tacSTRIP `_THEN` tacASM_REWRITE_NIL `_THEN`
-      tacEXISTS "x:A" `_THEN` tacASM_REWRITE_NIL
+      tacEXISTS tmX `_THEN` tacASM_REWRITE_NIL
 
 thmPAIR :: TriviaCtxt thry => HOL cls thry HOLThm
 thmPAIR = unsafeCacheProof "thmPAIR" .
-    prove "!x:A#B. FST x,SND x = x" $
+    prove [txt| !x:A#B. FST x,SND x = x |] $
       tacGEN `_THEN` 
-      _X_CHOOSE_THEN "a:A" (_X_CHOOSE_THEN "b:B" tacSUBST1)
-        (ruleSPEC "x:A#B" thmPAIR_SURJECTIVE) `_THEN`
+      _X_CHOOSE_THEN tmA (_X_CHOOSE_THEN tmB tacSUBST1)
+        (ruleSPEC [txt| x:A#B |] thmPAIR_SURJECTIVE) `_THEN`
       tacREWRITE [thmFST, thmSND]
 
 data Definitions = Definitions !(Map Text HOLThm) deriving Typeable
 
 deriveSafeCopy 0 'base ''Definitions
 
-getDefinitions :: Query Definitions [HOLThm]
+getDefinitions :: Query Definitions (Map Text HOLThm)
 getDefinitions =
     do (Definitions m) <- ask
-       return $! mapElems m
-
-getDefinitionPrim :: Text -> Query Definitions (Maybe HOLThm)
-getDefinitionPrim lbl =
-    do (Definitions m) <- ask
-       return $! mapLookup lbl m
+       return m
 
 addDefinition :: Text -> HOLThm -> Update Definitions ()
 addDefinition lbl th =
@@ -108,55 +110,54 @@ addDefinitions m =
     put (Definitions (mapFromList m))
 
 makeAcidic ''Definitions 
-    ['getDefinitions, 'getDefinitionPrim, 'addDefinition, 'addDefinitions]
+    ['getDefinitions, 'addDefinition, 'addDefinitions]
 
+
+getDefs :: HOL cls thry (Map Text HOLThm)
+getDefs =
+    do acid <- openLocalStateHOL (Definitions mapEmpty)
+       res <- queryHOL acid GetDefinitions
+       closeAcidStateHOL acid
+       return res
 
 newDefinition :: (TriviaCtxt thry, HOLTermRep tm Theory thry)
               => (Text, tm) -> HOL Theory thry HOLThm
 newDefinition (lbl, ptm) =
-    do acid <- openLocalStateHOL (Definitions mapEmpty)
-       qth <- queryHOL acid (GetDefinitionPrim lbl)
-       case qth of
-         Just th ->
-               closeAcidStateHOL acid >> return th
-         Nothing -> noteHOL "newDefinition" $
-              do defs <- queryHOL acid GetDefinitions
-                 closeAcidStateHOL acid
-                 tm <- toHTm ptm
+    do defs <- getDefs
+       case mapAssoc lbl defs of
+         Just th -> return th
+         Nothing -> note "newDefinition" $
+              do tm <- toHTm ptm
                  let (avs, def) = stripForall tm
-                 (do(th, th') <- tryFind (\ th -> do th' <- rulePART_MATCH Just
-                                                              th def
-                                                     return (th, th')) defs
-                    void . rulePART_MATCH Just th' . snd . stripForall $ 
-                             concl th
+                 (do(c, th') <- tryFind (\ th@(Thm _ c) -> 
+                                          do th' <- rulePART_MATCH return th def
+                                             return (c, th')) $ mapElems defs
+                    void . rulePART_MATCH return th' . snd $ stripForall c
                     warn True "Benign redefinition"
-                    th'' <- ruleGEN_ALL =<< ruleGENL avs th'
+                    th'' <- ruleGEN_ALL $ ruleGENL avs th'
                     acid' <- openLocalStateHOL (Definitions mapEmpty)
                     updateHOL acid' (AddDefinition lbl th'')
-                    createCheckpointAndCloseHOL acid'
+                    closeAcidStateHOL acid'
                     return th'')
-                  <|> (do (l, r) <- liftMaybe "newDefinition: Not an equation" $
-                                      destEq def
+                  <|> (do (l, r) <- destEq def
                           let (fn, args) = stripComb l
                           args' <- mapM depair args
                           let (gargs, reps) = (id `ffComb` unions) $ unzip args'
-                              l' = fromRight $ listMkComb fn gargs
-                          r' <- liftO $ subst reps r
+                          l' <- listMkComb fn gargs
+                          r' <- subst reps r
                           edef <- mkEq l' r'
                           th1 <- D.newDefinition (lbl, edef)
                           let slist = zip gargs args
-                          th2 <- liftM (fromJust . primINST slist) $ 
-                                   ruleSPEC_ALL th1
-                          xreps <- liftO $ mapM (subst slist . snd) reps
+                          th2 <- primINST slist $ ruleSPEC_ALL th1
+                          xreps <- mapM (subst slist . snd) reps
                           let conv = convPURE_REWRITE [thmFST, thmSND]
-                          threps <- mapM (\ x -> do x' <- runConv conv x
-                                                    liftO $ ruleSYM x') xreps
+                          threps <- mapM (ruleSYM . runConv conv) xreps
                           rth <- runConv (convSUBS threps) r
-                          th3 <- liftO $ primTRANS th2 =<< ruleSYM rth
-                          th4 <- ruleGEN_ALL =<< ruleGENL avs th3
+                          th3 <- primTRANS th2 $ ruleSYM rth
+                          th4 <- ruleGEN_ALL $ ruleGENL avs th3
                           acid' <- openLocalStateHOL (Definitions mapEmpty)
                           updateHOL acid' (AddDefinition lbl th4)
-                          createCheckpointAndCloseHOL acid'
+                          closeAcidStateHOL acid'
                           return th4)
   where depair :: HOLTerm -> HOL cls thry (HOLTerm, [(HOLTerm, HOLTerm)])
         depair x =
@@ -166,9 +167,9 @@ newDefinition (lbl, ptm) =
           where depairRec :: HOLTerm -> HOLTerm 
                           -> HOL cls thry [(HOLTerm, HOLTerm)]
                 depairRec gv arg = 
-                    (do (l, r) <- liftO $ destBinary "," arg
-                        l' <- liftM1 depairRec (listMkIComb "FST" [gv]) l
-                        r' <- liftM1 depairRec (listMkIComb "SND" [gv]) r
+                    (do (l, r) <- destBinary "," arg
+                        l' <- flip depairRec l =<< listMkIComb "FST" [gv]
+                        r' <- flip depairRec r =<< listMkIComb "SND" [gv]
                         return $! l' ++ r')
                     <|> return [(arg, gv)]
     
@@ -176,14 +177,14 @@ newDefinition (lbl, ptm) =
 -- stage4
 recursionPAIR :: TriviaCtxt thry => HOL cls thry HOLThm
 recursionPAIR = unsafeCacheProof "recursionPAIR" .
-    prove "!PAIR'. ?fn:A#B->C. !a0 a1. fn (a0,a1) = PAIR' a0 a1" $
+    prove [txt| !PAIR'. ?fn:A#B->C. !a0 a1. fn (a0,a1) = PAIR' a0 a1 |] $
       tacGEN `_THEN` 
-      tacEXISTS [str| \p. (PAIR':A->B->C) (FST p) (SND p) |] `_THEN`
+      tacEXISTS [txt| \p. (PAIR':A->B->C) (FST p) (SND p) |] `_THEN`
       tacREWRITE [thmFST, thmSND]
 
 inductPAIR :: TriviaCtxt thry => HOL cls thry HOLThm
 inductPAIR = unsafeCacheProof "inductPAIR" .
-    prove "!P. (!x y. P (x,y)) ==> !p. P p" $
+    prove [txt| !P. (!x y. P (x,y)) ==> !p. P p |] $
       _REPEAT tacSTRIP `_THEN`
       tacGEN_REWRITE convRAND [ruleGSYM thmPAIR] `_THEN`
       _FIRST_ASSUM tacMATCH_ACCEPT
