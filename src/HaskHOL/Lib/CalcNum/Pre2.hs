@@ -96,10 +96,10 @@ addClauses =
                    let v' = V.fromList clauses
                    acid' <- openLocalStateHOLBase (ADDClauses V.empty)
                    updateHOLUnsafe acid' (PutAddClauses v')
-                   createCheckpointAndCloseHOL acid'
+                   closeAcidStateHOL acid'
                    acid2 <- openLocalStateHOLBase (ADDFlags V.empty)
                    updateHOLUnsafe acid2 (PutAddFlags (V.fromList flags))
-                   createCheckpointAndCloseHOL acid2
+                   closeAcidStateHOL acid2
                    return v'
 
 addFlags :: WFCtxt thry => HOL cls thry (Vector Int)
@@ -114,10 +114,10 @@ addFlags =
                    let v' = V.fromList flags
                    acid' <- openLocalStateHOLBase (ADDClauses V.empty)
                    updateHOLUnsafe acid' (PutAddClauses (V.fromList clauses))
-                   createCheckpointAndCloseHOL acid'
+                   closeAcidStateHOL acid'
                    acid2 <- openLocalStateHOLBase (ADDFlags V.empty)
                    updateHOLUnsafe acid2 (PutAddFlags v')
-                   createCheckpointAndCloseHOL acid2
+                   closeAcidStateHOL acid2
                    return v'
 
 
@@ -133,10 +133,10 @@ adcClauses =
                    let v' = V.fromList clauses
                    acid' <- openLocalStateHOLBase (ADCClauses V.empty)
                    updateHOLUnsafe acid' (PutAdcClauses v')
-                   createCheckpointAndCloseHOL acid'
+                   closeAcidStateHOL acid'
                    acid2 <- openLocalStateHOLBase (ADCFlags V.empty)
                    updateHOLUnsafe acid2 (PutAdcFlags (V.fromList flags))
-                   createCheckpointAndCloseHOL acid2
+                   closeAcidStateHOL acid2
                    return v'
 
 adcFlags :: WFCtxt thry => HOL cls thry (Vector Int)
@@ -151,10 +151,10 @@ adcFlags =
                    let v' = V.fromList flags
                    acid' <- openLocalStateHOLBase (ADCClauses V.empty)
                    updateHOLUnsafe acid' (PutAdcClauses (V.fromList clauses))
-                   createCheckpointAndCloseHOL acid'
+                   closeAcidStateHOL acid'
                    acid2 <- openLocalStateHOLBase (ADCFlags V.empty)
                    updateHOLUnsafe acid2 (PutAdcFlags v')
-                   createCheckpointAndCloseHOL acid2
+                   closeAcidStateHOL acid2
                    return v'
 
 data SHIFTPths1 = SHIFTPths1 !(Vector HOLThm) deriving Typeable
@@ -232,7 +232,7 @@ convNUM_SHIFT_pths1 =
                   let v' = V.fromList ths
                   acid' <- openLocalStateHOLBase (SHIFTPths1 V.empty)
                   updateHOLUnsafe acid (PutShiftPths1 v')
-                  createCheckpointAndCloseHOL acid'
+                  closeAcidStateHOL acid'
                   return v'
 
 convNUM_SHIFT_pths0 :: WFCtxt thry => HOL cls thry (Vector HOLThm)
@@ -246,7 +246,7 @@ convNUM_SHIFT_pths0 =
                   let v' = V.fromList ths
                   acid' <- openLocalStateHOLBase (SHIFTPths0 V.empty)
                   updateHOLUnsafe acid (PutShiftPths0 v')
-                  createCheckpointAndCloseHOL acid'
+                  closeAcidStateHOL acid'
                   return v'
 
 convNUM_UNSHIFT_puths1 :: WFCtxt thry => HOL cls thry (Vector HOLThm)
@@ -260,7 +260,7 @@ convNUM_UNSHIFT_puths1 =
                   let v' = V.fromList ths
                   acid' <- openLocalStateHOLBase (UNSHIFTpuths1 V.empty)
                   updateHOLUnsafe acid (PutUnshiftpuths1 v')
-                  createCheckpointAndCloseHOL acid'
+                  closeAcidStateHOL acid'
                   return v'
 
 convNUM_UNSHIFT_puths2 :: WFCtxt thry => HOL cls thry (Vector HOLThm)
@@ -278,5 +278,5 @@ convNUM_UNSHIFT_puths2 =
                   let v' = V.fromList ths
                   acid' <- openLocalStateHOLBase (UNSHIFTpuths2 V.empty)
                   updateHOLUnsafe acid (PutUnshiftpuths2 v')
-                  createCheckpointAndCloseHOL acid'
+                  closeAcidStateHOL acid'
                   return v'
