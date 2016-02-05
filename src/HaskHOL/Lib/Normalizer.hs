@@ -1,4 +1,4 @@
-{-# LANGUAGE PatternSynonyms, ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-|
   Module:    HaskHOL.Lib.Normalizer
   Copyright: (c) The University of Kansas 2013
@@ -25,7 +25,7 @@ import Data.Vector (fromList, (!))
 
 semiring_pth :: WFCtxt thry => HOL cls thry HOLThm
 semiring_pth = cacheProof "semiring_pth" ctxtWF .
-    prove [str| (!x:A y z. add x (add y z) = add (add x y) z) /\
+    prove [txt| (!x:A y z. add x (add y z) = add (add x y) z) /\
                 (!x y. add x y = add y x) /\
                 (!x. add r0 x = x) /\
                 (!x y z. mul x (mul y z) = mul (mul x y) z) /\
@@ -77,7 +77,7 @@ semiring_pth = cacheProof "semiring_pth" ctxtWF .
                     (mul x (add y z) = add (mul x y) (mul x z)) /\
                     (pwr x (SUC q) = mul x (pwr x q)) |] $
       tacSTRIP `_THEN`
-      _SUBGOAL_THEN [str| (!m:A n. add m n = add n m) /\
+      _SUBGOAL_THEN [txt| (!m:A n. add m n = add n m) /\
                           (!m n p. add (add m n) p = add m (add n p)) /\
                           (!m n p. add m (add n p) = add n (add m p)) /\
                           (!x. add x r0 = x) /\
@@ -90,26 +90,28 @@ semiring_pth = cacheProof "semiring_pth" ctxtWF .
       tacMP `_THENL`
       [ tacASM_MESON_NIL
       , _MAP_EVERY (\ t -> _UNDISCH_THEN t (const _ALL))
-        [ "!x:A y z. add x (add y z) = add (add x y) z"
-        , "!x:A y. add x y :A = add y x"
-        , "!x:A y z. mul x (mul y z) = mul (mul x y) z"
-        , "!x:A y. mul x y :A = mul y x"
+        [ [txt| !x:A y z. add x (add y z) = add (add x y) z |]
+        , [txt| !x:A y. add x y :A = add y x |]
+        , [txt| !x:A y z. mul x (mul y z) = mul (mul x y) z |]
+        , [txt| !x:A y. mul x y :A = mul y x |]
         ] `_THEN`
         tacSTRIP
       ] `_THEN`
-      tacASM_REWRITE [ runConv convNUM =<< toHTm "2"
-                     , runConv convNUM =<< toHTm "1" ] `_THEN`
-      _SUBGOAL_THEN "!m n:num x:A. pwr x (m + n) :A = mul (pwr x m) (pwr x n)"
+      tacASM_REWRITE [ runConv convNUM [txt| 2 |]
+                     , runConv convNUM [txt| 1 |] ] `_THEN`
+      _SUBGOAL_THEN [txt| !m n:num x:A. pwr x (m + n) :A = 
+                                        mul (pwr x m) (pwr x n) |]
       tacASSUME `_THENL`
       [ tacGEN `_THEN` tacINDUCT `_THEN` tacASM_REWRITE [thmADD_CLAUSES]
       , _ALL
       ] `_THEN`
-      _SUBGOAL_THEN "!x:A y:A n:num. pwr (mul x y) n = mul (pwr x n) (pwr y n)"
+      _SUBGOAL_THEN [txt| !x:A y:A n:num. pwr (mul x y) n = 
+                                          mul (pwr x n) (pwr y n) |]
       tacASSUME `_THENL`
       [ tacGEN `_THEN` tacGEN `_THEN` tacINDUCT `_THEN` tacASM_REWRITE_NIL
       , _ALL
       ] `_THEN`
-      _SUBGOAL_THEN "!x:A m:num n. pwr (pwr x m) n = pwr x (m * n)"
+      _SUBGOAL_THEN [txt| !x:A m:num n. pwr (pwr x m) n = pwr x (m * n) |]
       (\ th -> tacASM_MESON [th]) `_THEN`
       tacGEN `_THEN` tacGEN `_THEN` tacINDUCT `_THEN` 
       tacASM_REWRITE [thmMULT_CLAUSES]
@@ -126,20 +128,15 @@ convSEMIRING_NORMALIZERS :: forall cls thry. WFCtxt thry
 convSEMIRING_NORMALIZERS sth rth ( isSemiringConstant, convSEMIRING_ADD
                                  , convSEMIRING_MUL, convSEMIRING_POW ) 
                          variableOrder =
- do thms <- ruleCONJUNCTS =<< ruleMATCH_MP semiring_pth sth
-    tmP <- serve tmP'
-    tmQ <- serve tmQ'
-    tmOnen <- serve tmOnen'
-    tmZeron <- serve tmZeron' 
-    tmTrue <- serve tmTrue'
+ do thms <- ruleCONJUNCTS $ ruleMATCH_MP semiring_pth sth
     let pthms = fromList thms
-        tmAdd = fromJust $ rator =<< rator =<< lHand (concl $ pthms ! 6)
-        tmMul = fromJust $ rator =<< rator =<< lHand (concl $ pthms ! 12)
-        tmPow = fromJust $ rator =<< rator =<< rand (concl $ pthms ! 31)
-        tmZero = fromJust $ rand (concl $ pthms ! 5)
-        tmOne = fromJust $ rand =<< lHand (concl $ pthms ! 13)
-        ty = typeOf . fromJust . rand . concl $ pthms ! 0
-        tmA = mkVar "a" ty
+    tmAdd <- rator =<< rator =<< lHand (concl $ pthms ! 6)
+    tmMul <- rator =<< rator =<< lHand (concl $ pthms ! 12)
+    tmPow <- rator =<< rator =<< rand (concl $ pthms ! 31)
+    tmZero <- rand (concl $ pthms ! 5)
+    tmOne <- rand =<< lHand (concl $ pthms ! 13)
+    ty <- typeOf `fmap` (rand . concl $ pthms ! 0)
+    let tmA = mkVar "a" ty
         tmB = mkVar "b" ty
         tmC = mkVar "c" ty
         tmD = mkVar "d" ty
@@ -156,74 +153,72 @@ convSEMIRING_NORMALIZERS sth rth ( isSemiringConstant, convSEMIRING_ADD
         destPow tm =
             do (l, r) <- destBinop tmPow tm
                if isNumeral r 
-                  then Just (l, r)
-                  else Nothing
+                  then return (l, r)
+                  else fail' "destPow"
         isAdd = isBinop tmAdd
         isMul = isBinop tmMul
     (nthm1, nthm2, tmSub, tmNeg, destSub) <-
           if concl rth == tmTrue 
-          then return (rth, rth, tmTrue, tmTrue, \ t -> Just (t, t))
-          else do nthm1 <- ruleSPEC tmX =<< ruleCONJUNCT1 rth
-                  nthm2 <- ruleSPECL [tmX, tmY] =<< ruleCONJUNCT2 rth
-                  let tmSub = fromJust $ rator =<< rator =<< lHand (concl nthm2)
-                      tmNeg = fromJust $ rator =<< lHand (concl nthm1)
-                      destSub = destBinop tmSub
+          then return (rth, rth, tmTrue, tmTrue, \ t -> return (t, t))
+          else do nthm1 <- ruleSPEC tmX $ ruleCONJUNCT1 rth
+                  nthm2 <- ruleSPECL [tmX, tmY] $ ruleCONJUNCT2 rth
+                  tmSub <- rator =<< rator =<< lHand (concl nthm2)
+                  tmNeg <- rator =<< lHand (concl nthm1)
+                  let destSub = destBinop tmSub
                   return (nthm1, nthm2, tmSub, tmNeg, destSub)
 --
     let convPOWVAR_MUL :: Conversion cls thry
         convPOWVAR_MUL = Conv $ \ tm ->
-          let (l, r) = fromJust $ destMul tm in
+          do (l, r) <- destMul tm in
             if isSemiringConstant l && isSemiringConstant r
             then runConv convSEMIRING_MUL tm
-            else do { (lx, ln) <- liftO $ destPow l
-                    ; do { (_, rn) <- liftO $ destPow r
-                         ; th1 <- liftO . primINST [ (tmX, lx), (tmP, ln)
-                                                   , (tmQ, rn) ] $ pthms ! 28
-                         ; (tm1, tm2) <- liftO $ destComb =<< 
-                                                   rand (concl th1)
+            else do { (lx, ln) <- destPow l
+                    ; do { (_, rn) <- destPow r
+                         ; th1 <- primINST [ (tmX, lx), (tmP, ln)
+                                           , (tmQ, rn) ] $ pthms ! 28
+                         ; (tm1, tm2) <- destComb =<< rand (concl th1)
                          ; th2 <- runConv convNUM_ADD tm2
-                         ; liftO $ primTRANS th1 =<< ruleAP_TERM tm1 th2
+                         ; primTRANS th1 $ ruleAP_TERM tm1 th2
                          } <|>
-                      do { th1 <- liftO . primINST [ (tmX, lx)
-                                                   , (tmQ, ln) ] $ pthms ! 30
-                         ; (tm1, tm2) <- liftO $ destComb =<< 
-                                                   rand (concl th1)
+                      do { th1 <- primINST [ (tmX, lx)
+                                           , (tmQ, ln) ] $ pthms ! 30
+                         ; (tm1, tm2) <- destComb =<< rand (concl th1)
                          ; th2 <- runConv convNUM_SUC tm2
-                         ; liftO $ primTRANS th1 =<< ruleAP_TERM tm1 th2
+                         ; primTRANS th1 $ ruleAP_TERM tm1 th2
                          }
                     } <|>
-                 do { (rx, rn) <- liftO $ destPow r
-                    ; th1 <- liftO . primINST [(tmX, rx), (tmQ, rn)] $ pthms ! 29
-                    ; (tm1, tm2) <- liftO $ destComb =<< rand (concl th1)
+                 do { (rx, rn) <- destPow r
+                    ; th1 <- primINST [(tmX, rx), (tmQ, rn)] $ pthms ! 29
+                    ; (tm1, tm2) <- destComb =<< rand (concl th1)
                     ; th2 <- runConv convNUM_SUC tm2
-                    ; liftO $ primTRANS th1 =<< ruleAP_TERM tm1 th2
-                    } <|> (liftO . primINST [(tmX, l)] $ pthms ! 31)
+                    ; primTRANS th1 $ ruleAP_TERM tm1 th2
+                    } <|> (primINST [(tmX, l)] $ pthms ! 31)
 --
     let ruleMONOMIAL_DEONE :: HOLThm -> Maybe HOLThm
         ruleMONOMIAL_DEONE th =
             (do (l, r) <- destMul =<< rand (concl th)
                 if l == tmOne
-                   then hush $ primTRANS th #<< primINST [(tmX, r)] 
-                                                  (pthms ! 0)
+                   then primTRANS th $ primINST [(tmX, r)] (pthms ! 0)
                    else return th)
             <|> return th
 --
     let ruleMONOMIAL_POW :: HOLTerm -> HOLTerm -> HOLTerm 
                          -> HOL cls thry HOLThm
         ruleMONOMIAL_POW tm bod ntm
-            | not (isComb bod) = return $! primREFL tm
+            | not (isComb bod) = primREFL tm
             | isSemiringConstant bod = runConv convSEMIRING_POW tm
             | otherwise =
-              let (lop, r) = fromJust $ destComb bod in
-                if not (isComb lop) then return $! primREFL tm
-                else let (op, l) = fromJust $ destComb lop in
-                       if op == tmPow && isNumeral r
-                       then let th1 = fromJust . primINST 
-                                      [(tmX, l), (tmP, r), (tmQ, ntm)] $ pthms ! 33
-                                (l', r') = fromJust $ destComb =<< 
-                                                        rand (concl th1) in
-                              do th2 <- runConv convNUM_MULT r'
-                                 liftO $ primTRANS th1 =<< ruleAP_TERM l' th2
+                do (lop, r) <- destComb bod
+                   if not (isComb lop) 
+                      then primREFL tm
+                      else do (op, l) <- destComb lop
+                              if op == tmPow && isNumeral r
+                              then do th1 <- primINST [ (tmX, l), (tmP, r)
+                                                      , (tmQ, ntm)
+                                                      ] $ pthms ! 33
+                                      (l', r') <- destComb =<< rand (concl th1)
+                                      th2 <- runConv convNUM_MULT r'
+                                      primTRANS th1 $ ruleAP_TERM l' th2
                        else if op == tmMul
                             then let th1 = fromJust . primINST
                                              [ (tmX, l), (tmY, r)
@@ -690,7 +685,7 @@ tmOnen' = [wf| 1 |]
 
 convNUM_NORMALIZE_sth :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_NORMALIZE_sth = cacheProof "convNUM_NORMALIZE_sth" ctxtWF $
-    prove [str| (!x y z. x + (y + z) = (x + y) + z) /\
+    prove [txt| (!x y z. x + (y + z) = (x + y) + z) /\
                 (!x y. x + y = y + x) /\
                 (!x. 0 + x = x) /\
                 (!x y z. x * (y * z) = (x * y) * z) /\

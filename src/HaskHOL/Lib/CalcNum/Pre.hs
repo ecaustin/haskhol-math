@@ -50,21 +50,21 @@ starts :: WFCtxt thry => HOL cls thry [HOLTerm]
 starts = 
     do ms <- bases tmM
        ns <- bases tmN
-       tmAdd' <- toHTm tmAdd
-       return $! allpairsV (\ mtm ntm -> try' $
-                   flip mkComb ntm =<< mkComb tmAdd' mtm) ms ns
-  where allpairsV :: (a -> b -> c) -> [a] -> [b] -> [c]
-        allpairsV _ [] _ = []
+       allpairsV (\ mtm ntm -> mkComb (mkComb tmAdd mtm) ntm) ms ns
+  where allpairsV :: Monad m => (a -> b -> m c) -> [a] -> [b] -> m [c]
+        allpairsV _ [] _ = return []
         allpairsV f (h:t) ys =
-            foldr (\ x a -> f h x : a) (allpairsV f t ys) ys
+            do t' <- allpairsV f t ys
+               foldrM (\ x a -> do h' <- f h x
+                                   return (h' : a)) t' ys
             
        
         bases :: (WFCtxt thry, HOLTermRep tm cls thry) 
               => tm -> HOL cls thry [HOLTerm]
         bases pv =
             do v <- toHTm pv
-               v0 <- flip mkComb v =<< tmBIT0
-               v1 <- flip mkComb v =<< tmBIT1
+               v0 <- mkComb tmBIT0 v
+               v1 <- mkComb tmBIT1 v
                part2 <- mapM (`mkCompnumeral` v) [8..15]
                part1 <- mapM (subst [(v1, v0)]) part2
                tmZero' <- toHTm tmZero
@@ -76,8 +76,8 @@ starts =
         mkCompnumeral k base =
             do t <- mkCompnumeral (k `div` 2) base
                if k `mod` 2 == 1
-                  then flip mkComb t =<< tmBIT1
-                  else flip mkComb t =<< tmBIT0
+                  then mkComb tmBIT1 t
+                  else mkComb tmBIT0 t
 
 adPairs :: WFCtxt thry => Bool -> HOL cls thry ([HOLThm], [Int])
 adPairs fl = liftM unzip $ mapM (mkClauses fl) =<< starts

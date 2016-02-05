@@ -1,4 +1,3 @@
-{-# LANGUAGE PatternSynonyms #-}
 {-|
   Module:    HaskHOL.Lib.CalcNum
   Copyright: (c) The University of Kansas 2013
@@ -226,25 +225,25 @@ convNUM_EXP = Conv $ \ tm -> note "convNUM_EXP" $
   where ruleNUM_EXP_CONV :: WFCtxt thry => HOLTerm -> HOLTerm
                          -> HOL cls thry HOLThm
         ruleNUM_EXP_CONV l ZERO = primINST [(tmM, l)] convNUM_EXP_pth
-        ruleNUM_EXP_CONV l (Comb b r')
-            | b == tmBIT0 = 
-                do th1 <- ruleNUM_EXP_CONV l r'
-                   tm1 <- rand $ concl th1
-                   th2 <- runConv convNUM_MULT' $ mkBinop tmMul tm1 tm1
-                   tm2 <- rand $ concl th2
-                   th3 <- primINST [ (tmM, l), (tmN, r'), (tmP, tm1)
-                                   , (tmB, tm2), (tmA, tm2) ] convNUM_EXP_pth0
-                   ruleMP (ruleMP th3 th1) th2
-            | otherwise = 
-                do th1 <- ruleNUM_EXP_CONV l r'
-                   tm1 <- rand $ concl th1
-                   th2 <- runConv convNUM_MULT' $ mkBinop tmMul tm1 tm1
-                   tm2 <- rand $ concl th2
-                   th3 <- runConv convNUM_MULT' $ mkBinop tmMul l tm2
-                   tm3 <- rand $ concl th3
-                   th4 <- primINST [ (tmM, l), (tmN, r'), (tmP, tm1)
-                                   , (tmB, tm2), (tmA, tm3) ] convNUM_EXP_pth1
-                   ruleMP (ruleMP (ruleMP th4 th1) th2) th3
+        ruleNUM_EXP_CONV l (BIT0 r') =
+            do th1 <- ruleNUM_EXP_CONV l r'
+               tm1 <- rand $ concl th1
+               th2 <- runConv convNUM_MULT' $ mkBinop tmMul tm1 tm1
+               tm2 <- rand $ concl th2
+               th3 <- primINST [ (tmM, l), (tmN, r'), (tmP, tm1)
+                               , (tmB, tm2), (tmA, tm2) ] convNUM_EXP_pth0
+               ruleMP (ruleMP th3 th1) th2
+        ruleNUM_EXP_CONV l (Comb _ r') =
+            do th1 <- ruleNUM_EXP_CONV l r'
+               tm1 <- rand $ concl th1
+               th2 <- runConv convNUM_MULT' $ mkBinop tmMul tm1 tm1
+               tm2 <- rand $ concl th2
+               th3 <- runConv convNUM_MULT' $ mkBinop tmMul l tm2
+               tm3 <- rand $ concl th3
+               th4 <- primINST [ (tmM, l), (tmN, r'), (tmP, tm1)
+                               , (tmB, tm2), (tmA, tm3) ] convNUM_EXP_pth1
+               ruleMP (ruleMP (ruleMP th4 th1) th2) th3
+        ruleNUM_EXP_CONV _ _ = fail "ruleNUM_EXP_CONV"
         convNUM_MULT' :: WFCtxt thry => Conversion cls thry
         convNUM_MULT' = Conv $ \ tm -> note "convNUM_MULT'" $
             case tm of
@@ -337,7 +336,7 @@ convNUM_LT = Conv $ \ tm -> note "convNUM_LT" $
 ruleNUM_ADD :: WFCtxt thry => HOLTerm -> HOLTerm -> HOL cls thry HOLThm
 ruleNUM_ADD mtm ntm = note "ruleNUM_ADD" $
     do (mLo, mHi) <- topsplit mtm
-       (nLo, nHi) <- ntm
+       (nLo, nHi) <- topsplit ntm
        let mInd = case mHi of
                     ZERO -> mLo
                     _ -> mLo + 16
@@ -359,9 +358,12 @@ ruleNUM_ADD mtm ntm = note "ruleNUM_ADD" $
                  primEQ_MP th3 th2
          _ -> fail "bad flag."
 
-ruleNUM_ADC :: WFCtxt thry => HOLTerm -> HOLTerm -> HOL cls thry HOLThm
-ruleNUM_ADC mtm ntm = note "ruleNUM_ADC" $
-    do (mLo, mHi) <- topsplit mtm
+ruleNUM_ADC :: (WFCtxt thry, HOLTermRep tm1 cls thry, HOLTermRep tm2 cls thry) 
+            => tm1 -> tm2 -> HOL cls thry HOLThm
+ruleNUM_ADC ptm1 ptm2 = note "ruleNUM_ADC" $
+    do mtm <- toHTm ptm1
+       ntm <- toHTm ptm2 
+       (mLo, mHi) <- topsplit mtm
        (nLo, nHi) <- topsplit ntm
        let mInd = case mHi of
                     ZERO -> mLo
@@ -566,14 +568,12 @@ ruleNUM_MUL k l tm@(BIT1 mtm) tm'@(BIT1 ntm)
                return [th1, th2]
 
         ruleNUM_MUL_pth_recodel :: WFCtxt thry => HOL cls thry HOLThm
-        ruleNUM_MUL_pth_recodel = cacheProof "ruleNUM_MUL_pth_recodel" ctxtWF $
-            do th <- prove [txt| SUC(_0 + m) = p ==> 
-                                 (p * n = a + n <=> m * n = a) |] $
-                       tacSUBST1 (ruleMESON [defNUMERAL] "_0 = 0") `_THEN`
-                       _DISCH_THEN (tacSUBST1 . ruleSYM) `_THEN`
-                       tacREWRITE [thmADD_CLAUSES, thmMULT_CLAUSES
-                                  , thmEQ_ADD_RCANCEL]
-               ruleUNDISCH_ALL th
+        ruleNUM_MUL_pth_recodel = cacheProof "ruleNUM_MUL_pth_recodel" ctxtWF .
+            ruleUNDISCH_ALL . prove [txt| SUC(_0 + m) = p ==> 
+                                          (p * n = a + n <=> m * n = a) |] $
+              tacSUBST1 (ruleMESON [defNUMERAL] [txt| _0 = 0 |]) `_THEN`
+              _DISCH_THEN (tacSUBST1 . ruleSYM) `_THEN`
+              tacREWRITE [thmADD_CLAUSES, thmMULT_CLAUSES, thmEQ_ADD_RCANCEL]
 
         ruleNUM_MUL_pth_recoder :: WFCtxt thry => HOL cls thry HOLThm
         ruleNUM_MUL_pth_recoder = cacheProof "ruleNUM_MUL_pth_recoder" ctxtWF $
@@ -797,7 +797,8 @@ ruleNUM_SQUARE tm = note "ruleNUM_SQUARE" $
                          mtm' <- rand $ concl th1
                          th2 <- ruleNUM_SQUARE mtm'
                          ptm <- rand $ concl th2
-                         atm <- subbn (mkComb tmBIT0 =<< mkComb tmBIT0 ptm) mtm'
+                         ptm' <- mkComb tmBIT0 $ mkComb tmBIT0 ptm
+                         atm <- subbn ptm' mtm'
                          th3 <- ruleNUM_ADD mtm' atm
                          th4 <- primINST [ (tmA, atm), (tmM, mtm'), (tmN, ntm)
                                          , (tmP, ptm) ] ruleNUM_SQUARE_pth_qstep
@@ -1022,7 +1023,7 @@ ruleNUM_SQUARE tm = note "ruleNUM_SQUARE" $
           cacheProof "ruleNUM_SQUARE_pth_toom3" ctxtWF $
             do rewrites <- mapM (\ k -> 
                              do n <- mkSmallNumeral (k - 1)
-                                th <- runConv (convREWRITE [thmARITH_SUC]) =<< 
+                                th <- runConv (convREWRITE [thmARITH_SUC]) $ 
                                         mkComb tmSuc n
                                 ruleSYM th) [1..5]
                prove [txt| h EXP 2 = e /\
@@ -1120,25 +1121,27 @@ ruleNUM_SQUARE tm = note "ruleNUM_SQUARE" $
 
 convNUM :: WFCtxt thry => Conversion cls thry
 convNUM = Conv $ \ tm -> note "convNUM" $
-    do n <- (destNumeral tm) - 1
+    do n <- liftM ((+) (-1)) $ destNumeral tm
        if n < 0
           then fail "negative number."
           else do tm' <- mkNumeral n
-                  th <- runConv convNUM_SUC =<< flip mkComb tm' =<< tmSUC
+                  th <- runConv convNUM_SUC $ mkComb tmSUC tm'
                   ruleSYM th
 
 -- Misc utility stuff
-ruleAP_BIT0 :: WFCtxt thry => HOLThm -> HOL cls thry HOLThm
+ruleAP_BIT0 :: (WFCtxt thry, HOLThmRep thm cls thry) 
+            => thm -> HOL cls thry HOLThm
 ruleAP_BIT0 th = primMK_COMB (primREFL tmBIT0) th
 
-ruleAP_BIT1 :: WFCtxt thry => HOLThm -> HOL cls thry HOLThm
+ruleAP_BIT1 :: (WFCtxt thry, HOLThmRep thm cls thry) 
+            => thm -> HOL cls thry HOLThm
 ruleAP_BIT1 th = primMK_COMB (primREFL tmBIT1) th
 
 ruleQUICK_PROVE_HYP :: HOLThm -> HOLThm -> HOL cls thry HOLThm
 ruleQUICK_PROVE_HYP ath bth =
     primEQ_MP (primDEDUCT_ANTISYM ath bth) ath
 
-destRawNumeral :: HOLTerm -> Maybe Int
+destRawNumeral :: MonadThrow m => HOLTerm -> m Int
 destRawNumeral (BIT1 t) =
     do t' <- destRawNumeral t
        return $! 2 * t' + 1
@@ -1146,15 +1149,15 @@ destRawNumeral (BIT0 t) =
     do t' <- destRawNumeral t
        return $! 2 * t'
 destRawNumeral ZERO = return 0
-destRawNumeral _ = Nothing
+destRawNumeral _ = fail' "destRawNumeral"
 
-bitcounts :: HOLTerm -> Maybe (Int, Int)
+bitcounts :: MonadThrow m => HOLTerm -> m (Int, Int)
 bitcounts = bctr 0 0
-  where bctr :: Int -> Int -> HOLTerm -> Maybe (Int, Int)
-        bctr w z ZERO = Just (w, z)
+  where bctr :: MonadThrow m => Int -> Int -> HOLTerm -> m (Int, Int)
+        bctr w z ZERO = return (w, z)
         bctr w z (BIT0 t) = bctr w (succ z) t
         bctr w z (BIT1 t) = bctr (succ w) z t
-        bctr _ _ _ = Nothing
+        bctr _ _ _ = fail' "bitcounts"
 
 wellformed :: HOLTerm -> Bool
 wellformed ZERO = True
@@ -1184,7 +1187,7 @@ orderrelation mtm ntm
 
 doublebn :: WFCtxt thry => HOLTerm -> HOL cls thry HOLTerm
 doublebn tm@ZERO = return tm
-doublebn tm = flip mkComb tm =<< tmBIT0
+doublebn tm = mkComb tmBIT0 tm
 
 subbn :: WFCtxt thry => HOLTerm -> HOLTerm -> HOL cls thry HOLTerm
 subbn = subbnRec
@@ -1192,54 +1195,44 @@ subbn = subbnRec
         subbnRec mtm ZERO = return mtm
         subbnRec (BIT0 mt) (BIT0 nt) = doublebn =<< subbnRec mt nt
         subbnRec (BIT1 mt) (BIT1 nt) = doublebn =<< subbnRec mt nt
-        subbnRec (BIT1 mt) (BIT0 nt) =
-            do tm' <- subbnRec mt nt
-               flip mkComb tm' =<< tmBIT1
-        subbnRec (BIT0 mt) (BIT1 nt) =
-            do tm' <- sbcbn mt nt
-               flip mkComb tm' =<< tmBIT1
+        subbnRec (BIT1 mt) (BIT0 nt) = mkComb tmBIT1 $ subbnRec mt nt
+        subbnRec (BIT0 mt) (BIT1 nt) = mkComb tmBIT1 $ sbcbn mt nt
         subbnRec _ _ = fail "subbn"
 
 sbcbn :: WFCtxt thry => HOLTerm -> HOLTerm -> HOL cls thry HOLTerm
 sbcbn = sbcbnRec
   where sbcbnRec :: WFCtxt thry => HOLTerm -> HOLTerm -> HOL cls thry HOLTerm
-        sbcbnRec (BIT0 mt) nt@ZERO =
-            do tm' <- sbcbnRec mt nt
-               flip mkComb tm' =<< tmBIT1
+        sbcbnRec (BIT0 mt) nt@ZERO = mkComb tmBIT1 $ sbcbnRec mt nt
         sbcbnRec (BIT1 mt) ZERO = doublebn mt
-        sbcbnRec (BIT0 mt) (BIT0 nt) =
-            do tm' <- sbcbnRec mt nt
-               flip mkComb tm' =<< tmBIT1
-        sbcbnRec (BIT1 mt) (BIT1 nt) =
-            do tm' <- sbcbnRec mt nt
-               flip mkComb tm' =<< tmBIT1
+        sbcbnRec (BIT0 mt) (BIT0 nt) = mkComb tmBIT1 $ sbcbnRec mt nt
+        sbcbnRec (BIT1 mt) (BIT1 nt) = mkComb tmBIT1 $ sbcbnRec mt nt
         sbcbnRec (BIT1 mt) (BIT0 nt) = doublebn =<< subbn mt nt
         sbcbnRec (BIT0 mt) (BIT1 nt) = doublebn =<< sbcbnRec mt nt
         sbcbnRec _ _ = fail "sbcbn"
 
-topsplit :: HOLTerm -> Maybe (Int, HOLTerm)
-topsplit n@ZERO = Just (0, n)
-topsplit (BIT1 n@ZERO) = Just (1, n)
-topsplit (BIT0 (BIT1 n@ZERO)) = Just (2, n)
-topsplit (BIT1 (BIT1 n@ZERO)) = Just (3, n)
-topsplit (BIT0 (BIT0 (BIT1 n@ZERO))) = Just (4, n)
-topsplit (BIT1 (BIT0 (BIT1 n@ZERO))) = Just (5, n)
-topsplit (BIT0 (BIT1 (BIT1 n@ZERO))) = Just (6, n)
-topsplit (BIT1 (BIT1 (BIT1 n@ZERO))) = Just (7, n)
-topsplit (BIT0 (BIT0 (BIT0 (BIT0 n)))) = Just (0, n)
-topsplit (BIT1 (BIT0 (BIT0 (BIT0 n)))) = Just (1, n)
-topsplit (BIT0 (BIT1 (BIT0 (BIT0 n)))) = Just (2, n)
-topsplit (BIT1 (BIT1 (BIT0 (BIT0 n)))) = Just (3, n)
-topsplit (BIT0 (BIT0 (BIT1 (BIT0 n)))) = Just (4, n)
-topsplit (BIT1 (BIT0 (BIT1 (BIT0 n)))) = Just (5, n)
-topsplit (BIT0 (BIT1 (BIT1 (BIT0 n)))) = Just (6, n)
-topsplit (BIT1 (BIT1 (BIT1 (BIT0 n)))) = Just (7, n)
-topsplit (BIT0 (BIT0 (BIT0 (BIT1 n)))) = Just (8, n)
-topsplit (BIT1 (BIT0 (BIT0 (BIT1 n)))) = Just (9, n)
-topsplit (BIT0 (BIT1 (BIT0 (BIT1 n)))) = Just (10, n)
-topsplit (BIT1 (BIT1 (BIT0 (BIT1 n)))) = Just (11, n)
-topsplit (BIT0 (BIT0 (BIT1 (BIT1 n)))) = Just (12, n)
-topsplit (BIT1 (BIT0 (BIT1 (BIT1 n)))) = Just (13, n)
-topsplit (BIT0 (BIT1 (BIT1 (BIT1 n)))) = Just (14, n)
-topsplit (BIT1 (BIT1 (BIT1 (BIT1 n)))) = Just (15, n)
-topsplit _ = Nothing
+topsplit :: MonadThrow m => HOLTerm -> m (Int, HOLTerm)
+topsplit n@ZERO = return (0, n)
+topsplit (BIT1 n@ZERO) = return (1, n)
+topsplit (BIT0 (BIT1 n@ZERO)) = return (2, n)
+topsplit (BIT1 (BIT1 n@ZERO)) = return (3, n)
+topsplit (BIT0 (BIT0 (BIT1 n@ZERO))) = return (4, n)
+topsplit (BIT1 (BIT0 (BIT1 n@ZERO))) = return (5, n)
+topsplit (BIT0 (BIT1 (BIT1 n@ZERO))) = return (6, n)
+topsplit (BIT1 (BIT1 (BIT1 n@ZERO))) = return (7, n)
+topsplit (BIT0 (BIT0 (BIT0 (BIT0 n)))) = return (0, n)
+topsplit (BIT1 (BIT0 (BIT0 (BIT0 n)))) = return (1, n)
+topsplit (BIT0 (BIT1 (BIT0 (BIT0 n)))) = return (2, n)
+topsplit (BIT1 (BIT1 (BIT0 (BIT0 n)))) = return (3, n)
+topsplit (BIT0 (BIT0 (BIT1 (BIT0 n)))) = return (4, n)
+topsplit (BIT1 (BIT0 (BIT1 (BIT0 n)))) = return (5, n)
+topsplit (BIT0 (BIT1 (BIT1 (BIT0 n)))) = return (6, n)
+topsplit (BIT1 (BIT1 (BIT1 (BIT0 n)))) = return (7, n)
+topsplit (BIT0 (BIT0 (BIT0 (BIT1 n)))) = return (8, n)
+topsplit (BIT1 (BIT0 (BIT0 (BIT1 n)))) = return (9, n)
+topsplit (BIT0 (BIT1 (BIT0 (BIT1 n)))) = return (10, n)
+topsplit (BIT1 (BIT1 (BIT0 (BIT1 n)))) = return (11, n)
+topsplit (BIT0 (BIT0 (BIT1 (BIT1 n)))) = return (12, n)
+topsplit (BIT1 (BIT0 (BIT1 (BIT1 n)))) = return (13, n)
+topsplit (BIT0 (BIT1 (BIT1 (BIT1 n)))) = return (14, n)
+topsplit (BIT1 (BIT1 (BIT1 (BIT1 n)))) = return (15, n)
+topsplit _ = fail' "topsplit"

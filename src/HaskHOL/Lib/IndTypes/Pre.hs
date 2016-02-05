@@ -7,11 +7,12 @@ import HaskHOL.Deductive hiding (getDefinition, getSpecification, newDefinition)
 import HaskHOL.Lib.Pair
 import HaskHOL.Lib.WF
 
-sucivate :: Int -> HOL cls thry HOLTerm
-sucivate n =
-    do zero <- toHTm [txt| 0 |]
-       suc <- toHTm [txt| SUC |]
-       funpowM n (mkComb suc) zero
+tmZERO, tmSUC :: WFCtxt thry => HOL cls thry HOLTerm
+tmZERO = serve [wf| 0 |]
+tmSUC = serve [wf| SUC |]
+
+sucivate :: WFCtxt thry => Int -> HOL cls thry HOLTerm
+sucivate n = funpowM n (mkComb tmSUC) =<< toHTm tmZERO
 
 ruleSCRUB_EQUATION :: BoolCtxt thry => HOLTerm -> (HOLThm, HOLTermEnv) 
                    -> HOL cls thry (HOLThm, HOLTermEnv)
@@ -42,7 +43,8 @@ justifyInductiveTypeModel def =
        bot <- mkConst "BOTTOM" [(tyA, pty)]
        bottail <- mkAbs nTm bot
        --
-       let mkConstructor :: Int -> (Text, [HOLType]) -> HOL cls thry HOLTerm
+       let mkConstructor :: WFCtxt thry 
+                         => Int -> (Text, [HOLType]) -> HOL cls thry HOLTerm
            mkConstructor n (cname, cargs) =
             let ttys = map (\ ty -> if ty `elem` newtys 
                                     then recty else ty) cargs
@@ -68,7 +70,7 @@ justifyInductiveTypeModel def =
                  condef <- listMkComb constr [n', iarg, rarg]
                  mkEq (mkVar cname conty) =<< listMkAbs args condef
        --         
-           mkConstructors :: Int -> [(Text, [HOLType])] 
+           mkConstructors :: WFCtxt thry => Int -> [(Text, [HOLType])] 
                           -> HOL cls thry [HOLTerm]
            mkConstructors _ [] = return []
            mkConstructors n (x:xs) =
@@ -188,8 +190,7 @@ defineInductiveTypeConstructor defs consindex (Thm _ c) =
          deftm <- mkEq deflf =<< rand (concl rexpth)
          defth <- newDefinition (name, deftm)
          primTRANS defth =<< ruleSYM rexpth
-  where modifyArg :: MonadCatch m 
-                  => HOLTermEnv -> HOLTerm -> m (HOLTerm, HOLTerm)
+  where modifyArg :: HOLTermEnv -> HOLTerm -> HOL cls thry (HOLTerm, HOLTerm)
         modifyArg asmlist v =
             (do (_, dest) <- flip assoc consindex =<< v `revAssoc` asmlist
                 ty' <- liftM (head . snd) . destType $ typeOf dest

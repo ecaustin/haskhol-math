@@ -200,10 +200,7 @@ tacINDUCT = tacMATCH_MP inductionNUM `_THEN` tacCONJ `_THENL`
 mkNumeral :: (Integral i, NumsCtxt thry) => i -> HOL cls thry HOLTerm
 mkNumeral n
     | n < 0 = fail "mkNumeral: negative argument"
-    | otherwise = 
-          do numeral <- serve [nums| NUMERAL |]
-             n' <- mkNum n
-             mkComb numeral n'
+    | otherwise = mkComb (serve [nums| NUMERAL |]) $ mkNum n
   where mkNum :: (Integral i, NumsCtxt thry) => i -> HOL cls thry HOLTerm
         mkNum x
             | x == 0 = serve [nums| _0 |]

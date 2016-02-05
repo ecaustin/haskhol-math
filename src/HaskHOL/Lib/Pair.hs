@@ -180,7 +180,7 @@ convGEN_BETA = Conv $ \ tm ->
               gv <- genVar $ typeOf vstr
               bod' <- subst [(vstr, gv)] =<< rand (concl bth)
               pat <- mkAbs gv bod'
-              th1 <- runConv convBETA =<< mkComb pat vstr
+              th1 <- runConv convBETA $ mkComb pat vstr
               th2 <- primTRANS th1 $ ruleSYM bth
               avs <- liftM (fst . stripForall) $ body =<< rand l
               th3 <- ruleGENL avs th2
