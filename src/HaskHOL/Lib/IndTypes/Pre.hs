@@ -2,10 +2,12 @@
 module HaskHOL.Lib.IndTypes.Pre where
 
 import HaskHOL.Core
+import qualified HaskHOL.Core.State as S (mkType)
 import HaskHOL.Deductive hiding (getDefinition, getSpecification, newDefinition)
 
 import HaskHOL.Lib.Pair
 import HaskHOL.Lib.WF
+import HaskHOL.Lib.IndTypesPre
 
 tmZERO, tmSUC :: WFCtxt thry => HOL cls thry HOLTerm
 tmZERO = serve [wf| 0 |]
@@ -124,7 +126,8 @@ proveModelInhabitation :: BoolCtxt thry => HOLThm -> HOL cls thry [HOLThm]
 proveModelInhabitation rth =
     do srules <- mapM ruleSPEC_ALL =<< ruleCONJUNCTS rth
        let (imps, bases) = partition (isImp . concl) srules
-           concs = map concl bases ++ map (try' . rand . concl) imps
+       impConcs <- mapM (rand . concl) imps
+       let concs = map concl bases ++ impConcs
        preds <- liftM setify $ mapM (repeatM rator) concs
        ithms <- exhaustInhabitations imps bases
        mapM (\ p -> find (\ th -> (fst . stripComb $ concl th) == p) ithms) 
@@ -133,13 +136,13 @@ proveModelInhabitation rth =
   where exhaustInhabitations :: BoolCtxt thry => [HOLThm] -> [HOLThm] 
                              -> HOL cls thry [HOLThm]
         exhaustInhabitations ths sofar =
-            let dunnit = setify $ map (fst . stripComb . concl) sofar
-                useful = filter (\ (Thm _ c) -> 
-                                 (fst . stripComb . try' $ rand c)
-                                  `notElem` dunnit) ths in
-              if null useful then return sofar
-              else do newth <- tryFind followHorn useful
-                      exhaustInhabitations ths (newth:sofar)
+            let dunnit = setify $ map (fst . stripComb . concl) sofar in
+              do useful <- filterM (\ (Thm _ c) -> 
+                                     do c' <- (fst . stripComb) `fmap` rand c
+                                        return $! c' `notElem` dunnit) ths
+                 if null useful then return sofar
+                 else do newth <- tryFind followHorn useful
+                         exhaustInhabitations ths (newth:sofar)
           where followHorn :: BoolCtxt thry => HOLThm -> HOL cls thry HOLThm
                 followHorn thm =
                     do preds <- liftM (map (fst . stripComb) . conjuncts) .
@@ -154,7 +157,8 @@ defineInductiveType :: BoolCtxt thry => [HOLThm] -> HOLThm
 defineInductiveType cdefs exth@(Thm asl extm) =
     let (epred@(Var ename _), _) = stripComb extm in
       do th1@(Thm _ c1) <- primASSUME =<< 
-                             find (\ eq -> try' (lHand eq) == epred) asl
+                             findM (\ eq -> do eq' <- lHand eq
+                                               return $! eq' == epred) asl
          th1' <- runConv (convSUBS cdefs) =<< rand c1
          th2 <- primTRANS th1 th1'
          th2' <- ruleAP_THM th2 =<< rand extm
@@ -183,8 +187,9 @@ defineInductiveTypeConstructor defs consindex (Thm _ c) =
          (retmk, _) <- cpred `assoc` consindex
          defbod <- mkComb retmk =<< listMkComb oldcon newrights
          defrt <- listMkAbs newargs defbod
-         expth <- find (\ (Thm _ c') -> lHand c' == Just oldcon) defs
-         deflf@(Var name _) <- liftM (\ (x, _) -> mkVar x $ typeOf defrt) $ 
+         expth <- findM (\ (Thm _ c') -> do c'' <- lHand c' 
+                                            return $! c'' == oldcon) defs
+         deflf@(Var name _) <- (\ (x, _) -> mkVar x $ typeOf defrt) =<< 
                                  destVar oldcon
          rexpth <- runConv (convSUBS [expth]) defrt
          deftm <- mkEq deflf =<< rand (concl rexpth)
@@ -194,7 +199,7 @@ defineInductiveTypeConstructor defs consindex (Thm _ c) =
         modifyArg asmlist v =
             (do (_, dest) <- flip assoc consindex =<< v `revAssoc` asmlist
                 ty' <- liftM (head . snd) . destType $ typeOf dest
-                v' <- liftM (\ (x, _) -> mkVar x ty') $ destVar v
+                v' <- (\ (x, _) -> mkVar x ty') =<< destVar v
                 v'' <- mkComb dest v'
                 return (v'', v'))
             <|> return (v, v)
@@ -245,9 +250,9 @@ pullbackInductionClause tybijpairs conthms rthm tm =
                lctms' <- listMkConj lctms
                asmin <- mkImp lctms' =<< rand =<< rand (concl conth3)
                argsin <- mapM rand =<< liftM conjuncts (lHand asmin)
-               let argsgen = map (\ x -> 
-                                  mkVar (fst . try' $ destVar =<< rand x) $
-                                    typeOf x) argsin
+               argsgen <- mapM (\ x -> 
+                                  do xname <- fst `fmap` (destVar =<< rand x)
+                                     return . mkVar xname $ typeOf x) argsin
                asmgen <- subst (zip argsin argsgen) asmin
                asmquant <- flip listMkForall asmgen =<< 
                              liftM (snd . stripComb) (rand =<< rand asmgen)
@@ -331,11 +336,12 @@ createRecursiveFunctions tybijpairs consindex conthms rth =
        recty <- liftM (head . snd) . destType . typeOf . fst . snd $ 
                    head consindex
        let ranty = mkVarType "Z"
-       fn <- liftM (mkVar "fn") $ mkFunTy recty ranty
+       fnty <- mkFunTy recty ranty
+       fn <- mkVar "fn" fnty
        fns <- liftM (mkArgs "fn" []) $ mapM (`mkFunTy` ranty) domtys
        let args = mkArgs "a" [] domtys
        rights <- map2M (\ (_, (_, d)) a ->
-                   mkAbs a =<< mkComb fn =<< mkComb d a) consindex args
+                   mkAbs a . mkComb fn $ mkComb d a) consindex args
        eqs <- map2M mkEq fns rights
        fdefs <- mapM primASSUME eqs
        fxths1 <- mapM (\ th1 -> tryFind (`primMK_COMB` th1) fdefs) conthms
@@ -391,7 +397,7 @@ createRecursionIsoConstructor :: WFCtxt thry
                               => [(HOLTerm, (HOLTerm, HOLTerm))] -> HOLThm 
                               -> HOL cls thry HOLTerm
 createRecursionIsoConstructor consindex cth =
-    do numty <- mkType "num" []
+    do numty <- S.mkType "num" []
        let zty = mkVarType "Z"
        s <- liftM (mkVar "s") $ mkFunTy numty zty
        recty <- liftM (head . snd) . destType . typeOf . fst $ head consindex
@@ -401,8 +407,8 @@ createRecursionIsoConstructor consindex cth =
        let mks = map (fst . snd) consindex
            mkindex = map (\ t -> (head . tail . snd . try' . destType $
                                   typeOf t, t)) mks
-       artms <- liftM (snd . stripComb) $ rand =<< rand (concl cth)
-       let artys = mapFilter (liftM typeOf . rand) artms
+       artms <- (snd . stripComb) `fmap` (rand =<< rand (concl cth))
+       artys <- mapFilterM (fmap typeOf . rand) artms
        (args, bod) <- liftM stripAbs . rand . head $ hyp cth
        (ccitm, rtm) <- destComb bod
        (_, itm) <- destComb ccitm
@@ -432,12 +438,11 @@ createRecursionIsoConstructor consindex cth =
                       then return thPAIR
                       else ruleSUBS [ruleSYM thPAIR] =<< extractArg tup' v
 
-deriveRecursionTheorem :: (HOLThmRep thm cls thry, WFCtxt thry) 
-                       => thm 
-                       -> [(HOLThm, HOLThm)] 
+deriveRecursionTheorem :: IndTypesPreCtxt thry
+                       => [(HOLThm, HOLThm)] 
                        -> [(HOLTerm, (HOLTerm, HOLTerm))] -> [HOLThm] 
                        -> HOLThm -> HOL cls thry HOLThm
-deriveRecursionTheorem thmCONSTR_REC tybijpairs consindex conthms rath =
+deriveRecursionTheorem tybijpairs consindex conthms rath =
     do isocons <- mapM (createRecursionIsoConstructor consindex) conthms
        let ty = typeOf $ head isocons
        fcons <- mkConst "FCONS" [(tyA, ty)]
@@ -464,26 +469,25 @@ deriveRecursionTheorem thmCONSTR_REC tybijpairs consindex conthms rath =
                       repeatM (liftM snd . destForall)) . 
                   conjuncts $ concl rthm
        ruleGENL pcons fethm
-  where convC :: BoolCtxt thry => Conversion cls thry
+  where convC :: IndTypesPreCtxt thry => Conversion cls thry
         convC = funpow 3 convRATOR . _REPEAT $ 
-                  convGEN_REWRITE id [getDefinition "FCONS"]
+                  convGEN_REWRITE id [defFCONS]
 
         convL :: BoolCtxt thry => HOLTerm -> Conversion cls thry
         convL betm = convREWR (primASSUME betm)
 
-        ruleSIMPER :: PairCtxt thry => [HOLThm] -> HOLThm -> HOL cls thry HOLThm
+        ruleSIMPER :: IndTypesPreCtxt thry => [HOLThm] -> HOLThm -> HOL cls thry HOLThm
         ruleSIMPER fnths th = 
             do ths1 <- mapM ruleSYM fnths
                let ths2 = map fst tybijpairs
-               ths3 <- sequence [ thmFST, thmSND, thmBETA
-                                , getDefinition "FCONS" ]
+               ths3 <- sequence [ thmFST, thmSND, thmBETA, defFCONS ]
                rulePURE_REWRITE (ths1++ths2++ths3) th
 
-        hackdownRath :: PairCtxt thry => HOLTerm -> [HOLThm] -> HOLThm 
+        hackdownRath :: IndTypesPreCtxt thry => HOLTerm -> [HOLThm] -> HOLThm 
                      -> HOL cls thry HOLThm
         hackdownRath betm fnths th =
             do (ltm, rtm) <- destEq $ concl th
-               wargs <- liftM (snd . stripComb) $ rand ltm
+               (_, wargs) <- stripComb `fmap` rand ltm
                th0 <- runConv (convL betm) rtm
                th1 <- primTRANS th th0
                th1' <- runConv convC =<< rand (concl th1)
@@ -528,11 +532,10 @@ parseInductiveTypeSpecification ctxt s =
    Returns the induction and recursion theorems separately.
    The parser isn't used.
 -}
-defineTypeRaw :: (HOLThmRep thm Theory thry, WFCtxt thry) 
-              => thm 
-              -> [(HOLType, [(Text, [HOLType])])] 
+defineTypeRaw :: IndTypesPreCtxt thry
+              => [(HOLType, [(Text, [HOLType])])] 
               -> HOL Theory thry (HOLThm, HOLThm)
-defineTypeRaw thmCONSTR_REC def =
+defineTypeRaw def =
     do (defs, rth, ith) <- justifyInductiveTypeModel def
        neths <- proveModelInhabitation rth
        tybijpairs <- mapM (defineInductiveType defs) neths
@@ -544,10 +547,10 @@ defineTypeRaw thmCONSTR_REC def =
        condefs <- mapM (defineInductiveTypeConstructor defs consindex) =<<
                     ruleCONJUNCTS rth
        conthms <- mapM (\ th@(Thm _ c) -> 
-                   ruleRIGHT_BETAS (fst . stripAbs . try' $ rand c) th) condefs
+                            do cs <- (fst . stripAbs) `fmap` rand c
+                               ruleRIGHT_BETAS cs th) condefs
        iith <- instantiateInductionTheorem consindex ith
        fth <- deriveInductionTheorem consindex tybijpairs conthms iith rth
        rath <- createRecursiveFunctions tybijpairs consindex conthms rth
-       kth <- deriveRecursionTheorem thmCONSTR_REC tybijpairs consindex conthms 
-                rath
+       kth <- deriveRecursionTheorem tybijpairs consindex conthms rath
        return (fth, kth)

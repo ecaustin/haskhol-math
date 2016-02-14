@@ -108,7 +108,7 @@ inductionNUM_PRIM = unsafeCacheProof "inductionNUM_PRIM" $
          tacMP (ruleSPEC [txt| \i. NUM_REP i /\ 
                                    P(mk_num i):bool |] inductNUM_REP) `_THEN`
          tacASM_REWRITE [ruleGSYM defZERO, rulesNUM_REP] `_THEN`
-         wComb (\ (Goal _ g) -> _SUBGOAL_THEN (try' $ funpowM 2 lHand g) 
+         wComb (\ (Goal _ g) -> _SUBGOAL_THEN (funpowM 2 lHand g) 
                                   (\ t -> tacREWRITE [t])) `_THENL`
          [ _REPEAT tacSTRIP `_THENL`
            [ tacMATCH_MP (ruleCONJUNCT2 rulesNUM_REP) `_THEN` 

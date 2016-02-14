@@ -130,25 +130,25 @@ convSEMIRING_NORMALIZERS sth rth ( isSemiringConstant, convSEMIRING_ADD
                          variableOrder =
  do thms <- ruleCONJUNCTS $ ruleMATCH_MP semiring_pth sth
     let pthms = fromList thms
-    tmAdd <- rator =<< rator =<< lHand (concl $ pthms ! 6)
-    tmMul <- rator =<< rator =<< lHand (concl $ pthms ! 12)
-    tmPow <- rator =<< rator =<< rand (concl $ pthms ! 31)
-    tmZero <- rand (concl $ pthms ! 5)
-    tmOne <- rand =<< lHand (concl $ pthms ! 13)
+    tmAdd <- rator . rator . lHand . concl $ pthms ! 6
+    tmMul <- rator . rator . lHand . concl $ pthms ! 12
+    tmPow <- rator . rator . rand . concl $ pthms ! 31
+    tmZero <- rand . concl $ pthms ! 5
+    tmOne <- rand . lHand . concl $ pthms ! 13
     ty <- typeOf `fmap` (rand . concl $ pthms ! 0)
-    let tmA = mkVar "a" ty
-        tmB = mkVar "b" ty
-        tmC = mkVar "c" ty
-        tmD = mkVar "d" ty
-        tmLX = mkVar "lx" ty
-        tmLY = mkVar "ly" ty
-        tmM = mkVar "m" ty
-        tmRX = mkVar "rx" ty
-        tmRY = mkVar "ry" ty
-        tmX = mkVar "x" ty
-        tmY = mkVar "y" ty
-        tmZ = mkVar "z" ty
-        destAdd = destBinop tmAdd
+    tmA <-  mkVar "a" ty
+    tmB <- mkVar "b" ty
+    tmC <- mkVar "c" ty
+    tmD <- mkVar "d" ty
+    tmLX <- mkVar "lx" ty
+    tmLY <- mkVar "ly" ty
+    tmM <- mkVar "m" ty
+    tmRX <- mkVar "rx" ty
+    tmRY <- mkVar "ry" ty
+    tmX <- mkVar "x" ty
+    tmY <- mkVar "y" ty
+    tmZ <- mkVar "z" ty
+    let destAdd = destBinop tmAdd
         destMul = destBinop tmMul
         destPow tm =
             do (l, r) <- destBinop tmPow tm
@@ -216,22 +216,20 @@ convSEMIRING_NORMALIZERS sth rth ( isSemiringConstant, convSEMIRING_ADD
                               then do th1 <- primINST [ (tmX, l), (tmP, r)
                                                       , (tmQ, ntm)
                                                       ] $ pthms ! 33
-                                      (l', r') <- destComb =<< rand (concl th1)
+                                      (l', r') <- destComb $ rand (concl th1)
                                       th2 <- runConv convNUM_MULT r'
                                       primTRANS th1 $ ruleAP_TERM l' th2
-                       else if op == tmMul
-                            then let th1 = fromJust . primINST
-                                             [ (tmX, l), (tmY, r)
-                                             , (tmQ, ntm) ] $ pthms ! 32
-                                     (xy, z) = fromJust $ destComb =<<
-                                                            rand (concl th1)
-                                     (x, y) = fromJust $ destComb xy in
-                                   do thl <- ruleMONOMIAL_POW y l ntm
+                              else if op == tmMul
+                              then do th1 <- primINST
+                                               [ (tmX, l), (tmY, r)
+                                               , (tmQ, ntm) ] $ pthms ! 32
+                                      (xy, z) <- destComb $ rand (concl th1)
+                                      (x, y) <- destComb xy
+                                      thl <- ruleMONOMIAL_POW y l ntm
                                       thr <- ruleMONOMIAL_POW z r ntm
-                                      let thl' = fromRight $ ruleAP_TERM x thl
-                                      liftO $ primTRANS th1 =<< 
-                                                primMK_COMB thl' thr
-                            else return $! primREFL tm
+                                      thl' <- ruleAP_TERM x thl
+                                      primTRANS th1 $ primMK_COMB thl' thr
+                              else primREFL tm
 --
         convMONOMIAL_POW :: Conversion cls thry
         convMONOMIAL_POW = Conv $ \ tm ->
@@ -239,10 +237,10 @@ convSEMIRING_NORMALIZERS sth rth ( isSemiringConstant, convSEMIRING_ADD
                 (op, l) = fromJust $ destComb lop in
               if op /= tmPow || not (isNumeral r)
               then fail "convMONOMIAL_POW"
-              else if r == tmZeron then liftO . primINST [(tmX, l)] $ pthms ! 34
-              else if r == tmOnen then liftO . primINST [(tmX, l)] $ pthms ! 35
+              else if r == tmZeron then primINST [(tmX, l)] $ pthms ! 34
+              else if r == tmOnen then primINST [(tmX, l)] $ pthms ! 35
               else do th <- ruleMONOMIAL_POW tm l r
-                      liftO $ ruleMONOMIAL_DEONE th
+                      ruleMONOMIAL_DEONE th
 --
     let powvar :: HOLTerm -> Maybe HOLTerm
         powvar tm
@@ -648,30 +646,28 @@ convSEMIRING_NORMALIZERS sth rth ( isSemiringConstant, convSEMIRING_ADD
                          th2 <- runConv convPOLYNOMIAL_NEG #<< rand (concl th1)
                          liftO $ primTRANS th1 th2
                  else if not (isComb lop)
-                      then return $! primREFL tm
+                      then primREFL tm
                       else let (op, l) = fromJust $ destComb lop in
                              if op == tmPow && isNumeral r
                              then do th0_5 <- runConv convPOLYNOMIAL l
-                                     let th1 = fromRight $ liftM1
-                                             ruleAP_THM (ruleAP_TERM op th0_5) r
-                                     th2 <- runConv convPOLYNOMIAL_POW #<< 
+                                     th1 <- ruleAP_THM (ruleAP_TERM op th0_5) r
+                                     th2 <- runConv convPOLYNOMIAL_POW $ 
                                               rand (concl th1)
-                                     liftO $ primTRANS th1 th2
+                                     primTRANS th1 th2
                              else if op == tmAdd || op == tmMul || op == tmSub
                                   then do thl <- runConv convPOLYNOMIAL l
                                           thr <- runConv convPOLYNOMIAL r
-                                          let th1 = fromRight $ liftM1 
-                                                primMK_COMB (ruleAP_TERM op thl) thr
-                                              fn 
+                                          th1 <- primMK_COMB (ruleAP_TERM op thl) thr
+                                          let fn 
                                                 | op == tmAdd =
                                                     convPOLYNOMIAL_ADD
                                                 | op == tmMul =
                                                     convPOLYNOMIAL_MUL
                                                 | otherwise = 
                                                     convPOLYNOMIAL_SUB
-                                          th2 <- runConv fn #<< rand (concl th1)
-                                          liftO $ primTRANS th1 th2
-                                  else return $! primREFL tm
+                                          th2 <- runConv fn $ rand (concl th1)
+                                          primTRANS th1 th2
+                                  else primREFL tm
 --
     return ( convPOLYNOMIAL_NEG, convPOLYNOMIAL_ADD, convPOLYNOMIAL_SUB
            , convPOLYNOMIAL_MUL, convPOLYNOMIAL_POW, convPOLYNOMIAL )
