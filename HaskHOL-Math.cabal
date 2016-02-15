@@ -34,10 +34,10 @@ library
       HaskHOL.Lib.Arith
       HaskHOL.Lib.WF
       HaskHOL.Lib.CalcNum
-      HaskHOL.Lib.Normalizer
-      HaskHOL.Lib.Grobner
-      HaskHOL.Lib.IndTypesPre
-      HaskHOL.Lib.IndTypes
+      --HaskHOL.Lib.Normalizer
+      --HaskHOL.Lib.Grobner
+      --HaskHOL.Lib.IndTypesPre
+      --HaskHOL.Lib.IndTypes
       -- HaskHOL.Lib.Lists
     exposed: True
     buildable: True
@@ -57,14 +57,14 @@ library
       HaskHOL.Lib.WF.PQ
       HaskHOL.Lib.CalcNum.Pre
       HaskHOL.Lib.CalcNum.Pre2
-      HaskHOL.Lib.IndTypesPre.Base
-      HaskHOL.Lib.IndTypesPre.Context
-      HaskHOL.Lib.IndTypesPre.PQ
-      HaskHOL.Lib.IndTypes.Base
-      HaskHOL.Lib.IndTypes.Context
-      HaskHOL.Lib.IndTypes.Pre
-      HaskHOL.Lib.IndTypes.Pre2
-      HaskHOL.Lib.IndTypes.PQ
+      --HaskHOL.Lib.IndTypesPre.Base
+      --HaskHOL.Lib.IndTypesPre.Context
+      --HaskHOL.Lib.IndTypesPre.PQ
+      --HaskHOL.Lib.IndTypes.Base
+      --HaskHOL.Lib.IndTypes.Context
+      --HaskHOL.Lib.IndTypes.Pre
+      --HaskHOL.Lib.IndTypes.Pre2
+      --HaskHOL.Lib.IndTypes.PQ
       -- HaskHOL.Lib.Lists.Base
       -- HaskHOL.Lib.Lists.Context
       -- HaskHOL.Lib.Lists.PQ

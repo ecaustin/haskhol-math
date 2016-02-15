@@ -135,12 +135,11 @@ defineType s =
              defspec <- parseInductiveTypeSpecification ctxt s
              let newtypes = map fst defspec
                  constructors = foldr ((++) . map fst) [] $ map snd defspec
-             failWhen (return $ (length (setify newtypes)) /= length newtypes)
-               "defineType: multiple definitions of a type."
-             failWhen (return $ (length (setify constructors)) /= 
-                                 length constructors)
-               "defineType: multiple instances of a constructor."
-             cond1 <- mapM (can getTypeArity . destVarType) newtypes
+             when ((length (setify newtypes)) /= length newtypes) $
+               fail "defineType: multiple definitions of a type."
+             when ((length (setify constructors)) /= length constructors) $
+               fail "defineType: multiple instances of a constructor."
+             cond1 <- mapM (can (getTypeArity . destVarType)) newtypes
              cond2 <- mapM (can getConstType) constructors
              if or cond1
                 then do t <- findM (can getTypeArity) =<< 
