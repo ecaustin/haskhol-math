@@ -115,7 +115,7 @@ defPASSOC = cacheProof "defPASSOC" ctxtPair $ getDefinition "PASSOC"
 mkPair :: HOLTerm -> HOLTerm -> HOL cls thry HOLTerm
 mkPair = mkBinary ","
 
-destPair :: MonadCatch m => HOLTerm -> m (HOLTerm, HOLTerm)
+destPair :: HOLTermRep tm cls thry => tm -> HOL cls thry (HOLTerm, HOLTerm)
 destPair = destBinary ","
 
 -- theorems
@@ -220,7 +220,7 @@ createProjections ref conname =
                  (con', args) <- liftM stripComb $ rand eqn
                  (aargs, zargs) <- trySplitAt (length avs) args
                  gargs <- mapM (genVar . typeOf) zargs
-                 eqty <- liftM typeOf $ rand eqn
+                 eqty <- typeOf $ rand eqn
                  gcon <- genVar =<< foldrM (mkFunTy . typeOf) eqty avs
                  btm <- listMkAbs (aargs++gargs) =<< listMkComb gcon avs
                  bth <- primINST [(con', btm)] sth

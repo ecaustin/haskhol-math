@@ -1,4 +1,4 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ImplicitParams, ScopedTypeVariables #-}
 {-|
   Module:    HaskHOL.Lib.Normalizer
   Copyright: (c) The University of Kansas 2013
@@ -8,11 +8,12 @@
   Stability:   unstable
   Portability: unknown
 -}
-module HaskHOL.Lib.Normalizer
+module HaskHOL.Lib.Normalizer where
+{-
     ( convSEMIRING_NORMALIZERS
     , convNUM_NORMALIZE
     ) where
-
+-}
 import HaskHOL.Core
 import HaskHOL.Deductive
 
@@ -21,7 +22,7 @@ import HaskHOL.Lib.Arith
 import HaskHOL.Lib.WF
 import HaskHOL.Lib.CalcNum
 
-import Data.Vector (fromList, (!))
+import Data.Vector (Vector, fromList, (!))
 
 semiring_pth :: WFCtxt thry => HOL cls thry HOLThm
 semiring_pth = cacheProof "semiring_pth" ctxtWF .
@@ -116,85 +117,59 @@ semiring_pth = cacheProof "semiring_pth" ctxtWF .
       tacGEN `_THEN` tacGEN `_THEN` tacINDUCT `_THEN` 
       tacASM_REWRITE [thmMULT_CLAUSES]
 
-
-reverseInterface :: Text -> Text -> HOLType -> HOL cls thry Bool
-reverseInterface op s ty =
-    can (findM (\ (op', s', ty') ->
-                    do cond' <- can (typeMatch ty') ty
-                       return $! cond' && op == op' && s' == s)) `fmap`
-      getInterface
-
--- Interface based destructors
--- Do we want to memoize these?  Should probably profile that.
-destBinary :: Text -> HOLTerm -> HOL cls thry (HOLTerm, HOLTerm)
-destBinary op tm@(Binary s l r) =
-    do cond <- reverseInterface op s $ typeOf tm
-       if cond
-          then return (l, r)
-          else fail "destBinary: not a defined overloading of multiplication."
-destBinary _ = fail "destBinary: not a binary term."
-
-destMul :: HOLTerm -> HOL cls thry (HOLTerm, HOLTerm)
-destMul = destBinary "*"
-
-destPow :: HOLTerm -> HOL cls thry (HOLTerm, HOLTerm)
-destPow = destBinary "^"
-
-data SemiRingContext = SemiRingContext
-    { ty      :: !HOLType
-    , mulName :: !Text
-    , powName :: !Text
-    , pthms   :: !(Vector HOLThm)
-    }
-
-convPOWVAR_MUL :: SemiRingContext -> Conversion cls thry
-convPOWVAR_MUL ctxt = Conv $ \ tm ->
-    case tm of
-      (Binary' (mulName ctxt) l r)
-          | isSemiringConstant l && isSemiringConstant r ->
-              runConv convSEMIRING_MUL tm
+convPOWVAR_MUL :: (MonadThrow m,
+                   ?convSEMIRING_MUL :: Conversion cls thry,
+                   ?destMul :: HOLTerm -> m (HOLTerm, HOLTerm),
+                   ?destPow :: HOLTerm -> m (HOLTerm, HOLTerm),
+                   ?isSemiringConstant :: HOLTerm -> Bool,
+                   ?pthms :: Vector HOLThm,
+                   ?ringType :: HOLType)
+               => Conversion cls thry
+convPOWVAR_MUL = Conv $ \ tm ->
+    case runCatch $ ?destMul tm of
+      Right (l, r)
+          | ?isSemiringConstant l && ?isSemiringConstant r ->
+              runConv ?convSEMIRING_MUL tm
           | otherwise ->
-              case l of
-                (Binary' (powName ctxt) lx ln) ->
-                    case r of
-                      (Binary' (powName ctxt) _ rn) ->
-                          do tmX <- mkVar "x" (ty ctxt)
-                             tmP <- mkVar "p" (ty ctxt)
-                             tmQ <- mkVar "q" (ty ctxt)
+              case runCatch $ ?destPow l of
+                Right (lx, ln) ->
+                    case runCatch $ ?destPow r of
+                      Right (_, rn) ->
+                          do tmX <- mkVar "x" ?ringType
+                             tmP <- mkVar "p" ?ringType
+                             tmQ <- mkVar "q" ?ringType
                              th1 <- primINST [(tmX, lx), (tmP, ln), (tmQ, rn)] $
-                                      (pthms ctxt) ! 28
-                             (tm1, tm2) <- destComb =<< rand (concl th1)
+                                      ?pthms ! 28
+                             (tm1, tm2) <- destComb $ rand (concl th1)
                              th2 <- runConv convNUM_ADD tm2
                              primTRANS th1 $ ruleAP_TERM tm1 th2
                       _ ->
-                          do tmX <- mkVar "x" (ty ctxt)
-                             tmQ <- mkVar "q" (ty ctxt)
+                          do tmX <- mkVar "x" ?ringType
+                             tmQ <- mkVar "q" ?ringType
                              th1 <- primINST [(tmX, lx), (tmQ, ln)] $ 
-                                      (pthms ctxt) ! 30
-                             (tm1, tm2) <- destComb =<< rand (concl th1)
+                                      ?pthms ! 30
+                             (tm1, tm2) <- destComb $ rand (concl th1)
                              th2 <- runConv convNUM_SUC tm2
                              primTRANS th1 $ ruleAP_TERM tm1 th2
                 _ ->
-                    case r of
-                      (Binary' (powName ctxt) rx rn) ->
-                          do tmX <- mkVar "x" (ty ctxt)
-                             tmQ <- mkVar "q" (ty ctxt)
+                    case runCatch $ ?destPow r of
+                      Right (rx, rn) ->
+                          do tmX <- mkVar "x" ?ringType
+                             tmQ <- mkVar "q" ?ringType
                              th1 <- primINST [(tmX, rx), (tmQ, rn)] $ 
-                                      (pthms ctxt) ! 29
-                             (tm1, tm2) <- destComb =<< rand (concl th1)
+                                      ?pthms ! 29
+                             (tm1, tm2) <- destComb $ rand (concl th1)
                              th2 <- runConv convNUM_SUC tm2
                              primTRANS th1 $ ruleAP_TERM tm1 th2
-                      _ -> do tmX <- mkVar "x" (ty ctxt)
-                              primINST [(tmX, l)] $ (ctxt pthms) ! 31
+                      _ -> do tmX <- mkVar "x" ?ringType
+                              primINST [(tmX, l)] $ ?pthms ! 31
 
+{-
 ruleMONOMIAL_DEONE :: SemiringContext -> HOLThm -> Maybe HOLThm
-ruleMONOMIAL_DEONE ctxt th@(HOLThm (Comb _ tm) =
-    case tm of
-      (Binary' (mulName ctxt) l r)
-          | l == (tmOne ctxt) ->
-              do tmX <- mkVar "x" (ty ctxt)
-                 primTRANS th . primINST [(tmX, r)] $ (pthms ctxt) ! 0
-          | otherwise -> return th
+ruleMONOMIAL_DEONE ctxt th@(HOLThm (Comb _ 
+                                    (Binary (tmMul ctxt) (tmOne ctxt) r)) =
+    do tmX <- mkVar "x" (ty ctxt)
+       primTRANS th . primINST [(tmX, r)] $ (pthms ctxt) ! 0
 ruleMONOMIAL_DEONE _ th = return th
 
 ruleMONOMIAL_POW :: SemiringContext -> HOLTerm -> HOLTerm -> HOLTerm 
@@ -206,7 +181,7 @@ ruleMONOMIAL_POW ctxt tm bod ntm =
           | otherwise ->
               case lop of
                 (Comb op l)
-                    | op == tmPow && isNumeral r ->
+                    | op == (tmPow ctxt) && isNumeral r ->
                         do tmX <- mkVar "x" (ty ctxt)
                            tmP <- mkVar "p" (ty ctxt)
                            tmQ <- mkVar "q" (ty ctxt)
@@ -215,7 +190,7 @@ ruleMONOMIAL_POW ctxt tm bod ntm =
                            (l', r') <- destComb $ rand (concl th1)
                            th2 <- runConv convNUM_MULT r'
                            primTRANS th1 $ ruleAP_TERM l' th2
-                    | op == tmMul ->
+                    | op == tmMul ctxt ->
                         do tmX <- mkVar "x" (ty ctxt)
                            tmY <- mkVar "y" (ty ctxt)
                            tmQ <- mkVar "q" (ty ctxt)
@@ -236,122 +211,95 @@ convMONOMIAL_POW ctxt = Conv $ \ tm ->
     do (lop, r) <- destComb tm
        (op, l) <- destComb lop
        tmX <- mkVar "x" (ty ctxt)
-       if op /= tmPow || not (isNumeral r)
+       if op /= (tmPow ctxt) || not (isNumeral r)
           then fail "convMONOMIAL_POW"
-          else if r == tmZeron then primINST [(tmX, l)] $ (pthms ctxt) ! 34
-          else if r == tmOnen then primINST [(tmX, l)] $ (pthms ctxt) ! 35
-          else do th <- ruleMONOMIAL_POW tm l r
-                  ruleMONOMIAL_DEONE th
+          else case r of
+                 ZERO -> primINST [(tmX, l)] $ (pthms ctxt) ! 34
+                 ONE -> primINST [(tmX, l)] $ (pthms ctxt) ! 35
+                 _ -> do th <- ruleMONOMIAL_POW tm l r
+                         ruleMONOMIAL_DEONE th
 
 ruleMONOMIAL_MUL :: SemiRingContext -> HOLTerm -> HOLTerm -> HOLTerm 
                  -> HOL cls thry HOLThm
+ruleMONOMIAL_MUL ctxt tm 
+                 (Binary (tmMul ctxt) lx ly) (Binary (tmMul ctxt) rx ry) =
+    do vl <- powvar lx
+       vr <- powvar rx
+       let ord = vorder vl vr
+       if ord == EQ
+          then do th1 <- primINST [ (tmLX, lx), (tmLY, ly)
+                                  , (tmRX, rx), (tmRY, ry) ] $ (pthms ctxt) ! 14
+                  (tm1, tm2) <- destComb $ rand (concl th1)
+                  (tm3, tm4) <- destComb tm1
+                  th1_5 <- runConv convPOWVAR_MUL tm4
+                  th2 <- ruleAP_THM (ruleAP_TERM tm3 th1_5) tm2
+                  th3 <- primTRANS th1 th2
+                  (tm5, tm6) <- destComb $ rand (concl th3)
+                  (tm7, tm8) <- destComb tm6
+                  th4 <- ruleMONOMIAL_MUL tm6 (rand tm7) tm8
+                  primTRANS th3 $ ruleAP_TERM tm5 th4
+          else let th0 = (!) (pthms ctxt) $ if ord == LT then 15 else 16 in
+                 do th1 <- primINST [ (tmLX, lx), (tmLY, ly)
+                                    , (tmRX, rx), (tmRY, ry) ] th0
+                    (tm1, tm2) <- destComb $ rand (concl th1)
+                    (tm3, tm4) <- destComb tm2
+                    th2 <- ruleMONOMIAL_MUL tm2 (rand tm3) tm4
+                    primTRANS th1 $ ruleAP_TERM tm1 th2
+ruleMONOMIAL_MUL ctxt tm (Binary (tmMul ctxt) lx ly) r =
+    do vr <- powvar r
+       case vorder vl vr of
+         EQ ->
+             do th1 <- primINST [ (tmLX, lx), (tmLY, ly)
+                                , (tmRX, r) ] $ (pthms ctxt) ! 17
+                (tm1, tm2) <- destComb $ rand (concl th1)
+                (tm3, tm4) <- destComb tm1
+                th1_5 <-  runConv convPOWVAR_MUL tm4
+                th2 <- ruleAP_THM (ruleAP_TERM tm3 th1_5) tm2
+                primTRANS th1 th2
+         LT ->
+             do th1 <- primINST [ (tmLX, lx), (tmLY, ly)
+                                , (tmRX, r) ] $ (pthms ctxt) ! 18
+                (tm1, tm2) <- destComb $ rand (concl th1)
+                (tm3, tm4) <- destComb tm2
+                th2 <- ruleMONOMIAL_MUL tm2 (rand tm3) tm4
+                primTRANS th1 $ ruleAP_TERM tm1 th2
+         _ -> primINST [(tmLX, l), (tmRX, r)] $ (pthms ctxt) ! 19
+ruleMONOMIAL_MUL ctxt tm l (Binary (tmMul ctxt) rx ry) =
+    do vl <- powvar l
+       vr <- powvar rx
+       case vorder vl vr of
+         EQ ->
+             do th1 <- primINST [ (tmLX, l), (tmRX, rx), (tmRY, ry) ] $ 
+                         (pthms ctxt) ! 20
+                (tm1, tm2) <- destComb $ rand (concl th1)
+                (tm3, tm4) <- destComb tm1
+                th2 <- runConv convPOWVAR_MUL tm4
+                primTRANS th1 $ ruleAP_THM (ruleAP_TERM tm3 th2) tm2
+         GT ->
+             do th1 <- primINST [ (tmLX, l), (tmRX, rx)
+                                , (tmRY, ry) ] $ (pthms ctxt) ! 21
+                (tm1, tm2) <- destComb $ rand (concl th1)
+                (tm3, tm4) <- destComb tm2
+                th2 <- ruleMONOMIAL_MUL tm2 (rand tm3) tm4
+                primTRANS th1 $ ruleAP_TERM tm1 th2
+         _ -> primREFL tm
 ruleMONOMIAL_MUL ctxt tm l r =
-          do { (lx, ly) <- liftO $ destMul l
-             ; vl <- liftO $ powvar lx
-             ; do { (rx, ry) <- liftO $ destMul r
-                  ; vr <- liftO $ powvar rx
-                  ; let ord = vorder vl vr
-                  ; if ord == EQ
-                    then do th1 <- liftO . primINST [ (tmLX, lx), (tmLY, ly)
-                                                    , (tmRX, rx), (tmRY, ry) 
-                                                    ] $ pthms ! 14
-                            (tm1, tm2) <- liftO $ destComb =<<
-                                                    rand (concl th1)
-                            (tm3, tm4) <- liftO $ destComb tm1
-                            th1_5 <- runConv convPOWVAR_MUL tm4
-                            th2 <- liftO $ liftM1 ruleAP_THM 
-                                             (ruleAP_TERM tm3 th1_5) tm2
-                            th3 <- liftO $ primTRANS th1 th2
-                            (tm5, tm6) <- liftO $ destComb =<<
-                                                    rand (concl th3)
-                            (tm7, tm8) <- liftO $ destComb tm6
-                            tm7' <- liftO $ rand tm7
-                            th4 <- ruleMONOMIAL_MUL tm6 tm7' tm8
-                            liftO $ primTRANS th3 =<< ruleAP_TERM tm5 th4
-                    else let th0 = (!) pthms $ if ord == LT then 15 
-                                                else 16 in
-                           do th1 <- liftO $ primINST 
-                                               [ (tmLX, lx), (tmLY, ly)
-                                               , (tmRX, rx), (tmRY, ry) ] th0
-                              (tm1, tm2) <- liftO $ destComb =<< 
-                                                      rand (concl th1)
-                              (tm3, tm4) <- liftO $ destComb tm2
-                              tm3' <- liftO $ rand tm3
-                              th2 <- ruleMONOMIAL_MUL tm2 tm3' tm4
-                              liftO $ primTRANS th1 =<< ruleAP_TERM tm1 th2
-                  } <|>
-               do { vr <- liftO $ powvar r
-                  ; let ord = vorder vl vr
-                  ; if ord == EQ
-                    then do th1 <- liftO . primINST [ (tmLX, lx), (tmLY, ly)
-                                                    , (tmRX, r) ] $ pthms ! 17
-                            (tm1, tm2) <- liftO $ destComb =<< 
-                                                    rand (concl th1)
-                            (tm3, tm4) <- liftO $ destComb tm1
-                            th1_5 <-  runConv convPOWVAR_MUL tm4
-                            th2 <- liftO $ liftM1 ruleAP_THM 
-                                             (ruleAP_TERM tm3 th1_5) tm2
-                            liftO $ primTRANS th1 th2
-                    else if ord == LT
-                         then do th1 <- liftO . primINST 
-                                                  [ (tmLX, lx), (tmLY, ly)
-                                                  , (tmRX, r) ] $ pthms ! 18
-                                 (tm1, tm2) <- liftO $ destComb =<< 
-                                                         rand (concl th1)
-                                 (tm3, tm4) <- liftO $ destComb tm2
-                                 tm3' <- liftO $ rand tm3
-                                 th2 <- ruleMONOMIAL_MUL tm2 tm3' tm4
-                                 liftO $ primTRANS th1 =<< 
-                                           ruleAP_TERM tm1 th2
-                         else liftO . primINST [(tmLX, l), (tmRX, r)] $ 
-                                        pthms ! 19
-                  }
-             } <|>
-          do { vl <- liftO $ powvar l
-             ; do { (rx, ry) <- liftO $ destMul r
-                  ; vr <- liftO $ powvar rx
-                  ; let ord = vorder vl vr
-                  ; if ord == EQ
-                    then do th1 <- liftO . primINST [ (tmLX, l), (tmRX, rx)
-                                                    , (tmRY, ry) ] $ 
-                                             pthms ! 20
-                            (tm1, tm2) <- liftO $ destComb =<<
-                                                    rand (concl th1)
-                            (tm3, tm4) <- liftO $ destComb tm1
-                            th2 <- runConv convPOWVAR_MUL tm4
-                            liftO $ primTRANS th1 =<< liftM1 ruleAP_THM 
-                                      (ruleAP_TERM tm3 th2) tm2
-                    else if ord == GT
-                         then do th1 <- liftO . primINST 
-                                                  [ (tmLX, l), (tmRX, rx)
-                                                  , (tmRY, ry) ] $ pthms ! 21
-                                 (tm1, tm2) <- liftO $ destComb =<<
-                                                         rand (concl th1)
-                                 (tm3, tm4) <- liftO $ destComb tm2
-                                 tm3' <- liftO $ rand tm3
-                                 th2 <- ruleMONOMIAL_MUL tm2 tm3' tm4
-                                 liftO $ primTRANS th1 =<< 
-                                           ruleAP_TERM tm1 th2
-                         else return $! primREFL tm
-                  } <|>
-               let vr = fromJust $ powvar r
-                   ord = vorder vl vr in
-                 if ord == EQ
-                 then runConv convPOWVAR_MUL tm
-                 else if ord == GT
-                      then liftO . primINST [(tmLX, l), (tmRX, r)] $ pthms ! 19
-                      else return $! primREFL tm
-             }   
+    do vl <- powvar l
+       vr <- powvar r
+       case vorder vl vr of
+         EQ -> runConv convPOWVAR_MUL tm
+         GT -> primINST [(tmLX, l), (tmRX, r)] $ (pthms ctxt) ! 19
+         _ -> primREFL tm
 
   where powvar :: HOLTerm -> HOL cls thry HOLTerm
         powvar tm
-            | isSemiringConstant tm = return tmOne
+            | isSemiringConstant tm = return (tmOne ctxt)
             | otherwise = 
                 case tm of
                   (Comb lop r) ->
                       case lop of
                         (Comb op l)
-                            | op == tmPow && isNumeral r -> return l
+                            | op == (tmPow ctxt) && isNumeral r -> return l
                             | otherwise -> fail "powvar"
                         _ -> return tm
                   _ -> return tm
@@ -359,10 +307,92 @@ ruleMONOMIAL_MUL ctxt tm l r =
         vorder :: HOLTerm -> HOLTerm -> Ordering
         vorder x y
             | x == y = EQ
-            | x == tmOne = LT
-            | y == tmOne = GT
+            | x == (tmOne ctxt) = LT
+            | y == (tmOne ctxt) = GT
             | variableOrder x y = LT
             | otherwise = GT
+
+convMONOMIAL_MUL :: SemiRingContext -> Conversion cls thry
+convMONOMIAL_MUL ctxt = Conv $ \ tm ->
+    case tm of
+      (Binary (tmMul ctxt) l r) ->
+          do th <- ruleMONOMIAL_MUL tm l r
+             ruleMONOMIAL_DEONE th
+      _ -> fail "convMONOMIAL_MUL"
+
+
+convPOLYNOMIAL_MONOMIAL_MUL :: SemiRingContext -> Conversion cls thry
+convPOLYNOMIAL_MONOMIAL_MUL ctxt = Conv $ \ tm ->
+    case tm of
+      (Binary (tmMul ctxt) l (Binary (tmAdd ctxt) y z)) ->
+          do th1 <- primINST [(tmX, l), (tmY, y), (tmZ, z)] $ (pthms ctxt) ! 36
+             (tm1, tm2) <- destComb $ rand (concl th1)
+             (tm3, tm4) <- destComb tm1
+             thl <- runConv convMONOMIAL_MUL tm4
+             thr <- runConv convPOLYNOMIAL_MONOMIAL_MUL tm2
+             th2 <- primMK_COMB (ruleAP_TERM tm3 thl) thr
+             primTRANS th1 th2
+      _ -> runConv convMONOMIAL_MUL tm
+
+convMONOMIAL_ADD :: SemiRingContext -> Conversion cls thry
+convMONOMIAL_ADD = Conv $ \ tm ->
+    case tm of
+      (Binary (tmAdd ctxt) l r)
+          | isSemiringConstant l && isSemiringConstant r ->
+              runConv convSEMIRING_ADD tm
+          | otherwise ->
+              do th1 <- case (l, r) of
+                          (Binary (tmMul ctxt) ll _, Binary (tmMul ctxt) lr rr)
+                              | isSemiringConstant ll && 
+                                isSemiringConstant lr ->
+                                    primINST [ (tmA, ll), (tmB, lr)
+                                             , (tmM, rr) ] $ 
+                                      (pthms ctxt) ! 1
+                              | isSemiringConstant ll ->
+                                    primINST [(tmA, ll), [tmM, r)] $ 
+                                      (pthms ctxt) ! 2
+                              | isSemiringConstant lr -> 
+                                    primINST [(tmA, lr), (tmM, l)] $
+                                      (pthms ctxt) ! 3
+                              | otherwise -> 
+                                    primINST [(tmR, r)] $ (pthms ctxt) ! 4
+                          (Binary (tmMul ctxt) ll _, _)
+                              | isSemiringConstant ll ->
+                                    primINST [(tmA, ll), [tmM, r)] $ 
+                                      (pthms ctxt) ! 2
+                              | otherwise -> 
+                                    primINST [(tmR, r)] $ (pthms ctxt) ! 4
+                          (_, Binary (tmMul ctxt) lr _)
+                              | isSemiringConstant lr -> 
+                                    primINST [(tmA, lr), (tmM, l)] $
+                                      (pthms ctxt) ! 3
+                              | otherwise -> 
+                                    primINST [(tmR, r)] $ (pthms ctxt) ! 4
+                          (_, _) -> primINST [(tmR, r)] $ (pthms ctxt) ! 4
+                 (tm1, tm2) <- destComb $ rand (concl th1)
+                 (tm3, tm4) <- destComb tm1
+                 th1_5 <- runConv convSEMIRING_ADD tm4
+                 th2 <- ruleAP_TERM tm3 th1_5
+                 th3 <- primTRANS th1 $ ruleAP_THM th2 tm2
+                 tm5 <- rand $ concl th3
+                 case tm5 of
+                   (Comb (Comb _ (tmZero ctxt) r)) ->
+                        primTRANS th3 (primINST [(tmM, r)] $ (pthms ctxt) ! 5)
+                   _ -> ruleMONOMIAL_DEONE th3
+
+    let ruleDEZERO :: HOLThm -> Either String HOLThm
+        ruleDEZERO th =
+            do tm <- note "" . rand $ concl th
+               if not (isAdd tm)
+                  then return th
+                  else do (lop, r) <- note "" $ destComb tm
+                          l <- note "" $ rand lop
+                          if l == tmZero
+                             then primTRANS th #<< primINST [(tmA, r)] (pthms ! 6)
+                             else if r == tmZero
+                                  then primTRANS th #<< 
+                                         primINST [(tmA, l)] (pthms ! 7)
+                                  else return th
 
 convSEMIRING_NORMALIZERS :: forall cls thry. WFCtxt thry
                          => HOLThm -> HOLThm 
@@ -414,115 +444,9 @@ convSEMIRING_NORMALIZERS sth rth ( isSemiringConstant, convSEMIRING_ADD
                   tmNeg <- rator =<< lHand (concl nthm1)
                   let destSub = destBinop tmSub
                   return (nthm1, nthm2, tmSub, tmNeg, destSub)     
---
-        convMONOMIAL_MUL :: Conversion cls thry
-        convMONOMIAL_MUL = Conv $ \ tm ->
-          let (l, r) = fromJust $ destMul tm in
-            do th <- ruleMONOMIAL_MUL tm l r
-               liftO $ ruleMONOMIAL_DEONE th
--- 
-    let convPOLYNOMIAL_MONOMIAL_MUL :: Conversion cls thry
-        convPOLYNOMIAL_MONOMIAL_MUL = Conv $ \ tm ->
-          let (l, r) = fromJust $ destMul tm in
-            (do (y, z) <- liftO $ destAdd r
-                th1 <- liftO . primINST [(tmX, l), (tmY, y), (tmZ, z)] $ 
-                                 pthms ! 36
-                (tm1, tm2) <- liftO $ destComb =<< rand (concl th1)
-                (tm3, tm4) <- liftO $ destComb tm1
-                thl <- runConv convMONOMIAL_MUL tm4
-                thr <- runConv convPOLYNOMIAL_MONOMIAL_MUL tm2
-                th2 <- liftO $ liftM1 primMK_COMB (ruleAP_TERM tm3 thl) thr
-                liftO $ primTRANS th1 th2)
-            <|> runConv convMONOMIAL_MUL tm
---
-    let convMONOMIAL_ADD :: Conversion cls thry
-        convMONOMIAL_ADD = Conv $ \ tm ->
-          let (l, r) = fromJust $ destAdd tm in
-            if isSemiringConstant l && isSemiringConstant r
-            then runConv convSEMIRING_ADD tm
-            else let th1 = fromJust $
-                       let ll' = lHand l
-                           lr' = lHand r in
-                         if isMul l && 
-                            (liftM isSemiringConstant ll' == Just True)
-                         then if isMul r && 
-                                 (liftM isSemiringConstant lr' == Just True)
-                              then do rr <- rand r
-                                      ll <- ll'
-                                      lr <- lr'
-                                      primINST [ (tmA, ll), (tmB, lr)
-                                               , (tmM, rr) ] $ pthms ! 1
-                              else do ll <- ll'
-                                      primINST [(tmA, ll),(tmM, r)] $ 
-                                        pthms ! 2
-                         else if isMul r && 
-                                 (liftM isSemiringConstant lr' == Just True)
-                              then do lr <- lr'
-                                      primINST [(tmA, lr), (tmM, l)] $ 
-                                        pthms ! 3
-                              else primINST [(tmM, r)] $ pthms ! 4
-                     (tm1, tm2) = fromJust $ destComb =<< rand (concl th1)
-                     (tm3, tm4) = fromJust $ destComb tm1 in
-                   do th1_5 <- runConv convSEMIRING_ADD tm4
-                      let th2 = fromRight $ ruleAP_TERM tm3 th1_5
-                          th3 = fromRight $ primTRANS th1 =<<
-                                              ruleAP_THM th2 tm2
-                          tm5 = fromJust . rand $ concl th3
-                      if lHand tm5 == Just tmZero
-                         then let tm5' = fromJust $ rand tm5 in
-                                liftO $ primTRANS th3 #<< 
-                                          primINST [(tmM, tm5')] (pthms ! 5)
-                         else liftO $ ruleMONOMIAL_DEONE th3
---
-    let powervars :: HOLTerm -> [HOLTerm]
-        powervars tm =
-            let ptms = stripList destMul tm in
-              if isSemiringConstant $ head ptms
-              then tail ptms
-              else ptms
 
-        destVarpow :: HOLTerm -> Maybe (HOLTerm, Integer)
-        destVarpow tm =
-            (do (x, n) <- destPow tm
-                n' <- destNumeral n
-                return (x, n'))
-            <|> return (tm, if isSemiringConstant tm then 0 else 1)
-
-        morder :: HOLTerm -> HOLTerm -> Ordering
-        morder tm1 tm2 =
-            let vdegs1 = fromJust . mapM destVarpow $ powervars tm1
-                vdegs2 = fromJust . mapM destVarpow $ powervars tm2
-                deg1 = foldr ((+) . snd) 0 vdegs1
-                deg2 = foldr ((+) . snd) 0 vdegs2 in
-              if deg1 < deg2 then LT
-              else if deg1 > deg2 then GT
-                   else lexorder vdegs1 vdegs2
-          where lexorder :: [(HOLTerm, Integer)] -> [(HOLTerm, Integer)] 
-                         -> Ordering
-                lexorder [] [] = EQ
-                lexorder _ [] = LT
-                lexorder [] _ = GT
-                lexorder ((x1, n1):vs1) ((x2, n2):vs2)
-                    | variableOrder x1 x2 = GT
-                    | variableOrder x2 x1 = LT
-                    | n1 < n2 = LT
-                    | n2 < n1 = GT
-                    | otherwise = lexorder vs1 vs2
+        
 --
-    let ruleDEZERO :: HOLThm -> Either String HOLThm
-        ruleDEZERO th =
-            do tm <- note "" . rand $ concl th
-               if not (isAdd tm)
-                  then return th
-                  else do (lop, r) <- note "" $ destComb tm
-                          l <- note "" $ rand lop
-                          if l == tmZero
-                             then primTRANS th #<< primINST [(tmA, r)] (pthms ! 6)
-                             else if r == tmZero
-                                  then primTRANS th #<< 
-                                         primINST [(tmA, l)] (pthms ! 7)
-                                  else return th
-
         convPOLYNOMIAL_ADD :: Conversion cls thry
         convPOLYNOMIAL_ADD = Conv $ \ tm ->
           do (l, r) <- destAdd tm
@@ -744,4 +668,41 @@ convNUM_NORMALIZE = Conv $ \ tm ->
        (_, _, _, _, _, conv) <- convSEMIRING_NORMALIZERS sth rth
           (isNumeral, convNUM_ADD, convNUM_MULT, convNUM_EXP) (<)
        runConv conv tm
-                       
+  
+morder :: SemiRingContext -> HOLTerm -> HOLTerm -> HOL cls thry Ordering
+morder ctxt tm1 tm2 =
+    do vdegs1 <- mapM destVarpow $ powervars tm1
+       vdegs2 <- mapM destVarpow $ powervars tm2
+       let deg1 = foldr ((+) . snd) 0 vdegs1
+           deg2 = foldr ((+) . snd) 0 vdegs2
+       if deg1 < deg2 
+          then LT
+          else if deg1 > deg2 then GT
+               else lexorder vdegs1 vdegs2
+  where destVarpow :: HOLTerm -> HOL cls thry (HOLTerm, Integer)
+        destVarpow tm =
+            case tm of
+              (Binary (tmPow ctxt) x n) ->
+                  do n' <- destNumeral n
+                     return (x, n')
+              _ -> return (tm, if isSemiringConstant tm then 0 else 1)
+
+        powervars :: HOLTerm -> [HOLTerm]
+        powervars tm =
+            let ptms = stripList destMul tm in
+              if isSemiringConstant $ head ptms
+              then tail ptms
+              else ptms
+
+        lexorder :: [(HOLTerm, Integer)] -> [(HOLTerm, Integer)] -> Ordering
+        lexorder [] [] = EQ
+        lexorder _ [] = LT
+        lexorder [] _ = GT
+        lexorder ((x1, n1):vs1) ((x2, n2):vs2)
+            | variableOrder x1 x2 = GT
+            | variableOrder x2 x1 = LT
+            | n1 < n2 = LT
+            | n2 < n1 = GT
+            | otherwise = lexorder vs1 vs2
+                          
+-}

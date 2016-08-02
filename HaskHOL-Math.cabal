@@ -18,12 +18,12 @@ library
     default-extensions: ConstraintKinds, DeriveDataTypeable, FlexibleContexts,
                         OverloadedStrings, PatternSynonyms, QuasiQuotes, 
                         TemplateHaskell, TypeFamilies
-    build-depends:   base >=4.7
-                   , template-haskell >=2.9
-                   , parsec >=3.1
+    build-depends:   base >=4.9 && < 5.0
+                   , template-haskell >= 2.11
+                   , parsec >= 3.1
                    , vector >= 0.10
-                   , haskhol-core >=1.2
-                   , haskhol-deductive >=0.2
+                   , haskhol-core >=1.3
+                   , haskhol-deductive >= 1.0
                    , text >= 1.2
 
     exposed-modules:
@@ -69,7 +69,10 @@ library
       -- HaskHOL.Lib.Lists.Context
       -- HaskHOL.Lib.Lists.PQ
              
-    ghc-prof-options: -O2 -funbox-strict-fields -fcontext-stack=200 -Wall 
-                      -fprof-cafs -fprof-auto -rtsopts
-    ghc-options: -O2 -funbox-strict-fields -fcontext-stack=200 -Wall
+    ghc-prof-options: -O2 -funbox-strict-fields -Wall -fprof-auto 
+                      -fconstraint-solver-iterations=0
+                      -fno-warn-redundant-constraints
+    ghc-options: -O2 -funbox-strict-fields -Wall 
+                 -fconstraint-solver-iterations=0
+                 -fno-warn-redundant-constraints
  

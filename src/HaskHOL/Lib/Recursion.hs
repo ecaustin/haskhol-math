@@ -107,9 +107,9 @@ reshuffle fn args acc =
       if args' == args then return acc
       else do gvs <- mapM (genVar . typeOf) args
               gvs' <- mapM (\ x -> x `assoc` zip args gvs) args'
-              lty <- itlistM (mkFunTy . typeOf) gvs' <=<
+              lty <- itlistM (mkFunTy . typeOf) gvs' =<<
                        funpowM (length gvs)
-                         (liftM (head . tail . snd) . destType) $ typeOf fn
+                         (liftM (head . tail . snd) . destType) =<< typeOf fn
               fn' <- genVar lty
               def <- mkEq fn =<< listMkAbs gvs =<< listMkComb fn' gvs'
               def' <- primASSUME def

@@ -50,6 +50,7 @@ module HaskHOL.Lib.Nums
     , ruleDENUMERAL
     , defBIT0
     , pattern ZERO
+    , pattern ONE
     , pattern SUC
     , pattern NUMERAL
     , pattern BIT0
@@ -61,6 +62,7 @@ import HaskHOL.Lib.Nums.Context
 import HaskHOL.Lib.Nums.PQ
 
 import HaskHOL.Core
+import qualified HaskHOL.Core.Basics as B (destNumeral)
 import HaskHOL.Deductive hiding (getDefinition, newDefinition, newSpecification,
                                  getSpecification)
 import HaskHOL.Lib.Pair
@@ -112,11 +114,24 @@ defBIT0_PRIM = cacheProof "defBIT0_PRIM" ctxtNums $ getDefinition "BIT0"
 defBIT1 :: NumsCtxt thry => HOL cls thry HOLThm
 defBIT1 = cacheProof "defBIT1" ctxtNums $ getDefinition "BIT1"
 
+pattern ZERO :: HOLTerm
 pattern ZERO <- Const "_0" _
+
+pattern SUC :: HOLTerm
 pattern SUC <- Const "SUC" _
+
+pattern NUMERAL :: HOLTerm -> HOLTerm
 pattern NUMERAL tm <- Comb (Const "NUMERAL" _) tm
+
+pattern BIT0 :: HOLTerm -> HOLTerm
 pattern BIT0 tm <- Comb (Const "BIT0" _) tm
+
+pattern BIT1 :: HOLTerm -> HOLTerm
 pattern BIT1 tm <- Comb (Const "BIT1" _) tm
+
+-- GHC 8 panics on nested patterns, so we expand the definition here.
+pattern ONE :: HOLTerm
+pattern ONE <- Comb (Const "NUMERAL" _) (Comb (Const "BIT1" _) (Const "_0" _))
 
 thmIND_SUC_0_EXISTS :: NumsCtxt thry => HOL cls thry HOLThm
 thmIND_SUC_0_EXISTS = Base.thmIND_SUC_0_EXISTS
@@ -213,11 +228,11 @@ mkNumeral n
 mkSmallNumeral :: NumsCtxt thry => Int -> HOL cls thry HOLTerm
 mkSmallNumeral = mkNumeral
 
-destSmallNumeral :: HOLTerm -> Maybe Int
-destSmallNumeral = liftM fromInteger . destNumeral
+destSmallNumeral :: HOLTermRep tm cls thry => tm -> HOL cls thry Integer
+destSmallNumeral = destNumeral
 
 isNumeral :: HOLTerm -> Bool
-isNumeral = try' . can destNumeral
+isNumeral = test' . B.destNumeral
 
 newSpecification :: NumsCtxt thry => [Text] -> HOLThm -> HOL Theory thry HOLThm
 newSpecification [] _ = fail "newSpecification: no constant names provided."
