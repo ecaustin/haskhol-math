@@ -79,68 +79,6 @@ starts =
                   then mkComb tmBIT1 t
                   else mkComb tmBIT0 t
 
-adPairs :: WFCtxt thry => Bool -> HOL cls thry ([HOLThm], [Int])
-adPairs fl = liftM unzip $ mapM (mkClauses fl) =<< starts
-
-convNUM_SHIFT_pths1' :: WFCtxt thry => HOL cls thry HOLThm
-convNUM_SHIFT_pths1' = cacheProof "convNUM_SHIFT_pths1'" ctxtWF .
-    prove [txt| (n = a + p * b <=>
-                 BIT0(BIT0(BIT0(BIT0 n))) =
-                 BIT0(BIT0(BIT0(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT1(BIT0(BIT0(BIT0 n))) =
-                 BIT1(BIT0(BIT0(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT0(BIT1(BIT0(BIT0 n))) =
-                 BIT0(BIT1(BIT0(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT1(BIT1(BIT0(BIT0 n))) =
-                 BIT1(BIT1(BIT0(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT0(BIT0(BIT1(BIT0 n))) =
-                 BIT0(BIT0(BIT1(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT1(BIT0(BIT1(BIT0 n))) =
-                 BIT1(BIT0(BIT1(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT0(BIT1(BIT1(BIT0 n))) =
-                 BIT0(BIT1(BIT1(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT1(BIT1(BIT1(BIT0 n))) =
-                 BIT1(BIT1(BIT1(BIT0 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT0(BIT0(BIT0(BIT1 n))) =
-                 BIT0(BIT0(BIT0(BIT1 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT1(BIT0(BIT0(BIT1 n))) =
-                 BIT1(BIT0(BIT0(BIT1 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT0(BIT1(BIT0(BIT1 n))) =
-                 BIT0(BIT1(BIT0(BIT1 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT1(BIT1(BIT0(BIT1 n))) =
-                 BIT1(BIT1(BIT0(BIT1 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT0(BIT0(BIT1(BIT1 n))) =
-                 BIT0(BIT0(BIT1(BIT1 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT1(BIT0(BIT1(BIT1 n))) =
-                 BIT1(BIT0(BIT1(BIT1 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT0(BIT1(BIT1(BIT1 n))) =
-                 BIT0(BIT1(BIT1(BIT1 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) /\
-                (n = a + p * b <=>
-                 BIT1(BIT1(BIT1(BIT1 n))) =
-                 BIT1(BIT1(BIT1(BIT1 a))) + BIT0(BIT0(BIT0(BIT0 p))) * b) |] $
-      tacMP (ruleREWRITE [ruleGSYM thmMULT_2] thmBIT0) `_THEN`
-      tacMP (ruleREWRITE [ruleGSYM thmMULT_2] thmBIT1) `_THEN`
-      tacABBREV [txt| two = 2 |] `_THEN`
-      _DISCH_THEN (\ th -> tacREWRITE [th]) `_THEN`
-      _DISCH_THEN (\ th -> tacREWRITE [th]) `_THEN`
-      _FIRST_X_ASSUM (tacSUBST1 . ruleSYM) `_THEN`
-      tacREWRITE [ thmADD_CLAUSES, thmSUC_INJ
-                 , thmEQ_MULT_LCANCEL, thmARITH_EQ
-                 , ruleGSYM thmLEFT_ADD_DISTRIB, ruleGSYM thmMULT_ASSOC ]
 
 convNUM_SHIFT_pths0' :: WFCtxt thry => HOL cls thry HOLThm
 convNUM_SHIFT_pths0' = cacheProof "convNUM_SHIFT_pths0'" ctxtWF .

@@ -10,6 +10,8 @@ import HaskHOL.Core
 
 import HaskHOL.Lib.Pair
 
+import HaskHOL.Lib.Nums
+import HaskHOL.Lib.Arith
 import HaskHOL.Lib.Arith.Context
 
 data WFThry
@@ -40,3 +42,11 @@ ctxtWF = extendTheory ctxtArith $(thisModule') $
          , ("NUMPAIR", [txt| NUMPAIR x y = (2 EXP x) * (2 * y + 1) |])
          , ("NUMSUM", [txt| NUMSUM b x = if b then SUC(2 * x) else 2 * x |])
          ]
+       -- Force evaluation of some theorems to save time in CalcNum compilation
+       sequence_
+         [ thmARITH_ADD, thmARITH_SUC, thmARITH_0, thmBITS_INJ
+         , thmMULT_2, thmBIT0, thmBIT1, thmADD_CLAUSES, thmSUC_INJ
+         , thmEQ_MULT_LCANCEL, thmARITH_EQ, thmLEFT_ADD_DISTRIB
+         , thmMULT_ASSOC
+         ]
+       
