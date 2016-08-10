@@ -26,11 +26,11 @@ module HaskHOL.Math
     , module HaskHOL.Lib.Arith
     , module HaskHOL.Lib.WF
     , module HaskHOL.Lib.CalcNum
-    --, module HaskHOL.Lib.Normalizer
+    , module HaskHOL.Lib.Normalizer
     --, module HaskHOL.Lib.Grobner
-    --, module HaskHOL.Lib.IndTypesPre
-    --, module HaskHOL.Lib.IndTypes
-    --, module HaskHOL.Lib.Lists
+    , module HaskHOL.Lib.IndTypesPre
+    , module HaskHOL.Lib.IndTypes
+    , module HaskHOL.Lib.Lists
     ) where
 
 import HaskHOL.Core
@@ -41,15 +41,13 @@ import HaskHOL.Lib.Recursion
 import HaskHOL.Lib.Arith
 import HaskHOL.Lib.WF
 import HaskHOL.Lib.CalcNum
---import HaskHOL.Lib.Normalizer
+import HaskHOL.Lib.Normalizer
 --import HaskHOL.Lib.Grobner
---import HaskHOL.Lib.IndTypesPre
---import HaskHOL.Lib.IndTypes
---import HaskHOL.Lib.Lists
+import HaskHOL.Lib.IndTypesPre
+import HaskHOL.Lib.IndTypes
+import HaskHOL.Lib.Lists
 
-import HaskHOL.Lib.WF.Context
---import HaskHOL.Lib.IndTypes.Context
---import HaskHOL.Lib.Lists.Context
+import HaskHOL.Lib.Lists.Context
 
 {- $ThryCtxt
   See 'extendCtxt' in the "HaskHOL.Core.Ext" module for more information.
@@ -59,16 +57,16 @@ import HaskHOL.Lib.WF.Context
   The theory context type for the math libraries.  
   An alias to 'ListsType'.
 -}
-type MathType = WFType
-type MathCtxt a = WFCtxt a
+type MathType = ListsType
+type MathCtxt a = ListsCtxt
 
 {-| 
   The theory context for the math libraries.  
-  An alias to 'ctxtWF'.
+  An alias to 'ctxtLists'.
 -}
 ctxtMath :: TheoryPath MathType
-ctxtMath = ctxtWF
+ctxtMath = ctxtLists
 
--- | The quasi-quoter for the math libraries.  An alias to 'wF'.
+-- | The quasi-quoter for the math libraries.  An alias to 'lists'.
 math :: QuasiQuoter
-math = wf
+math = lists

@@ -1,6 +1,7 @@
 module HaskHOL.Lib.IndTypes.Pre2 where
 
-import HaskHOL.Core
+import HaskHOL.Core hiding (typeOf)
+import HaskHOL.Core.Kernel (typeOf)
 import qualified HaskHOL.Core.State as S (mkType)
 import HaskHOL.Deductive
 
@@ -221,7 +222,7 @@ proveConstructorsDistinct ax =
 
         proveDistinct :: WFCtxt thry => [HOLTerm] -> HOL cls thry [HOLThm]
         proveDistinct pat =
-            do tyNum <- S.mkType "num" []
+            do tyNum <- S.mkType "num" ([]::[HOLType])
                nms <- mapM mkNumeral ([0..(length pat -1)] :: [Int])
                fn <- genVar =<< mkType "fun" [typeOf $ head pat, tyNum]
                ls <- mapM (mkComb fn) pat

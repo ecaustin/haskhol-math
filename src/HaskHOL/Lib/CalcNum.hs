@@ -37,15 +37,21 @@ import HaskHOL.Lib.WF
 import HaskHOL.Lib.CalcNum.Pre
 import HaskHOL.Lib.CalcNum.Pre2
 
-import qualified Data.Vector as V
-
+pattern SUC :: HOLTerm -> HOLTerm
 pattern SUC x <- Comb Nums.SUC (NUMERAL x)
-pattern BIN_OP str x y <- Binary' str (NUMERAL x) (NUMERAL y)
 
+pattern BIN_OP :: Text -> HOLTerm -> HOLTerm -> HOLTerm
+pattern BIN_OP str x y <- Binary str (NUMERAL x) (NUMERAL y)
+
+pattern (:+) :: HOLTerm -> HOLTerm -> HOLTerm
 pattern x :+ y <- BIN_OP "+" x y
+pattern (:*) :: HOLTerm -> HOLTerm -> HOLTerm
 pattern x :* y <- BIN_OP "*" x y
+pattern (:<=) :: HOLTerm -> HOLTerm -> HOLTerm
 pattern x :<= y <- BIN_OP "<=" x y
+pattern (:=) :: HOLTerm -> HOLTerm -> HOLTerm
 pattern x := y <- BIN_OP "=" x y
+pattern (:<) :: HOLTerm -> HOLTerm -> HOLTerm
 pattern x :< y <- BIN_OP "<" x y
 
 tmA, tmB, tmC, tmD, tmE, tmH, tmL, tmMul, tmSUC :: WFCtxt thry => HOL cls thry HOLTerm
@@ -247,7 +253,7 @@ convNUM_EXP = Conv $ \ tm -> note "convNUM_EXP" $
         convNUM_MULT' :: WFCtxt thry => Conversion cls thry
         convNUM_MULT' = Conv $ \ tm -> note "convNUM_MULT'" $
             case tm of
-              (Binary' "*" mtm ntm)
+              (mtm :* ntm)
                   | mtm == ntm ->
                       do th1 <- ruleNUM_SQUARE mtm
                          ptm <- rand $ concl th1
@@ -345,9 +351,9 @@ ruleNUM_ADD mtm ntm = note "ruleNUM_ADD" $
                     _ -> nLo + 16
            ind = 32 * mInd + nInd
        clauses <- addClauses
-       let th1 = clauses V.! ind
+       let th1 = clauses !! ind
        flags <- addFlags
-       case flags V.! ind of
+       case flags !! ind of
          0 -> primINST [(tmM, mHi)] th1
          1 -> primINST [(tmN, nHi)] th1
          2 -> do th2@(Thm _ (Comb _ ptm)) <- ruleNUM_ADD mHi nHi
@@ -374,8 +380,8 @@ ruleNUM_ADC ptm1 ptm2 = note "ruleNUM_ADC" $
            ind = 32 * mInd + nInd
        clauses <- adcClauses
        flags <- adcFlags
-       let th1 = clauses V.! ind
-       case flags V.! ind of
+       let th1 = clauses !! ind
+       case flags !! ind of
          0 -> primINST [(tmM, mHi)] th1
          1 -> primINST [(tmN, nHi)] th1
          2 -> do th2@(Thm _ (Comb _ ptm)) <- ruleNUM_ADD mHi nHi
@@ -603,12 +609,12 @@ convNUM_SHIFT k = Conv $ \ tm -> note "convNUM_SHIFT" $
                  case concl th1 of
                    (Comb _ (Comb (Comb _ ZERO)(Comb (Comb _ ptm) btm))) ->
                      do pths <- convNUM_SHIFT_pths0
-                        let th2 = pths V.! i
+                        let th2 = pths !! i
                         th3 <- primINST [(tmN, ntm), (tmB, btm), (tmP, ptm)] th2
                         primEQ_MP th3 th1
                    (Comb _ (Comb (Comb _ atm) (Comb (Comb _ ptm) btm))) ->
                      do pths <- convNUM_SHIFT_pths1
-                        let th2 = pths V.! i
+                        let th2 = pths !! i
                         th3 <- primINST [ (tmN, ntm), (tmA, atm)
                                         , (tmB, btm), (tmP, ptm) ] th2
                         primEQ_MP th3 th1
@@ -699,7 +705,7 @@ convNUM_UNSHIFT = Conv $ \ tm -> note "convNUM_UNSHIFT" $
                                      (mkComb (mkComb tmMul ptm'') btm)
                             th1 <- runConv convNUM_UNSHIFT tm'
                             pths <- convNUM_UNSHIFT_puths2
-                            let pth = pths V.! (16 * j + i)
+                            let pth = pths !! (16 * j + i)
                             ntm <- rand $ concl th1
                             th2 <- primINST [ (tmA, atm''), (tmP, ptm'')
                                             , (tmB, btm), (tmN, ntm) ] pth
@@ -709,7 +715,7 @@ convNUM_UNSHIFT = Conv $ \ tm -> note "convNUM_UNSHIFT" $
                                     (mkComb (mkComb tmMul ptm') btm)
                            th1 <- runConv convNUM_UNSHIFT tm'
                            pths <- convNUM_UNSHIFT_puths1
-                           let pth = pths V.! i
+                           let pth = pths !! i
                            ntm <- rand $ concl th1
                            th2 <- primINST [ (tmA, atm'), (tmP, ptm')
                                            , (tmB, btm), (tmN, ntm) ] pth

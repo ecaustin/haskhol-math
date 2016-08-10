@@ -1,7 +1,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 module HaskHOL.Lib.IndTypes.Pre where
 
-import HaskHOL.Core
+import HaskHOL.Core hiding (typeOf)
+import HaskHOL.Core.Kernel (typeOf)
 import qualified HaskHOL.Core.State as S (mkType)
 import HaskHOL.Deductive hiding (getDefinition, getSpecification, newDefinition)
 
@@ -397,7 +398,7 @@ createRecursionIsoConstructor :: WFCtxt thry
                               => [(HOLTerm, (HOLTerm, HOLTerm))] -> HOLThm 
                               -> HOL cls thry HOLTerm
 createRecursionIsoConstructor consindex cth =
-    do numty <- S.mkType "num" []
+    do numty <- S.mkType "num" ([]::[HOLType])
        let zty = mkVarType "Z"
        s <- liftM (mkVar "s") $ mkFunTy numty zty
        recty <- liftM (head . snd) . destType . typeOf . fst $ head consindex

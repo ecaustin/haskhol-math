@@ -32,7 +32,8 @@ module HaskHOL.Lib.IndTypes
     , convMATCH_SEQPATTERN_TRIV
     ) where
 
-import HaskHOL.Core
+import HaskHOL.Core hiding (typeOf)
+import HaskHOL.Core.Kernel (typeOf)
 import HaskHOL.Deductive hiding (getDefinition, newDefinition)
 
 import HaskHOL.Lib.Pair
@@ -48,7 +49,7 @@ import HaskHOL.Lib.IndTypes.PQ
 
 import qualified Data.Text.Lazy as T (words)
 
-tmT :: BoolCtxt thry => HOL cls thry HOLThm
+tmT :: BoolCtxt thry => HOL cls thry HOLTerm
 tmT = serve [bool| T |]
 
 
@@ -339,18 +340,18 @@ defineTypeNested def =
                  (x `append` id', map typeOf args)
 
         modifyClause :: HOLTypeEnv -> (HOLType, [(Text, [HOLType])]) 
-                     -> Either String (HOLType, [(Text, [HOLType])])
+                     -> HOL cls thry (HOLType, [(Text, [HOLType])])
         modifyClause alist (l, lis) =
             do lis' <- mapM (modifyItem alist) lis
                return (l, lis')
 
         modifyItem :: HOLTypeEnv -> (Text, [HOLType]) 
-                   -> Either String (Text, [HOLType])
+                   -> HOL cls thry (Text, [HOLType])
         modifyItem alist (s, l) =
             do l' <- mapM (modifyType alist) l
                return (s, l')
 
-        modifyType :: HOLTypeEnv -> HOLType -> Either String HOLType
+        modifyType :: HOLTypeEnv -> HOLType -> HOL cls thry HOLType
         modifyType alist ty =
             revAssoc ty alist <|>
               do (tycon, tyargs) <- destType ty
@@ -516,7 +517,7 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
                let inst1 = (vc1, itm1)
                return (inst0, inst1)
 
-        clauseCorresponds :: HOLTerm -> HOLTerm -> Maybe Bool
+        clauseCorresponds :: HOLTerm -> HOLTerm -> HOL cls thry Bool
         clauseCorresponds cl0 cl1 =
             do (f0, ctm0) <- destComb =<< lhs cl0
                c0 <- liftM fst . destConst . fst $ stripComb ctm0
