@@ -58,7 +58,7 @@ import HaskHOL.Lib.Lists.Context
   An alias to 'ListsType'.
 -}
 type MathType = ListsType
-type MathCtxt a = ListsCtxt
+type MathCtxt a = ListsCtxt a
 
 {-| 
   The theory context for the math libraries.  

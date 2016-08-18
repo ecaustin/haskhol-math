@@ -32,8 +32,7 @@ module HaskHOL.Lib.IndTypes
     , convMATCH_SEQPATTERN_TRIV
     ) where
 
-import HaskHOL.Core hiding (typeOf)
-import HaskHOL.Core.Kernel (typeOf)
+import HaskHOL.Core
 import HaskHOL.Deductive hiding (getDefinition, newDefinition)
 
 import HaskHOL.Lib.Pair
@@ -140,7 +139,7 @@ defineType s =
                fail "defineType: multiple definitions of a type."
              when ((length (setify constructors)) /= length constructors) $
                fail "defineType: multiple instances of a constructor."
-             cond1 <- mapM (can (getTypeArity . destVarType)) newtypes
+             cond1 <- mapM (can (getTypeArity <=< destVarType)) newtypes
              cond2 <- mapM (can getConstType) constructors
              if or cond1
                 then do t <- findM (can getTypeArity) =<< 
@@ -178,14 +177,14 @@ defineTypeRaw def =
          let (avs, etm) = stripForall $ concl rth0
              allcls = conjuncts . snd $ stripExists etm
          (relcls, _) <- trySplitAt (length truecons) allcls
-         gencons <- mapM (repeatM rator . rand . lHand . snd . stripForall) 
+         gencons <- mapM (repeatM rator <=< rand . lHand . snd . stripForall) 
                       relcls
          cdefs <- map2M (\ s r -> do deftm <- mkEq (mkVar s $ typeOf r) r
                                      dth <- newDefinition (s, deftm)
                                      ruleSYM dth) truecons gencons
-         let tavs = mkArgs "f" [] $ map typeOf avs
+         tavs <- mkArgs "f" [] `fmap` mapM typeOf avs
          ith1 <- ruleSUBS cdefs ith0
-         rth1 <- ruleGENL tavs . ruleSUBS cdefs $ ruleSPECL tavs rth0
+         rth1 <- ruleGENL tavs . ruleSUBS cdefs =<< ruleSPECL tavs rth0
          let retval = (p, ith1, rth1)
          newentries <- mapM (\s -> do s' <- destVarType s
                                       return (s', retval)) newtys
@@ -207,7 +206,7 @@ defineTypeNested def =
              do (k, tyal, ncls, ith, rth) <- createAuxiliaryClauses nty
                 cls <- mapM (modifyClause tyal) $ def ++ ncls
                 (_, ith1, rth1) <- defineTypeNested cls
-                xnewtys <- mapM (head . snd . destType . typeOf) .
+                xnewtys <- mapM (liftM (head . snd) . destType <=< typeOf) .
                                 fst . stripExists . snd . stripForall $ 
                                   concl rth1
                 xtyal <- mapM (\ ty -> 
@@ -222,15 +221,19 @@ defineTypeNested def =
                 (isoth, rclauses) <- proveInductiveTypesIsomorphic n k 
                                        (ith0, rth0) (ith1, rth1)
                 irth3 <- ruleCONJ ith1 rth1
-                let vtylist = foldr (insert . typeOf) [] . variables $ 
-                                concl irth3
+                vtylist <- foldrM (\ tm acc -> 
+                                   do ty <- typeOf tm
+                                      return $! insert ty acc) [] . variables $ 
+                             concl irth3
                 isoths <- ruleCONJUNCTS isoth
                 isotys <- mapM (liftM (head . snd) . destType <=<
-                                liftM typeOf . lHand . concl) isoths
+                                typeOf <=< lHand . concl) isoths
                 let ctylist = filter (\ ty -> 
                                       any (\ t -> t `occursIn` ty) isotys) 
                                 vtylist
-                    atylist = foldr (union . stripList destFunTy) [] ctylist
+                atylist <- foldrM (\ tm acc ->
+                                   do tm' <- stripListM destFunTy tm
+                                      return $! union tm' acc) [] ctylist
                 isoths' <- mapM (liftTypeBijections isoths) $
                             filter (\ ty -> any (\ t -> t `occursIn` ty) isotys)
                               atylist
@@ -239,16 +242,16 @@ defineTypeNested def =
                 uisoths <- mapM ruleISO_USAGE cisoths
                 visoths <- mapM (primASSUME . concl) uisoths
                 irth3' <- ruleREWRITE_FUN_EQ visoths irth3
-                let irth4 = foldr rulePROVE_HYP irth3' uisoths
+                irth4 <- foldrM rulePROVE_HYP irth3' uisoths
                 isoths'' <- mapM ruleSIMPLE_ISO_EXPAND isoths'
                 irth5 <- ruleREWRITE (rclauses : isoths'') irth4
                 irth6 <- repeatM ruleSCRUB_ASSUMPTION irth5
-                let ncjs = filter (\ t -> 
-                             let ts = snd . stripComb $ rand =<< 
-                                        (lhs . snd $ stripForall t) in
-                               any (\ v -> not $ isVar v) ts) . conjuncts . 
-                             snd . stripExists . snd . stripForall . 
-                               rand $ concl irth6
+                ncjs <- filterM (\ t -> 
+                          do ts <- liftM (snd . stripComb) 
+                                     (rand . lhs . snd $ stripForall t)
+                             return $! any (\ v -> not $ isVar v) ts) =<< 
+                          (liftM (conjuncts . snd . stripExists . snd . 
+                                  stripForall) . rand $ concl irth6)
                 dths <- mapM mkNewcon ncjs
                 (ith6, rth6) <- ruleCONJ_PAIR =<< rulePURE_REWRITE dths irth6
                 return (n, ith6, rth6)
@@ -258,8 +261,8 @@ defineTypeNested def =
               do eqn <- findM (\ t -> 
                         do x <- lhs t
                            us <- mapM (\ u -> do u' <- rand u
-                                                 x `freeIn` u') hyps
-                           return $! all us) hyps
+                                                 return $! x `freeIn` u') hyps
+                           return $! and us) hyps
                  (l, r) <- destEq eqn
                  th' <- ruleDISCH eqn th
                  ruleMP (primINST [(l, r)] th') (primREFL r)
@@ -316,28 +319,33 @@ defineTypeNested def =
                                    "for nested type: " ++ show tycon)
                let (evs, bod) = stripExists . snd . stripForall $ concl rth
                cjs <- mapM (lHand . snd . stripForall) $ conjuncts bod
-               rtys <- mapM ((head . snd) `fmap` (destType . typeOf)) evs
-               tyins <- tryFind (\ vty -> typeMatch vty nty ([], [], [])) rtys
-               cjs' <- mapM ((instFull tyins) `fmap` rand) $ 
-                         fst `fmap` trySplitAt k cjs
-               let mtys = foldr (insert . typeOf) [] cjs'
-                   pcons = map (\ ty -> 
-                                filter (\ t -> typeOf t == ty) cjs') mtys
-                   cls' = zip mtys $ map (map (recoverClause id')) pcons
-                   tyal = map (\ ty -> do (x, _) <- (destTypeOp . fst) `fmap` 
-                                                      destType ty
-                                          (mkVarType (x `append` id'), ty)) mtys
+               rtys <- mapM (liftM (head . snd) . (destType <=< typeOf)) evs
+               tyins <- tryFind (\ vty -> typeMatch_NIL vty nty) rtys
+               cjs' <- mapM (liftM (instFull tyins) . rand) =<< 
+                         (fst `fmap` trySplitAt k cjs)
+               mtys <- foldrM (\ tm acc -> 
+                                do ty <- typeOf tm
+                                   return $! insert ty acc) [] cjs'
+               pcons <- mapM (\ ty -> 
+                                filterM (\ t -> 
+                                         do ty' <- typeOf t
+                                            return $! ty' == ty) cjs') mtys
+               cls' <- zip mtys `fmap` (mapM (mapM (recoverClause id')) pcons)
+               tyal <- mapM (\ ty -> do (x, _) <- (destTypeOp . fst) `fmap` 
+                                                  destType ty
+                                        return (mkVarType (x `append` id'), ty)) mtys
                cls'' <- mapM (modifyType tyal `ffCombM` 
                               mapM (modifyItem tyal)) cls'
-               return (k, tyal, cls'', 
-                       primINST_TYPE_FULL tyins ith, 
-                       primINST_TYPE_FULL tyins rth)
+               th1 <- primINST_TYPE_FULL tyins ith
+               th2 <- primINST_TYPE_FULL tyins rth
+               return (k, tyal, cls'', th1, th2)
 
-        recoverClause :: Text -> HOLTerm -> (Text, [HOLType])
+        recoverClause :: Text -> HOLTerm -> HOL cls thry (Text, [HOLType])
         recoverClause id' tm =
             let (con, args) = stripComb tm in
               do (x, _) <- destConst con
-                 (x `append` id', map typeOf args)
+                 tys <- mapM typeOf args
+                 return (x `append` id', tys)
 
         modifyClause :: HOLTypeEnv -> (HOLType, [(Text, [HOLType])]) 
                      -> HOL cls thry (HOLType, [(Text, [HOLType])])
@@ -355,7 +363,7 @@ defineTypeNested def =
         modifyType alist ty =
             revAssoc ty alist <|>
               do (tycon, tyargs) <- destType ty
-                 tyApp tycon $ mapM (modifyType alist) tyargs
+                 tyApp tycon =<< mapM (modifyType alist) tyargs
 
         isNested :: [HOLType] -> HOLType -> Bool
         isNested vs ty = not (isVarType ty) && 
@@ -372,7 +380,8 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
        let (pevs0, pbod0) = stripExists $ concl sth0
            (pevs1, pbod1) = stripExists $ concl sth1
        (pcjs0, _) <- trySplitAt k $ conjuncts pbod0
-       (pcjs1, _) <- trySplitAt k =<< (snd `fmap` trySplitAt n $ conjuncts pbod1)
+       (pcjs1, _) <- trySplitAt k =<< 
+                       (snd `fmap` (trySplitAt n $ conjuncts pbod1))
        (pcjs1', pcjs0') <- pairMapM (mapM grabType) (pcjs1, pcjs0)
        let tyal0 = setify $ zip pcjs1' pcjs0'
            tyal1 = map (\ (a, b) -> (b, a)) tyal0
@@ -389,8 +398,8 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
        let (_, bod0) = stripExists $ concl tth0
            (_, bod1) = stripExists $ concl tth1
        (lcjs0, rcjs0) <- trySplitAt k . map (snd . stripForall) $ conjuncts bod0
-       (lcjs1, rcjsx) <- trySplitAt k ((map (snd . stripForall) . snd) `fmap`
-                                     trySplitAt n $ conjuncts bod1)
+       (lcjs1, rcjsx) <- trySplitAt k =<< ((map (snd . stripForall) . snd) `fmap`
+                                     (trySplitAt n $ conjuncts bod1))
        rcjs1 <- mapM (\ t -> findM (clauseCorresponds t) rcjsx) rcjs0
        (insts0, insts1) <- unzip `fmap` 
                            map2M procClause (lcjs0++rcjs0) (lcjs1++rcjs1)
@@ -399,8 +408,8 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
        (efvs0, sth0') <- ruleDE_EXISTENTIALIZE uth0
        (efvs1, sth1') <- ruleDE_EXISTENTIALIZE uth1
        efvs2 <- mapM (\ t1 -> findM (\ t2 ->
-                  do t1' <- destType $ typeOf t1
-                     t2' <- destType $ typeOf t2
+                  do t1' <- destType =<< typeOf t1
+                     t2' <- destType =<< typeOf t2
                      return $! (head . tail $ snd t1') == 
                                (head $ snd t2')) efvs1) efvs0
        isotms <- map2M (\ ff gg -> listMkIComb "ISO" [ff, gg]) efvs0 efvs2
@@ -413,7 +422,7 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
        ctm2 <- mkConj (listMkConj $ map snd cjs1) =<< listMkConj (map snd cjs2)
        let ruleDETRIV = ruleTRIV_ANTE <=< ruleREWRITE [sth0', sth1']
        jth0 <- do itha <- ruleSPEC_ALL ith0
-                  icjs <- conjuncts `fmap` rand $ concl itha
+                  icjs <- conjuncts `fmap` (rand $ concl itha)
                   cinsts <- mapM (\ tm -> tryFind (\ vtm ->
                                    termMatch [] vtm tm) icjs) =<< 
                                      conjuncts `fmap` (rand ctm2)
@@ -421,14 +430,14 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
                                  (foldr (\ (_, x, _) -> union (map snd x)) [] 
                                     cinsts)
                   ctvs <- mapM (\ p ->
-                            do (_, tys) <- destType $ typeOf p
+                            do (_, tys) <- destType =<< typeOf p
                                x <- mkVar "x" $ head tys
                                x' <- mkAbs x tmT
                                return (x', p)) tvs
                   ithas <- foldrM ruleINSTANTIATE itha cinsts
                   ruleDETRIV $ primINST ctvs ithas
        jth1 <- do itha <- ruleSPEC_ALL ith1
-                  icjs <- conjuncts `fmap` rand $ concl itha
+                  icjs <- conjuncts `fmap` (rand $ concl itha)
                   cinsts <-mapM (\ tm -> tryFind (\ vtm ->
                                    termMatch [] vtm tm) icjs) =<< 
                                      liftM conjuncts (lHand ctm2)
@@ -436,13 +445,14 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
                                  (foldr (\ (_, x, _) -> union (map snd x)) []
                                     cinsts)
                   ctvs <- mapM (\ p ->
-                            do (_, tys) <- destType $ typeOf p
+                            do (_, tys) <- destType =<< typeOf p
                                x <- mkVar "x" $ head tys
                                x' <- mkAbs x tmT
                                return (x', p)) tvs
                   ithas <- foldrM ruleINSTANTIATE itha cinsts
                   ruleDETRIV $ primINST ctvs ithas
-       cths4 <- (map2M ruleCONJ) (ruleCONJUNCTS jth0) (ruleCONJUNCTS jth1)
+       cths3_5 <- ruleCONJUNCTS jth0
+       cths4 <- (map2M ruleCONJ) cths3_5 =<< ruleCONJUNCTS jth1
        cths5 <- mapM (rulePURE_ONCE_REWRITE [ruleGSYM defISO]) cths4
        cth6 <- foldr1M ruleCONJ cths5
        cth7 <- ruleCONJ sth0' sth1'
@@ -495,11 +505,13 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
                                do t' <- rand t
                                   return $! isComb t && t' == a)) wargs0) vargs0
                targs0 <- map2M (\ a f -> 
-                                if f then find (\ t -> isComb t && 
-                                                       rand t == Just a) wargs0
-                                else Just a) vargs0 nestf0
+                                if f then find (\ t -> 
+                                                case t of
+                                                  Comb _ r -> r == a
+                                                  _ -> False) wargs0
+                                else return a) vargs0 nestf0
                let gvlist0 = zip wargs0 gargs0
-               xargs <- mapM (\ v -> v `lookup` gvlist0) targs0
+               xargs <- mapM (\ v -> v `assoc` gvlist0) targs0
                l1' <- (fst . stripComb) `fmap` rand l1
                itm0 <- listMkAbs gargs0 =<< listMkComb l1' xargs
                let inst0 = (vc0, itm0)
@@ -507,9 +519,11 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
                (_, vargs1) <- stripComb `fmap` rand l1
                gargs1 <- mapM (genVar . typeOf) wargs1
                targs1 <- map2M (\ a f ->
-                                if f then find (\ t -> isComb t &&
-                                                       rand t == Just a) wargs1
-                                else Just a) vargs1 nestf0
+                                if f then find (\ t ->
+                                                case t of
+                                                  Comb _ r -> r == a
+                                                  _ -> False) wargs1
+                                else return a) vargs1 nestf0
                let gvlist1 = zip wargs1 gargs1
                xargs' <- mapM (\ v -> v `assoc` gvlist1) targs1
                l0' <- (fst . stripComb) `fmap` rand l0
@@ -528,14 +542,14 @@ proveInductiveTypesIsomorphic n k (ith0, rth0) (ith1, rth1) =
                return $! c0 == c1 && dty0 == rty1 && rty0 == dty1
 
         grabType :: HOLTerm -> HOL cls thry HOLType
-        grabType = typeOf `fmap` (rand <=< lHand . snd . stripForall)
+        grabType = typeOf . rand . lHand . snd . stripForall
 
 liftTypeBijections :: IndTypesCtxt thry => [HOLThm] 
                    -> HOLType 
                    -> HOL cls thry HOLThm
 liftTypeBijections iths cty =
-    do itys <- mapM (liftM (head . snd) . destType <=< 
-                                liftM typeOf . lHand . concl) iths
+    do itys <- mapM (liftM (head . snd) . destType <=< typeOf . lHand . concl) 
+                 iths
        (cty `assoc` zip itys iths <|>
         (if not $ any (flip occursIn cty) itys
             then primINST_TYPE [(tyA, cty)] thmISO_REFL

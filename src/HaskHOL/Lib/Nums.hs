@@ -50,11 +50,12 @@ module HaskHOL.Lib.Nums
     , ruleDENUMERAL
     , defBIT0
     , pattern ZERO
-    , pattern ONE
     , pattern SUC
     , pattern NUMERAL
     , pattern BIT0
     , pattern BIT1
+    , pattern ZERON
+    , pattern ONEN
     ) where
 
 import qualified HaskHOL.Lib.Nums.Base as Base
@@ -130,8 +131,11 @@ pattern BIT1 :: HOLTerm -> HOLTerm
 pattern BIT1 tm <- Comb (Const "BIT1" _) tm
 
 -- GHC 8 panics on nested patterns, so we expand the definition here.
-pattern ONE :: HOLTerm
-pattern ONE <- Comb (Const "NUMERAL" _) (Comb (Const "BIT1" _) (Const "_0" _))
+pattern ZERON :: HOLTerm
+pattern ZERON <- Comb (Const "NUMERAL" _) (Const "_0" _)
+
+pattern ONEN :: HOLTerm
+pattern ONEN <- Comb (Const "NUMERAL" _) (Comb (Const "BIT1" _) (Const "_0" _))
 
 thmIND_SUC_0_EXISTS :: NumsCtxt thry => HOL cls thry HOLThm
 thmIND_SUC_0_EXISTS = Base.thmIND_SUC_0_EXISTS

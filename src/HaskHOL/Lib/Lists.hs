@@ -46,123 +46,125 @@ module HaskHOL.Lib.Lists
 
 import HaskHOL.Core
 import HaskHOL.Deductive
+import HaskHOL.Lib.Recursion
+import HaskHOL.Lib.IndTypes
 
-import HaskHOL.Lib.Lists.Base
+import qualified HaskHOL.Lib.Lists.Base as Base
 import HaskHOL.Lib.Lists.Context
 import HaskHOL.Lib.Lists.PQ
 
 import Data.Char (ord)
 import Data.Bits (testBit)
 
-defHD :: ListsACtxt thry => HOL cls thry HOLThm
-defHD = cacheProof "defHD" ctxtListsA $ getRecursiveDefinition "HD"
+defHD :: ListsCtxt thry => HOL cls thry HOLThm
+defHD = cacheProof "defHD" ctxtLists $ getRecursiveDefinition "HD"
 
-defTL :: ListsACtxt thry => HOL cls thry HOLThm
-defTL = cacheProof "defTL" ctxtListsA $ getRecursiveDefinition "TL"
+defTL :: ListsCtxt thry => HOL cls thry HOLThm
+defTL = cacheProof "defTL" ctxtLists $ getRecursiveDefinition "TL"
 
-defAPPEND :: ListsACtxt thry => HOL cls thry HOLThm
-defAPPEND = cacheProof "defAPPEND" ctxtListsA $ getRecursiveDefinition "APPEND"
+defAPPEND :: ListsCtxt thry => HOL cls thry HOLThm
+defAPPEND = cacheProof "defAPPEND" ctxtLists $ getRecursiveDefinition "APPEND"
 
-defREVERSE :: ListsACtxt thry => HOL cls thry HOLThm
-defREVERSE = cacheProof "defREVERSE" ctxtListsA $ 
+defREVERSE :: ListsCtxt thry => HOL cls thry HOLThm
+defREVERSE = cacheProof "defREVERSE" ctxtLists $ 
     getRecursiveDefinition "REVERSE"
 
-defLENGTH :: ListsACtxt thry => HOL cls thry HOLThm
-defLENGTH = cacheProof "defLENGTH" ctxtListsA $ getRecursiveDefinition "LENGTH"
+defLENGTH :: ListsCtxt thry => HOL cls thry HOLThm
+defLENGTH = cacheProof "defLENGTH" ctxtLists $ getRecursiveDefinition "LENGTH"
 
-defMAP :: ListsACtxt thry => HOL cls thry HOLThm
-defMAP = cacheProof "defMAP" ctxtListsA $ getRecursiveDefinition "MAP"
+defMAP :: ListsCtxt thry => HOL cls thry HOLThm
+defMAP = cacheProof "defMAP" ctxtLists $ getRecursiveDefinition "MAP"
 
-defLAST :: ListsACtxt thry => HOL cls thry HOLThm
-defLAST = cacheProof "defLAST" ctxtListsA $ getRecursiveDefinition "LAST"
+defLAST :: ListsCtxt thry => HOL cls thry HOLThm
+defLAST = cacheProof "defLAST" ctxtLists $ getRecursiveDefinition "LAST"
 
-defBUTLAST :: ListsACtxt thry => HOL cls thry HOLThm
-defBUTLAST = cacheProof "defBUTLAST" ctxtListsA $ 
+defBUTLAST :: ListsCtxt thry => HOL cls thry HOLThm
+defBUTLAST = cacheProof "defBUTLAST" ctxtLists $ 
     getRecursiveDefinition "BUTLAST"
 
-defREPLICATE :: ListsACtxt thry => HOL cls thry HOLThm
-defREPLICATE = cacheProof "defREPLICATE" ctxtListsA $ 
+defREPLICATE :: ListsCtxt thry => HOL cls thry HOLThm
+defREPLICATE = cacheProof "defREPLICATE" ctxtLists $ 
     getRecursiveDefinition "REPLICATE"
 
-defNULL :: ListsACtxt thry => HOL cls thry HOLThm
-defNULL = cacheProof "defNULL" ctxtListsA $ getRecursiveDefinition "NULL"
+defNULL :: ListsCtxt thry => HOL cls thry HOLThm
+defNULL = cacheProof "defNULL" ctxtLists $ getRecursiveDefinition "NULL"
 
-defALL :: ListsACtxt thry => HOL cls thry HOLThm
-defALL = cacheProof "defALL" ctxtListsA $ getRecursiveDefinition "ALL"
+defALL :: ListsCtxt thry => HOL cls thry HOLThm
+defALL = Base.defALL
 
-defEX :: ListsACtxt thry => HOL cls thry HOLThm
-defEX = cacheProof "defEX" ctxtListsA $ getRecursiveDefinition "EX"
+defEX :: ListsCtxt thry => HOL cls thry HOLThm
+defEX = cacheProof "defEX" ctxtLists $ getRecursiveDefinition "EX"
 
-defITLIST :: ListsACtxt thry => HOL cls thry HOLThm
-defITLIST = cacheProof "defITLIST" ctxtListsA $ getRecursiveDefinition "ITLIST"
+defITLIST :: ListsCtxt thry => HOL cls thry HOLThm
+defITLIST = cacheProof "defITLIST" ctxtLists $ getRecursiveDefinition "ITLIST"
 
-defALL2 :: ListsACtxt thry => HOL cls thry HOLThm
-defALL2 = cacheProof "defALL2" ctxtListsA $ getRecursiveDefinition "ALL2"
+defALL2 :: ListsCtxt thry => HOL cls thry HOLThm
+defALL2 = Base.defALL2
 
-defMAP2 :: ListsACtxt thry => HOL cls thry HOLThm
-defMAP2 = cacheProof "defMAP2" ctxtListsA $ getRecursiveDefinition "MAP2"
+defMAP2 :: ListsCtxt thry => HOL cls thry HOLThm
+defMAP2 = cacheProof "defMAP2" ctxtLists $ getRecursiveDefinition "MAP2"
 
-defEL :: ListsACtxt thry => HOL cls thry HOLThm
-defEL = cacheProof "defEL" ctxtListsA $ getRecursiveDefinition "EL"
+defEL :: ListsCtxt thry => HOL cls thry HOLThm
+defEL = cacheProof "defEL" ctxtLists $ getRecursiveDefinition "EL"
 
-defFILTER :: ListsACtxt thry => HOL cls thry HOLThm
-defFILTER = cacheProof "defFILTER" ctxtListsA $ getRecursiveDefinition "FILTER"
+defFILTER :: ListsCtxt thry => HOL cls thry HOLThm
+defFILTER = cacheProof "defFILTER" ctxtLists $ getRecursiveDefinition "FILTER"
 
-defASSOC :: ListsACtxt thry => HOL cls thry HOLThm
-defASSOC = cacheProof "defASSOC" ctxtListsA $ getRecursiveDefinition "ASSOC"
+defASSOC :: ListsCtxt thry => HOL cls thry HOLThm
+defASSOC = cacheProof "defASSOC" ctxtLists $ getRecursiveDefinition "ASSOC"
 
-defITLIST2 :: ListsACtxt thry => HOL cls thry HOLThm
-defITLIST2 = cacheProof "defITLIST2" ctxtListsA $ 
+defITLIST2 :: ListsCtxt thry => HOL cls thry HOLThm
+defITLIST2 = cacheProof "defITLIST2" ctxtLists $ 
     getRecursiveDefinition "ITLIST2"
 
-defZIP :: ListsACtxt thry => HOL cls thry HOLThm
-defZIP = cacheProof "defZIP" ctxtListsA $ getRecursiveDefinition "ZIP"
+defZIP :: ListsCtxt thry => HOL cls thry HOLThm
+defZIP = cacheProof "defZIP" ctxtLists $ getRecursiveDefinition "ZIP"
 
-defMEM :: ListsACtxt thry => HOL cls thry HOLThm
-defMEM = cacheProof "defMEM" ctxtListsA $ getRecursiveDefinition "MEM"
+defMEM :: ListsCtxt thry => HOL cls thry HOLThm
+defMEM = cacheProof "defMEM" ctxtLists $ getRecursiveDefinition "MEM"
 
 
-inductCHAR :: ListsACtxt thry => HOL cls thry HOLThm
-inductCHAR = cacheProof "inductCHAR" ctxtListsA $
+inductCHAR :: ListsCtxt thry => HOL cls thry HOLThm
+inductCHAR = cacheProof "inductCHAR" ctxtLists $
     liftM fst tyChar
 
-recursionCHAR :: ListsACtxt thry => HOL cls thry HOLThm
-recursionCHAR = cacheProof "recursionCHAR" ctxtListsA $
+recursionCHAR :: ListsCtxt thry => HOL cls thry HOLThm
+recursionCHAR = cacheProof "recursionCHAR" ctxtLists $
     liftM snd tyChar
 
-tyChar :: ListsACtxt thry => HOL cls thry (HOLThm, HOLThm)
+tyChar :: ListsCtxt thry => HOL cls thry (HOLThm, HOLThm)
 tyChar = getType "char"
 
 tacLIST_INDUCT :: ListsCtxt thry => Tactic cls thry
 tacLIST_INDUCT = Base.tacLIST_INDUCT
 
 thmMONO_ALL :: ListsCtxt thry => HOL cls thry HOLThm
-thmMONO_ALL = Base.thmMON_ALL
+thmMONO_ALL = Base.thmMONO_ALL
 
 thmMONO_ALL2 :: ListsCtxt thry => HOL cls thry HOLThm
-thmMONO_ALL2
+thmMONO_ALL2 = Base.thmMONO_ALL2
 
 thmAPPEND_NIL :: ListsCtxt thry => HOL cls thry HOLThm
 thmAPPEND_NIL = cacheProof "thmAPPEND_NIL" ctxtLists .
-    prove [str| ! (l:A list). APPEND l [] = l |] $
+    prove [txt| ! (l:A list). APPEND l [] = l |] $
       tacLIST_INDUCT `_THEN` tacASM_REWRITE [defAPPEND]
 
 thmAPPEND_ASSOC :: ListsCtxt thry => HOL cls thry HOLThm
 thmAPPEND_ASSOC = cacheProof "thmAPPEND_ASSOC" ctxtLists .
-    prove [str| ! (l:A list) m n. APPEND l (APPEND m n) = 
+    prove [txt| ! (l:A list) m n. APPEND l (APPEND m n) = 
                                   APPEND (APPEND l m) n |] $
       tacLIST_INDUCT `_THEN` tacASM_REWRITE [defAPPEND]
 
 thmREVERSE_APPEND :: ListsCtxt thry => HOL cls thry HOLThm
 thmREVERSE_APPEND = cacheProof "thmREVERSE_APPEND" ctxtLists .
-    prove [str| ! (xs:A list) (ys:A list). REVERSE (APPEND xs ys) = 
+    prove [txt| ! (xs:A list) (ys:A list). REVERSE (APPEND xs ys) = 
                                            APPEND (REVERSE ys) (REVERSE xs) |] $
       tacLIST_INDUCT `_THEN` 
       tacASM_REWRITE [defAPPEND, defREVERSE, thmAPPEND_NIL, thmAPPEND_ASSOC]
 
 thmREVERSE_APPEND2 :: ListsCtxt thry => HOL cls thry HOLThm
 thmREVERSE_APPEND2 = cacheProof "thmREVERSE_APPEND2" ctxtLists .
-    prove [str| !! 'A. ! (xs:'A list) (ys:'A list). 
+    prove [txt| !! 'A. ! (xs:'A list) (ys:'A list). 
                 REVERSE (APPEND xs ys) = APPEND (REVERSE ys) (REVERSE xs) |] $
       tacGEN_TY `_THEN` tacLIST_INDUCT `_THEN` 
       tacASM_REWRITE [defAPPEND, defREVERSE, thmAPPEND_NIL, thmAPPEND_ASSOC]
@@ -185,7 +187,7 @@ mkChar = mkCode . ord
         mkCode n =
             do ascii <- serve tmASCII
                bits <- mapM (\ i -> mkBool (testBit n i)) [0..7]
-               liftO $ foldrM (flip mkComb) ascii bits
+               foldrM (flip mkComb) ascii bits
         
         mkBool :: ListsCtxt thry => Bool -> HOL cls thry HOLTerm
         mkBool True = serve tmT

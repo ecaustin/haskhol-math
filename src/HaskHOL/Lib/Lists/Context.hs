@@ -11,10 +11,11 @@ import HaskHOL.Deductive hiding (newDefinition)
 
 import HaskHOL.Lib.Recursion
 import HaskHOL.Lib.Pair
+import HaskHOL.Lib.IndTypes
+import HaskHOL.Lib.Nums
 
 import HaskHOL.Lib.IndTypes.Context
 
-import HaskHOL.Lib.Lists.Pre
 import HaskHOL.Lib.Lists.Base
 
 
@@ -108,5 +109,5 @@ ctxtLists = extendTheory ctxtIndTypes $(thisModule') $
        void $ newDefinition ("CONCAT_MAP",
                 [txt| CONCAT_MAP f xs = ITLIST (APPEND o f) xs [] |])
        void $ defineType "char = ASCII bool bool bool bool bool bool bool bool"
-       newTypeAbbrev "string" "char list"
+       newTypeAbbrev "string" [txt| char list |]
        mapM_ addMonoThm [thmMONO_ALL, thmMONO_ALL2]
