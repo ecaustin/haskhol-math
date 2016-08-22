@@ -11,6 +11,7 @@
 module HaskHOL.Lib.Normalizer
     ( convSEMIRING_NORMALIZERS
     , convNUM_NORMALIZE
+    , semiring_pth
     ) where
 
 import HaskHOL.Core
@@ -444,19 +445,19 @@ convMONOMIAL_ADD = Conv $ \ tm ->
                                        tmM <- mkVar "m" ?ringType
                                        primINST [(tmA, try' rl'), (tmM, l)] $
                                          ?pthms !! 3
-                               else do tmR <- mkVar "r" ?ringType
-                                       primINST [(tmR, r)] $ ?pthms !! 4
+                               else do tmM <- mkVar "m" ?ringType
+                                       primINST [(tmM, r)] $ ?pthms !! 4
                  (tm1, tm2) <- destComb $ rand (concl th1)
                  (tm3, tm4) <- destComb tm1
                  th1_5 <- runConv ?convSEMIRING_ADD tm4
                  th2 <- ruleAP_TERM tm3 th1_5
                  th3 <- primTRANS th1 $ ruleAP_THM th2 tm2
                  tm5 <- rand $ concl th3
-                 tm6 <- lHand tm5
-                 one <- toHTm ?tmOne
-                 if tm6 == one
+                 let (Binop _ tm6 tm7) = tm5
+                 zero <- toHTm ?tmZero
+                 if tm6 == zero
                     then do tmM <- mkVar "m" ?ringType
-                            primTRANS th3 (primINST [(tmM, r)] $ ?pthms !! 5)
+                            primTRANS th3 (primINST [(tmM, tm7)] $ ?pthms !! 5)
                     else ruleMONOMIAL_DEONE th3
 
 ruleDEZERO :: Normalizer cls thry => HOLThm -> HOL cls thry HOLThm
