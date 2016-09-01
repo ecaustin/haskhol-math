@@ -1,6 +1,6 @@
 module HaskHOL.Lib.IndTypes.Pre2 where
 
-import HaskHOL.Core hiding (typeOf)
+import HaskHOL.Core hiding (typeOf, lefts)
 import HaskHOL.Core.Kernel (typeOf)
 import qualified HaskHOL.Core.State as S (mkType)
 import HaskHOL.Deductive

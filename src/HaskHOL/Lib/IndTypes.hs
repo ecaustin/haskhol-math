@@ -37,7 +37,6 @@ import HaskHOL.Deductive hiding (getDefinition, newDefinition)
 
 import HaskHOL.Lib.Pair
 import HaskHOL.Lib.Recursion
-import HaskHOL.Lib.IndTypesPre
 
 import HaskHOL.Lib.IndTypes.Pre (parseInductiveTypeSpecification)
 import qualified HaskHOL.Lib.IndTypes.Pre2 as Pre (defineTypeRaw)
@@ -287,7 +286,7 @@ defineTypeNested def =
             do ths <- foldrM (mkRewrites False) [] [thmFUN_EQ]
                net <- basicNet
                net' <- foldrM (netOfThm False) net ths
-               ruleCONV (convGENERAL_REWRITE True convTOP_DEPTH net' thms) thm
+               ruleCONV (convCACHED_GENERAL_REWRITE False True convTOP_DEPTH net' thms) thm
 
         defineTypeBasecase :: IndTypesCtxt thry
                            => HOL Theory thry (HOLThm, HOLThm)

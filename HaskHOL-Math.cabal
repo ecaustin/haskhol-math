@@ -25,12 +25,11 @@ library
                    , cereal >= 0.5
                    , cereal-conduit >= 0.7
                    , conduit >= 1.2
-                   , conduit-combinators >= 1.0
                    , parsec >= 3.1
                    , template-haskell >= 2.11
                    , text >= 1.2
                    , vector >= 0.10
-
+                   , zlib >= 0.6
 
     exposed-modules:
       HaskHOL.Math
@@ -48,6 +47,12 @@ library
     exposed: True
     buildable: True
     hs-source-dirs: src
+    cc-options: -O
+    c-sources: cbits/adcClauses.c cbits/adcFlags.c 
+               cbits/addClauses.c cbits/addFlags.c
+    include-dirs: include
+    includes: constants.h
+    install-includes: constants.h
     other-modules:
       HaskHOL.Lib.Pair.Base
       HaskHOL.Lib.Pair.Context
@@ -74,10 +79,10 @@ library
       HaskHOL.Lib.Lists.Context
       HaskHOL.Lib.Lists.PQ
              
-    ghc-prof-options: -O2 -funbox-strict-fields -Wall -fprof-auto 
+    ghc-prof-options: -O0 -funbox-strict-fields -Wall -fprof-auto 
                       -fconstraint-solver-iterations=0
                       -fno-warn-redundant-constraints
-    ghc-options: -O2 -funbox-strict-fields -Wall 
+    ghc-options: -O0 -funbox-strict-fields -Wall 
                  -fconstraint-solver-iterations=0
                  -fno-warn-redundant-constraints
 source-repository head

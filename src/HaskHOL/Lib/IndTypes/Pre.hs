@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 module HaskHOL.Lib.IndTypes.Pre where
 
-import HaskHOL.Core hiding (typeOf)
+import HaskHOL.Core hiding (typeOf, rights, lefts)
 import HaskHOL.Core.Kernel (typeOf)
 import qualified HaskHOL.Core.State as S (mkType)
 import HaskHOL.Deductive hiding (getDefinition, getSpecification, newDefinition)

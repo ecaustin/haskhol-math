@@ -11,6 +11,15 @@ import HaskHOL.Lib.WF
 
 import HaskHOL.Lib.CalcNum.Pre
 
+-- Serialization Libraries
+import Codec.Compression.GZip
+import Data.ByteString.Lazy (fromChunks)
+import Data.ByteString.Unsafe
+import Data.Serialize.Get
+import Foreign
+import Foreign.C.Types
+import System.IO.Unsafe
+
 thmARITH :: WFCtxt thry => HOL cls thry HOLThm
 thmARITH = cacheProof "thmARITH" ctxtWF $ foldr1M ruleCONJ =<< 
     sequence [ thmARITH_ZERO, thmARITH_SUC, thmARITH_PRE
@@ -21,25 +30,83 @@ thmARITH = cacheProof "thmARITH" ctxtWF $ foldr1M ruleCONJ =<<
              ]
 
 -- Lookup arrays for numeral conversions
+{-
 addValues :: WFCtxt thry => HOL cls thry ([HOLThm], [Int])
-addValues = serializeValue "addValues" ctxtWF $
-  liftM unzip $ mapM (mkClauses False) =<< starts
+addValues = 
+-- Binary File Generation Code
+  do ths <- serializeValue "addClauses" ctxtWF $ liftM (fst . unzip) $ mapM (mkClauses False) =<< starts
+     xs <- serializeValue "addFlags" ctxtWF $ liftM (snd . unzip) $ mapM (mkClauses False) =<< starts
+     return (ths, xs)
+-}
 
 addClauses :: WFCtxt thry => HOL cls thry [HOLThm]
-addClauses = fst `fmap` addValues
+addClauses = return . unsafePerformIO $
+    do n <- c_constant_addClauses_size
+       s <- c_constant_addClauses
+       b <- unsafePackCStringLen (castPtr s, fromIntegral n)
+       case runGetLazy safeGet . decompress $ fromChunks [b] of
+         Left err -> fail err
+         Right res -> return res
+
+foreign import ccall unsafe "constant_addClauses" 
+    c_constant_addClauses :: IO (Ptr Word8)
+
+foreign import ccall unsafe "addClauses_size" 
+    c_constant_addClauses_size :: IO CLong
 
 addFlags :: WFCtxt thry => HOL cls thry [Int]
-addFlags = snd `fmap` addValues
+addFlags = return . unsafePerformIO $
+    do n <- c_constant_addFlags_size
+       s <- c_constant_addFlags
+       b <- unsafePackCStringLen (castPtr s, fromIntegral n)
+       case runGetLazy safeGet . decompress $ fromChunks [b] of
+         Left err -> fail err
+         Right res -> return res
 
+foreign import ccall unsafe "constant_addFlags" 
+    c_constant_addFlags :: IO (Ptr Word8)
+
+foreign import ccall unsafe "addFlags_size" 
+    c_constant_addFlags_size :: IO CLong
+
+{-
 adcValues :: WFCtxt thry => HOL cls thry ([HOLThm], [Int])
-adcValues = serializeValue "adcValues" ctxtWF $
-  liftM unzip $ mapM (mkClauses True) =<< starts
+adcValues = -- Binary File Generation Code
+  do ths <- serializeValue "adcClauses" ctxtWF $ liftM (fst . unzip) $ mapM (mkClauses True) =<< starts
+     xs <- serializeValue "adcFlags" ctxtWF $ liftM (snd . unzip) $ mapM (mkClauses True) =<< starts
+     return (ths, xs)
+-}
 
 adcClauses :: WFCtxt thry => HOL cls thry [HOLThm]
-adcClauses = fst `fmap` adcValues
+adcClauses = return . unsafePerformIO $
+    do n <- c_constant_adcClauses_size
+       s <- c_constant_adcClauses
+       b <- unsafePackCStringLen (castPtr s, fromIntegral n)
+       case runGetLazy safeGet . decompress $ fromChunks [b] of
+         Left err -> fail err
+         Right res -> return res
+
+foreign import ccall unsafe "constant_adcClauses" 
+    c_constant_adcClauses :: IO (Ptr Word8)
+
+foreign import ccall unsafe "adcClauses_size" 
+    c_constant_adcClauses_size :: IO CLong
 
 adcFlags :: WFCtxt thry => HOL cls thry [Int]
-adcFlags = snd `fmap` adcValues
+adcFlags = return . unsafePerformIO $
+    do n <- c_constant_adcFlags_size
+       s <- c_constant_adcFlags
+       b <- unsafePackCStringLen (castPtr s, fromIntegral n)
+       case runGetLazy safeGet . decompress $ fromChunks [b] of
+         Left err -> fail err
+         Right res -> return res
+
+foreign import ccall unsafe "constant_adcFlags" 
+    c_constant_adcFlags :: IO (Ptr Word8)
+
+foreign import ccall unsafe "adcFlags_size" 
+    c_constant_adcFlags_size :: IO CLong
+
 
 convNUM_SHIFT_pths1 :: WFCtxt thry => HOL cls thry [HOLThm]
 convNUM_SHIFT_pths1 = serializeValue "convNUM_SHIFT_pths1" ctxtWF $
