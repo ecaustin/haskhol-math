@@ -569,7 +569,7 @@ convPUSH_EXISTS bc = Conv $ \ tm ->
 convBREAK_CONS :: TheoremsCtxt thry => Conversion cls thry
 convBREAK_CONS = Conv $ \ tm ->
     do net <- Base.basicRectypeNet
-       let conv0 = convTOP_SWEEP (convREWRITES net)
+       let conv0 = convTOP_SWEEP (gconvREWRITES net)
            conv1 = if isConj tm then convLAND conv0 else conv0
        runConv (conv1 `_THEN` (convGEN_REWRITE convDEPTH 
                                  [ thmAND_CLAUSES, thmOR_CLAUSES ] `_THEN` 

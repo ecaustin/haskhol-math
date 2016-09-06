@@ -48,8 +48,7 @@ library
     buildable: True
     hs-source-dirs: src
     cc-options: -O
-    c-sources: cbits/adcClauses.c cbits/adcFlags.c 
-               cbits/addClauses.c cbits/addFlags.c
+    c-sources: cbits/constants.c
     include-dirs: include
     includes: constants.h
     install-includes: constants.h
