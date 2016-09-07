@@ -35,6 +35,7 @@ module HaskHOL.Lib.Pair
     , Base.newDefinition
     , getDefinition
     , thmFORALL_PAIR
+    , thmFORALL_UNCURRY
     , createIteratedProjections
     , createProjections
     ) where
@@ -126,6 +127,14 @@ thmFORALL_PAIR :: PairCtxt thry => HOL cls thry HOLThm
 thmFORALL_PAIR = cacheProof "thmFORALL_PAIR" ctxtPair .
     prove [txt| !P. (!p. P p) <=> (!p1 p2. P(p1,p2)) |] $
       tacMESON [thmPAIR]
+
+thmFORALL_UNCURRY :: PairCtxt thry => HOL cls thry HOLThm
+thmFORALL_UNCURRY = cacheProof "thmFORALL_UNCURRY" ctxtPair .
+    prove [txt| !P. (!f:A->B->C. P f) <=> (!f. P (\a b. f(a,b))) |] $
+      tacGEN `_THEN` tacEQ `_THEN` tacSIMP ([] :: [HOLThm]) `_THEN` 
+      tacDISCH `_THEN` tacX_GEN [txt| f:A->B->C |] `_THEN`
+      _FIRST_ASSUM(tacMP . ruleSPEC [txt| \(a,b). (f:A->B->C) a b |]) `_THEN` 
+      tacSIMP [axETA]
 
 thmREP_ABS_PAIR :: PairCtxt thry => HOL cls thry HOLThm
 thmREP_ABS_PAIR = Base.thmREP_ABS_PAIR

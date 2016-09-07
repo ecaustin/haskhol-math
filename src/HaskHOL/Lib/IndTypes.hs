@@ -45,8 +45,6 @@ import qualified HaskHOL.Lib.IndTypes.Base as Base
 import HaskHOL.Lib.IndTypes.Context
 import HaskHOL.Lib.IndTypes.PQ
 
-import qualified Data.Text.Lazy as T (words)
-
 tmT :: BoolCtxt thry => HOL cls thry HOLTerm
 tmT = serve [bool| T |]
 
@@ -128,7 +126,7 @@ defineType s =
     do acid <- openLocalStateHOL (Base.InductiveTypes mapEmpty)
        indTys <- queryHOL acid Base.GetInductiveTypes
        closeAcidStateHOL acid
-       let s' = head $ T.words s
+       let s' = head $ textWords s
        (mapAssoc s' indTys <|>
          (do ctxt <- parseContext
              defspec <- parseInductiveTypeSpecification ctxt s

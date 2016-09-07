@@ -27,7 +27,7 @@ module HaskHOL.Math
     , module HaskHOL.Lib.WF
     , module HaskHOL.Lib.CalcNum
     , module HaskHOL.Lib.Normalizer
-    --, module HaskHOL.Lib.Grobner
+    , module HaskHOL.Lib.Grobner
     , module HaskHOL.Lib.IndTypesPre
     , module HaskHOL.Lib.IndTypes
     , module HaskHOL.Lib.Lists
@@ -42,7 +42,7 @@ import HaskHOL.Lib.Arith
 import HaskHOL.Lib.WF
 import HaskHOL.Lib.CalcNum
 import HaskHOL.Lib.Normalizer
---import HaskHOL.Lib.Grobner
+import HaskHOL.Lib.Grobner
 import HaskHOL.Lib.IndTypesPre
 import HaskHOL.Lib.IndTypes
 import HaskHOL.Lib.Lists
