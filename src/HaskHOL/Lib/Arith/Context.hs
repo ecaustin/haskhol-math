@@ -30,6 +30,7 @@ type family ArithCtxt a :: Constraint where
 type ArithType = ExtThry ArithThry NumsType
 
 type family ArithContext a :: Bool where
+    ArithContext UnsafeThry = 'True
     ArithContext BaseThry = 'False
     ArithContext (ExtThry a b) = ArithContext b || (a == ArithThry)
 

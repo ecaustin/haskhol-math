@@ -107,12 +107,16 @@ module HaskHOL.Lib.Arith
     , thmLT_MULT_LCANCEL
     , thmMULT_EQ_0
     , thmEQ_MULT_LCANCEL
+    , thmEQ_MULT_RCANCEL
     , thmEVEN_MULT
     , thmEXP_EQ_0
     , thmLT_ADD2
     , thmRIGHT_ADD_DISTRIB
     , thmLEFT_SUB_DISTRIB
     , thmEVEN_DOUBLE
+    , thmODD_DOUBLE
+    , thmEVEN_EXISTS
+    , thmODD_EXISTS
     , thmLE_MULT_RCANCEL
     , thmDIVMOD_EXIST
     , thmMULT_2
@@ -136,11 +140,16 @@ module HaskHOL.Lib.Arith
     , thmARITH_SUB
     , thmARITH_0
     , thmBITS_INJ
-    , thmSUB_ELIM
     , thmEXP_2
     , convNUM_CANCEL
     , ruleLE_IMP
     , thmDIVISION
+    , thmPRE_ELIM
+    , thmPRE_ELIM'
+    , thmSUB_ELIM
+    , thmSUB_ELIM'
+    , thmDIVMOD_ELIM
+    , thmDIVMOD_ELIM'
     ) where
 
 import HaskHOL.Core
@@ -674,6 +683,12 @@ thmEQ_MULT_LCANCEL = cacheProof "thmEQ_MULT_LCANCEL" ctxtArith .
                      , ruleGSYM thmNOT_SUC, thmNOT_SUC ] `_THEN`
       tacASM_REWRITE [thmSUC_INJ, ruleGSYM thmADD_ASSOC, thmEQ_ADD_LCANCEL]
 
+thmEQ_MULT_RCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
+thmEQ_MULT_RCANCEL = cacheProof "thmEQ_MULT_RCANCEL" ctxtArith .
+  prove [txt| !m n p. (m * p = n * p) <=> (m = n) \/ (p = 0) |] $
+    tacONCE_REWRITE [thmMULT_SYM, thmDISJ_SYM] `_THEN`
+    tacMATCH_ACCEPT thmEQ_MULT_LCANCEL
+
 thmEVEN_MULT :: ArithCtxt thry => HOL cls thry HOLThm
 thmEVEN_MULT = cacheProof "thmEVEN_MULT" ctxtArith .
     prove [txt| !m n. EVEN(m * n) <=> EVEN(m) \/ EVEN(n) |] $
@@ -722,6 +737,43 @@ thmEVEN_DOUBLE = cacheProof "thmEVEN_DOUBLE" ctxtArith .
       tacGEN `_THEN` tacREWRITE [thmEVEN_MULT] `_THEN` tacDISJ1 `_THEN`
       tacPURE_REWRITE [thmBIT0_THM, thmBIT1_THM] `_THEN` 
       tacREWRITE [defEVEN, thmEVEN_ADD]
+
+thmODD_DOUBLE :: ArithCtxt thry => HOL cls thry HOLThm
+thmODD_DOUBLE = cacheProof "thmODD_DOUBLE" ctxtArith .
+    prove [txt| !n. ODD(SUC(2 * n)) |] $
+      tacREWRITE [defODD] `_THEN` tacREWRITE [thmNOT_ODD, thmEVEN_DOUBLE]
+
+thmEVEN_EXISTS_LEMMA :: ArithCtxt thry => HOL cls thry HOLThm
+thmEVEN_EXISTS_LEMMA = cacheProof "thmEVEN_EXISTS_LEMMA" ctxtArith .
+    prove [txt| !n. (EVEN n ==> ?m. n = 2 * m) /\
+                    (~EVEN n ==> ?m. n = SUC(2 * m)) |] $
+      tacINDUCT `_THEN` tacREWRITE [defEVEN] `_THENL`
+      [ tacEXISTS [txt| 0 |] `_THEN` tacREWRITE [thmMULT_CLAUSES]
+      , _POP_ASSUM tacSTRIP_ASSUME `_THEN` tacCONJ `_THEN`
+        _DISCH_THEN (_ANTE_RES_THEN (tacX_CHOOSE [txt| m:num |])) `_THENL`
+        [ tacEXISTS [txt| SUC m |] `_THEN` tacASM_REWRITE_NIL `_THEN`
+          tacREWRITE [thmMULT_2] `_THEN` tacREWRITE [thmADD_CLAUSES]
+        , tacEXISTS [txt| m:num |] `_THEN` tacASM_REWRITE_NIL
+        ]
+      ]
+
+thmEVEN_EXISTS :: ArithCtxt thry => HOL cls thry HOLThm
+thmEVEN_EXISTS = cacheProof "thmEVEN_EXISTS" ctxtArith .
+    prove [txt| !n. EVEN n <=> ?m. n = 2 * m |] $
+      tacGEN `_THEN` tacEQ `_THEN` tacDISCH `_THENL`
+      [ tacMATCH_MP (ruleCONJUNCT1 (ruleSPEC_ALL thmEVEN_EXISTS_LEMMA)) `_THEN`
+        tacASM_REWRITE_NIL
+      , _POP_ASSUM (_CHOOSE_THEN tacSUBST1) `_THEN` tacREWRITE [thmEVEN_DOUBLE]
+      ]
+
+thmODD_EXISTS :: ArithCtxt thry => HOL cls thry HOLThm
+thmODD_EXISTS = cacheProof "thmODD_EXISTS" ctxtArith .
+    prove [txt| !n. ODD n <=> ?m. n = SUC(2 * m) |] $
+      tacGEN `_THEN` tacEQ `_THEN` tacDISCH `_THENL`
+      [ tacMATCH_MP (ruleCONJUNCT2 (ruleSPEC_ALL thmEVEN_EXISTS_LEMMA)) `_THEN`
+        tacASM_REWRITE [thmNOT_EVEN]
+      , _POP_ASSUM (_CHOOSE_THEN tacSUBST1) `_THEN` tacREWRITE [thmODD_DOUBLE]
+      ]
 
 thmLE_MULT_RCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
 thmLE_MULT_RCANCEL = cacheProof "thmLE_MULT_RCANCEL" ctxtArith .
@@ -935,20 +987,6 @@ thmBITS_INJ = cacheProof "thmBITS_INJ" ctxtArith .
       tacREWRITE [ruleGSYM thmMULT_2] `_THEN`
       tacREWRITE [thmSUC_INJ, thmEQ_MULT_LCANCEL, thmARITH_EQ]
 
-thmSUB_ELIM :: ArithCtxt thry => HOL cls thry HOLThm
-thmSUB_ELIM = cacheProof "thmSUB_ELIM" ctxtArith $
-    prove [txt| P(a - b) <=> !d. a = b + d \/ a < b /\ d = 0 ==> P d |] $
-      tacDISJ_CASES (ruleSPECL [ [txt| a:num |]
-                               , [txt| b:num |] ] thmLTE_CASES) `_THENL`
-      [ tacASM_MESON [thmNOT_LT, thmSUB_EQ_0, thmLT_IMP_LE, thmLE_ADD]
-      , _ALL
-      ] `_THEN`
-      _FIRST_ASSUM (_X_CHOOSE_THEN [txt| e:num |] tacSUBST1 . 
-                     ruleREWRITE [thmLE_EXISTS]) `_THEN`
-      tacSIMP [ thmADD_SUB2, ruleGSYM thmNOT_LE
-              , thmLE_ADD, thmEQ_ADD_LCANCEL ] `_THEN` 
-      tacMESON_NIL
-
 thmEXP_2 :: ArithCtxt thry => HOL cls thry HOLThm
 thmEXP_2 = cacheProof "thmEXP_2" ctxtArith .
     prove [txt| !n. n EXP 2 = n * n |] $
@@ -1003,3 +1041,101 @@ thmDIVISION = cacheProof "thmDIVISION" ctxtArith .
     prove [txt| !m n. ~(n = 0) ==> 
                       (m = m DIV n * n + m MOD n) /\ m MOD n < n |] $
       tacMESON [specDIVISION_0]
+
+
+-- Need to clean up
+
+thmDIVMOD_UNIQ_LEMMA :: ArithCtxt thry => HOL cls thry HOLThm
+thmDIVMOD_UNIQ_LEMMA = cacheProof "thmDIVMOD_UNIQ_LEMMA" ctxtArith .
+  prove [txt| !m n q1 r1 q2 r2. ((m = q1 * n + r1) /\ r1 < n) /\
+                                ((m = q2 * n + r2) /\ r2 < n)
+                                ==> (q1 = q2) /\ (r1 = r2) |] $
+    _REPEAT tacGEN `_THEN` tacSTRIP `_THEN`
+    _SUBGOAL_THEN [txt| r1:num = r2 |] tacMP `_THENL`
+    [ tacUNDISCH [txt| m = q2 * n + r2 |] `_THEN` tacASM_REWRITE_NIL `_THEN`
+      _DISJ_CASES_THEN tacMP (ruleSPECL [[txt|q1:num|], [txt|q2:num|]] 
+                                thmLE_CASES) `_THEN`
+      _DISCH_THEN (_X_CHOOSE_THEN [txt| d:num |] tacSUBST1 . 
+                     ruleREWRITE [thmLE_EXISTS]) `_THEN`
+      tacREWRITE [ thmRIGHT_ADD_DISTRIB, ruleGSYM thmADD_ASSOC
+                 , thmEQ_ADD_LCANCEL ] `_THENL`
+      [ tacDISCH `_THEN` tacUNDISCH [txt| r1 < n |]
+      , _DISCH_THEN (tacASSUME . ruleSYM) `_THEN` tacUNDISCH [txt| r2 < n |]
+      ] `_THEN`
+      tacASM_REWRITE_NIL `_THEN` tacONCE_REWRITE [thmMULT_SYM] `_THEN`
+      tacSPEC ([txt| d:num |], [txt| d:num |]) `_THEN` tacINDUCT `_THEN`
+      tacREWRITE [ thmADD_CLAUSES, thmMULT_CLAUSES, ruleGSYM thmNOT_LE
+                 , thmLE_ADD, ruleGSYM thmADD_ASSOC ]
+    , _DISCH_THEN tacSUBST_ALL `_THEN` tacREWRITE_NIL `_THEN`
+      tacCONV convSYM `_THEN` tacUNDISCH [txt| m = q1 * n + r2 |] `_THEN`
+      tacASM_REWRITE [thmEQ_ADD_RCANCEL, thmEQ_MULT_RCANCEL] `_THEN`
+      _REPEAT (tacUNDISCH [txt| r2 < n |]) `_THEN`
+      tacASM_CASES [txt| n = 0 |] `_THEN` 
+      tacASM_REWRITE [ruleGSYM thmNOT_LE, thmLE_0]
+    ]
+
+thmDIVMOD_UNIQ :: ArithCtxt thry => HOL cls thry HOLThm
+thmDIVMOD_UNIQ = cacheProof "thmDIVMOD_UNIQ" ctxtArith .
+  prove [txt| !m n q r. (m = q * n + r) /\ r < n ==> 
+                        (m DIV n = q) /\ (m MOD n = r) |] $
+    _REPEAT tacGEN `_THEN` 
+    _DISCH_THEN (_CONJUNCTS_THEN (tacASSUME . ruleGSYM)) `_THEN`
+    tacMATCH_MP thmDIVMOD_UNIQ_LEMMA `_THEN`
+    _MAP_EVERY tacEXISTS [[txt|m:num|], [txt|n:num|]] `_THEN` 
+    tacASM_REWRITE_NIL `_THEN` tacMATCH_MP thmDIVISION `_THEN`
+    tacDISCH `_THEN` tacUNDISCH [txt| r < n |] `_THEN`
+    tacASM_REWRITE [ruleGSYM thmNOT_LE, thmLE_0]
+
+
+
+thmPRE_ELIM :: ArithCtxt thry => HOL cls thry HOLThm
+thmPRE_ELIM = cacheProof "thmPRE_ELIM" ctxtArith .
+    prove [txt| P(PRE n) <=> !m. n = SUC m \/ m = 0 /\ n = 0 ==> P m |] $
+      tacSPEC ([txt| n:num |], [txt| n:num |]) `_THEN` tacINDUCT `_THEN`
+      tacREWRITE [thmNOT_SUC, thmSUC_INJ, defPRE] `_THEN` tacMESON_NIL
+
+thmPRE_ELIM' :: ArithCtxt thry => HOL cls thry HOLThm
+thmPRE_ELIM' = cacheProof "thmPRE_ELIM'" ctxtArith .
+    prove [txt| P(PRE n) <=> ?m. (n = SUC m \/ m = 0 /\ n = 0) /\ P m |] $
+      tacMP (primINST [([txt| P:num->bool |], [txt| \x:num. ~P x |])]
+               thmPRE_ELIM) `_THEN` tacMESON_NIL
+
+thmSUB_ELIM :: ArithCtxt thry => HOL cls thry HOLThm
+thmSUB_ELIM = cacheProof "thmSUB_ELIM" ctxtArith .
+    prove [txt| P(a - b) <=> !d. a = b + d \/ a < b /\ d = 0 ==> P d |] $
+      tacDISJ_CASES 
+        (ruleSPECL [[txt| a:num |], [txt| b:num |]] thmLTE_CASES) `_THENL`
+      [ tacASM_MESON [thmNOT_LT, thmSUB_EQ_0, thmLT_IMP_LE, thmLE_ADD]
+      , _ALL
+      ] `_THEN`
+      _FIRST_ASSUM (_X_CHOOSE_THEN [txt| e:num |] tacSUBST1 . 
+                     ruleREWRITE [thmLE_EXISTS]) `_THEN`
+      tacSIMP [ thmADD_SUB2, ruleGSYM thmNOT_LE
+              , thmLE_ADD, thmEQ_ADD_LCANCEL ] `_THEN`
+      tacMESON_NIL
+
+thmSUB_ELIM' :: ArithCtxt thry => HOL cls thry HOLThm
+thmSUB_ELIM' = cacheProof "thmSUB_ELIM'" ctxtArith .
+    prove [txt| P(a - b) <=> ?d. (a = b + d \/ a < b /\ d = 0) /\ P d |] $
+      tacMP (primINST [([txt| P:num->bool |], [txt| \x:num. ~P x |])]
+               thmSUB_ELIM) `_THEN` tacMESON_NIL
+
+thmDIVMOD_ELIM :: ArithCtxt thry => HOL cls thry HOLThm
+thmDIVMOD_ELIM = cacheProof "thmDIVMOD_ELIM" ctxtArith .
+    prove [txt| P (m DIV n) (m MOD n) <=>
+                    !q r. n = 0 /\ q = 0 /\ r = m \/ 
+                          m = q * n + r /\ r < n ==> P q r |] $
+      tacASM_CASES [txt| n = 0 |] `_THEN` tacASM_REWRITE_NIL `_THENL`
+      [ tacASM_MESON [specDIVISION_0, defLT]
+      , _FIRST_ASSUM (tacMP . ruleMATCH_MP thmDIVISION) `_THEN`
+        tacMESON [thmDIVMOD_UNIQ]
+      ]
+
+thmDIVMOD_ELIM' :: ArithCtxt thry => HOL cls thry HOLThm
+thmDIVMOD_ELIM' = cacheProof "thmDIVMOD_ELIM'" ctxtArith .
+    prove [txt| P (m DIV n) (m MOD n) <=>
+                   ?q r. (n = 0 /\ q = 0 /\ r = m \/ 
+                          m = q * n + r /\ r < n) /\ P q r|] $
+      tacMP (primINST [([txt| P:num->num->bool |], 
+                        [txt| \x:num y:num. ~P x y |])] thmDIVMOD_ELIM) `_THEN`
+      tacMESON_NIL

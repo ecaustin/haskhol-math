@@ -9,6 +9,16 @@
 -}
 module HaskHOL.Lib.CalcNum
     ( thmARITH
+    , convNUM_SUC
+    , convNUM_PRE
+    , convNUM_FACT
+    , convNUM_GT
+    , convNUM_GE
+    , convNUM_ODD
+    , convNUM_DIV
+    , convNUM_MOD
+    , convNUM_MAX
+    , convNUM_MIN
     , convNUM_EVEN
     , convNUM_SUC
     , convNUM_LE
@@ -19,11 +29,8 @@ module HaskHOL.Lib.CalcNum
     , convNUM_LT
     , convNUM
     , ruleNUM_ADC
-    , adcClauses
-    , adcFlags
-    , topsplit
-    , starts
-    , mkClauses
+    , convNUM_RED
+    , convNUM_REDUCE
     ) where
 
 import HaskHOL.Core hiding (pattern (:=))
@@ -1133,6 +1140,34 @@ convNUM = Conv $ \ tm -> note "convNUM" $
           else do tm' <- mkNumeral n
                   th <- runConv convNUM_SUC $ mkComb tmSUC tm'
                   ruleSYM th
+
+convNUM_RED :: WFCtxt thry => Conversion cls thry
+convNUM_RED = Conv $ \ tm ->
+  do net <- basicNet
+     net' <- liftM (foldr (uncurry netOfConv) net) $
+               mapM (toHTm `ffCombM` return)
+                 [ ([wf| SUC(NUMERAL n) |], HINT "convNUM_SUC" "HaskHOL.Lib.CalcNum")
+                   ([wf| PRE(NUMERAL n) |], HINT "convNUM_PRE" "HaskHOL.Lib.CalcNum")
+                   ([wf| FACT(NUMERAL n) |], HINT "convNUM_FACT" "HaskHOL.Lib.CalcNum")
+                   ([wf| NUMERAL m < NUMERAL n |], HINT "convNUM_LT" "HaskHOL.Lib.CalcNum")
+                   ([wf| NUMERAL m <= NUMERAL n |], HINT "convNUM_LE" "HaskHOL.Lib.CalcNum")
+                   ([wf| NUMERAL m > NUMERAL n |], HINT "convNUM_GT" "HaskHOL.Lib.CalcNum")
+                   ([wf| NUMERAL m >= NUMERAL n |], HINT "convNUM_GE" "HaskHOL.Lib.CalcNum")
+                   ([wf| NUMERAL m = NUMERAL n |], HINT "convNUM_EQ" "HaskHOL.Lib.CalcNum")
+                   ([wf| EVEN(NUMERAL n) |], HINT "convNUM_EVEN" "HaskHOL.Lib.CalcNum")
+                   ([wf| ODD(NUMERAL n) |], HINT "convNUM_ODD" "HaskHOL.Lib.CalcNum")
+                   ([wf| NUMERAL m + NUMERAL n |], HINT "convNUM_ADD" "HaskHOL.Lib.CalcNum")
+                   ([wf| NUMERAL m - NUMERAL n |], HINT "convNUM_SUB" "HaskHOL.Lib.CalcNum")
+                   ([wf| NUMERAL m * NUMERAL n |], HINT "convNUM_MULT" "HaskHOL.Lib.CalcNum")
+                   ([wf| (NUMERAL m) EXP (NUMERAL n) |], HINT "convNUM_EXP" "HaskHOL.Lib.CalcNum")
+                   ([wf| (NUMERAL m) DIV (NUMERAL n) |], HINT "convNUM_DIV" "HaskHOL.Lib.CalcNum")
+                   ([wf| (NUMERAL m) MOD (NUMERAL n) |], HINT "convNUM_MOD" "HaskHOL.Lib.CalcNum")
+                   ([wf| MAX (NUMERAL m) (NUMERAL n) |], HINT "convNUM_MAX" "HaskHOL.Lib.CalcNum")
+                   ([wf| MIN (NUMERAL m) (NUMERAL n) |], HINT "convNUM_MIN" "HaskHOL.Lib.CalcNum")
+                 ]
+
+convNUM_REDUCE :: WFCtxt thry => Conversion cls thry
+convNUM_REDUCE = convDEPTH convNUM_RED
 
 -- Misc utility stuff
 ruleAP_BIT0 :: (WFCtxt thry, HOLThmRep thm cls thry) 

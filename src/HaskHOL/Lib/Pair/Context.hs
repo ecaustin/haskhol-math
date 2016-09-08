@@ -26,6 +26,7 @@ type family PairCtxt a :: Constraint where
 type PairType = ExtThry PairThry DeductiveType
 
 type family PairContext a :: Bool where
+    PairContext UnsafeThry = 'True
     PairContext BaseThry = 'False
     PairContext (ExtThry a b) = PairContext b || (a == PairThry)
 

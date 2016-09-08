@@ -27,6 +27,7 @@ type family NumsCtxt a :: Constraint where
 type NumsType = ExtThry NumsThry PairType
 
 type family NumsContext a :: Bool where
+    NumsContext UnsafeThry = 'True
     NumsContext BaseThry = 'False
     NumsContext (ExtThry a b) = NumsContext b || (a == NumsThry)
 

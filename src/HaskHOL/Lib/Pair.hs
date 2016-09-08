@@ -36,8 +36,10 @@ module HaskHOL.Lib.Pair
     , getDefinition
     , thmFORALL_PAIR
     , thmFORALL_UNCURRY
+    , thmEXISTS_UNCURRY
     , createIteratedProjections
     , createProjections
+    , test
     ) where
 
 import HaskHOL.Core
@@ -46,6 +48,12 @@ import HaskHOL.Deductive hiding (newDefinition, getDefinition)
 import qualified HaskHOL.Lib.Pair.Base as Base
 import HaskHOL.Lib.Pair.Context
 import HaskHOL.Lib.Pair.PQ
+
+
+test :: IO ()
+test = flip (runHOLProof False) ctxtPair $ printHOL =<<
+  do cnv <- runHOLHint "convGEN_BETA" ("HaskHOL.Lib.Equal":["HaskHOL.Lib.Pair"])
+     runConv cnv [txt| (\ (a, b) . a) (x, y) |]
 
 -- Definition mechanics
 getDefinition :: Text -> HOL cls thry HOLThm
@@ -135,6 +143,12 @@ thmFORALL_UNCURRY = cacheProof "thmFORALL_UNCURRY" ctxtPair .
       tacDISCH `_THEN` tacX_GEN [txt| f:A->B->C |] `_THEN`
       _FIRST_ASSUM(tacMP . ruleSPEC [txt| \(a,b). (f:A->B->C) a b |]) `_THEN` 
       tacSIMP [axETA]
+
+thmEXISTS_UNCURRY :: PairCtxt thry => HOL cls thry HOLThm
+thmEXISTS_UNCURRY = cacheProof "thmEXISTS_UNCURRY" ctxtPair .
+    prove [txt| !P. (?f:A->B->C. P f) <=> (?f. P (\a b. f(a,b))) |] $
+      tacONCE_REWRITE [ruleMESON_NIL [txt| (?x. P x) <=> ~(!x. ~P x) |]] `_THEN`
+      tacREWRITE [thmFORALL_UNCURRY]
 
 thmREP_ABS_PAIR :: PairCtxt thry => HOL cls thry HOLThm
 thmREP_ABS_PAIR = Base.thmREP_ABS_PAIR

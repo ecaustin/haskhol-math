@@ -31,6 +31,7 @@ type family IndTypesPreCtxt a :: Constraint where
 type IndTypesPreType = ExtThry IndTypesPreThry WFType
 
 type family IndTypesPreContext a :: Bool where
+    IndTypesPreContext UnsafeThry = 'True
     IndTypesPreContext BaseThry = 'False
     IndTypesPreContext (ExtThry a b) = IndTypesPreContext b || (a == IndTypesPreThry)
 

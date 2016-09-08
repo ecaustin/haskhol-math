@@ -28,6 +28,7 @@ type family WFCtxt a :: Constraint where
 type WFType = ExtThry WFThry ArithType
 
 type family WFContext a :: Bool where
+    WFContext UnsafeThry = 'True
     WFContext BaseThry = 'False
     WFContext (ExtThry a b) = WFContext b || (a == WFThry)
 
