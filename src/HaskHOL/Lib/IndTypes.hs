@@ -30,6 +30,7 @@ module HaskHOL.Lib.IndTypes
     , convMATCH_ONEPATTERN_TRIV
     , convMATCH_SEQPATTERN
     , convMATCH_SEQPATTERN_TRIV
+    , Base.basicRectypeNet
     ) where
 
 import HaskHOL.Core

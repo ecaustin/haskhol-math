@@ -95,13 +95,13 @@ data Definitions = Definitions !(Map Text HOLThm) deriving Typeable
 
 deriveSafeCopy 0 'base ''Definitions
 
-getDefinitions :: Query Definitions (Map Text HOLThm)
-getDefinitions =
+getDefinitions' :: Query Definitions (Map Text HOLThm)
+getDefinitions' =
     do (Definitions m) <- ask
        return m
 
-addDefinition :: Text -> HOLThm -> Update Definitions ()
-addDefinition lbl th =
+addDefinition' :: Text -> HOLThm -> Update Definitions ()
+addDefinition' lbl th =
     do (Definitions m) <- get
        put (Definitions (mapInsert lbl th m))
 
@@ -110,20 +110,25 @@ addDefinitions m =
     put (Definitions (mapFromList m))
 
 makeAcidic ''Definitions 
-    ['getDefinitions, 'addDefinition, 'addDefinitions]
+    ['getDefinitions', 'addDefinition', 'addDefinitions]
 
+addDefinition :: Text -> HOLThm -> HOL Theory thry ()
+addDefinition lbl th =
+  do acid' <- openLocalStateHOL (Definitions mapEmpty)
+     updateHOL acid' (AddDefinition' lbl th)
+     closeAcidStateHOL acid'
 
-getDefs :: HOL cls thry (Map Text HOLThm)
-getDefs =
+getDefinitions :: HOL cls thry (Map Text HOLThm)
+getDefinitions =
     do acid <- openLocalStateHOL (Definitions mapEmpty)
-       res <- queryHOL acid GetDefinitions
+       res <- queryHOL acid GetDefinitions'
        closeAcidStateHOL acid
        return res
 
 newDefinition :: (TriviaCtxt thry, HOLTermRep tm Theory thry)
               => (Text, tm) -> HOL Theory thry HOLThm
 newDefinition (lbl, ptm) =
-    do defs <- getDefs
+    do defs <- getDefinitions
        case mapAssoc lbl defs of
          Just th -> return th
          Nothing -> note "newDefinition" $
@@ -135,9 +140,7 @@ newDefinition (lbl, ptm) =
                     void . rulePART_MATCH return th' . snd $ stripForall c
                     warn True "Benign redefinition"
                     th'' <- ruleGEN_ALL $ ruleGENL avs th'
-                    acid' <- openLocalStateHOL (Definitions mapEmpty)
-                    updateHOL acid' (AddDefinition lbl th'')
-                    closeAcidStateHOL acid'
+                    addDefinition lbl th''
                     return th'')
                   <|> (do (l, r) <- destEq def
                           let (fn, args) = stripComb l
@@ -155,9 +158,7 @@ newDefinition (lbl, ptm) =
                           rth <- runConv (convSUBS threps) r
                           th3 <- primTRANS th2 $ ruleSYM rth
                           th4 <- ruleGEN_ALL $ ruleGENL avs th3
-                          acid' <- openLocalStateHOL (Definitions mapEmpty)
-                          updateHOL acid' (AddDefinition lbl th4)
-                          closeAcidStateHOL acid'
+                          addDefinition lbl th4
                           return th4)
   where depair :: HOLTerm -> HOL cls thry (HOLTerm, [(HOLTerm, HOLTerm)])
         depair x =

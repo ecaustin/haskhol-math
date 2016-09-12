@@ -5,17 +5,16 @@ module HaskHOL.Lib.Grobner
 import HaskHOL.Core
 import HaskHOL.Deductive
 
-import HaskHOL.Lib.Normalizer
 import HaskHOL.Lib.CalcNum
 import HaskHOL.Lib.WF
 import HaskHOL.Lib.Arith
 
-convNUM_SIMPLIFY :: ArithCtxt thry => Conversion cls thry
+convNUM_SIMPLIFY :: WFCtxt thry => Conversion cls thry
 convNUM_SIMPLIFY =
     convNUM_REDUCE `_THEN` convCONDS_CELIM `_THEN` convNNF `_THEN`
-    convNUM_MULTIPLY `_THEN` convNUM_REDUCE `_THEN`
+    convNUM_MULTIPLY True `_THEN` convNUM_REDUCE `_THEN`
     convGEN_REWRITE convONCE_DEPTH [pth]
-  where convNUM_MULTIPLY :: ArithCtxt thry => Bool -> Conversion cls thry
+  where convNUM_MULTIPLY :: WFCtxt thry => Bool -> Conversion cls thry
         convNUM_MULTIPLY pos = Conv $ \ tm ->
           if isForall tm || isExists tm || isUExists tm
                then runConv (convBINDER (convNUM_MULTIPLY pos)) tm
@@ -27,14 +26,14 @@ convNUM_SIMPLIFY =
                then runConv (convBINOP (convNUM_MULTIPLY pos)) tm
           else if (isNeg tm && not pos && containsQuantifier tm)
                then runConv (convRAND (convNUM_MULTIPLY (not pos))) tm
-          else do tmA <- toHTm [arith| a:num |]
-                  tmB <- toHTm [arith| b:num |]
-                  tmM <- toHTm [arith| m:num |]
-                  tmN <- toHTm [arith| n:num |]
-                  tmP <- toHTm [arith| P:num->bool |]
-                  tmQ <- toHTm [arith| P:num->num->bool |]
-                  tmDiv <- toHTm [arith| (DIV):num->num->num |]
-                  tmMod <- toHTm [arith| (MOD):num->num->num |]
+          else do tmA <- toHTm [wf| a:num |]
+                  tmB <- toHTm [wf| b:num |]
+                  tmM <- toHTm [wf| m:num |]
+                  tmN <- toHTm [wf| n:num |]
+                  tmP <- toHTm [wf| P:num->bool |]
+                  tmQ <- toHTm [wf| P:num->num->bool |]
+                  tmDiv <- toHTm [wf| (DIV):num->num->num |]
+                  tmMod <- toHTm [wf| (MOD):num->num->num |]
                   ((do t <- findTerm (\ t -> isPre t && freeIn t tm) tm
                        ty <- typeOf t
                        v <- genVar ty
@@ -89,20 +88,20 @@ convNUM_SIMPLIFY =
         convBETA2 :: Conversion cls thry
         convBETA2 = convRATOR convBETA `_THEN` convBETA
 
-        thmPRE_ELIM'' :: ArithCtxt thry => HOL cls thry HOLThm
-        thmPRE_ELIM'' = cacheProof "thmPRE_ELIM''" ctxtArith $
+        thmPRE_ELIM'' :: WFCtxt thry => HOL cls thry HOLThm
+        thmPRE_ELIM'' = cacheProof "thmPRE_ELIM''" ctxtWF $
             ruleCONV (convRAND convNNF) thmPRE_ELIM
 
-        thmSUB_ELIM'' :: ArithCtxt thry => HOL cls thry HOLThm
-        thmSUB_ELIM'' = cacheProof "thmSUB_ELIM''" ctxtArith $
+        thmSUB_ELIM'' :: WFCtxt thry => HOL cls thry HOLThm
+        thmSUB_ELIM'' = cacheProof "thmSUB_ELIM''" ctxtWF $
             ruleCONV (convRAND convNNF) thmSUB_ELIM
 
-        thmDIVMOD_ELIM'' :: ArithCtxt thry => HOL cls thry HOLThm
-        thmDIVMOD_ELIM'' = cacheProof "thmDIVMOD_ELIM''" ctxtArith $
+        thmDIVMOD_ELIM'' :: WFCtxt thry => HOL cls thry HOLThm
+        thmDIVMOD_ELIM'' = cacheProof "thmDIVMOD_ELIM''" ctxtWF $
             ruleCONV (convRAND convNNF) thmDIVMOD_ELIM
 
-        pth :: ArithCtxt thry => HOL cls thry HOLThm
-        pth = cacheProof "convNUM_SIMPLIFY_pth" ctxtArith .
+        pth :: WFCtxt thry => HOL cls thry HOLThm
+        pth = cacheProof "convNUM_SIMPLIFY_pth" ctxtWF .
             prove [txt| (EVEN(x) <=> (!y. ~(x = SUC(2 * y)))) /\
                         (ODD(x) <=> (!y. ~(x = 2 * y))) /\
                         (~EVEN(x) <=> (!y. ~(x = 2 * y))) /\

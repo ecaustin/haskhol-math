@@ -34,12 +34,13 @@ module HaskHOL.Lib.Pair
     , destPair
     , Base.newDefinition
     , getDefinition
+    , Base.getDefinitions
+    , Base.addDefinition
     , thmFORALL_PAIR
     , thmFORALL_UNCURRY
     , thmEXISTS_UNCURRY
     , createIteratedProjections
     , createProjections
-    , test
     ) where
 
 import HaskHOL.Core
@@ -50,15 +51,10 @@ import HaskHOL.Lib.Pair.Context
 import HaskHOL.Lib.Pair.PQ
 
 
-test :: IO ()
-test = flip (runHOLProof False) ctxtPair $ printHOL =<<
-  do cnv <- runHOLHint "convGEN_BETA" ("HaskHOL.Lib.Equal":["HaskHOL.Lib.Pair"])
-     runConv cnv [txt| (\ (a, b) . a) (x, y) |]
-
 -- Definition mechanics
 getDefinition :: Text -> HOL cls thry HOLThm
 getDefinition lbl =
-    do defs <- Base.getDefs
+    do defs <- Base.getDefinitions
        case mapAssoc lbl defs of
          Just res -> return res
          _ -> fail $ "getDefinition: definition for " ++ show lbl ++ 

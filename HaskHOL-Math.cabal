@@ -30,7 +30,7 @@ library
       HaskHOL.Lib.WF
       HaskHOL.Lib.CalcNum
       HaskHOL.Lib.Normalizer
-      --HaskHOL.Lib.Grobner
+      HaskHOL.Lib.Grobner
       HaskHOL.Lib.IndTypesPre
       HaskHOL.Lib.IndTypes
       HaskHOL.Lib.Lists

@@ -9,7 +9,7 @@
 -}
 module HaskHOL.Lib.CalcNum
     ( thmARITH
-    , convNUM_SUC
+    , convNUM_SUB
     , convNUM_PRE
     , convNUM_FACT
     , convNUM_GT
@@ -76,6 +76,11 @@ tmSUC = serve [wf| SUC |]
 convNUM_EVEN :: WFCtxt thry => Conversion cls thry
 convNUM_EVEN = Conv $ \ tm ->
     do (tth, rths) <- ruleCONJ_PAIR thmARITH_EVEN
+       runConv (convGEN_REWRITE id [tth] `_THEN` convGEN_REWRITE id [rths]) tm
+
+convNUM_ODD :: WFCtxt thry => Conversion cls thry
+convNUM_ODD = Conv $ \ tm ->
+    do (tth, rths) <- ruleCONJ_PAIR thmARITH_ODD
        runConv (convGEN_REWRITE id [tth] `_THEN` convGEN_REWRITE id [rths]) tm
 
 convNUM_SUC ::  WFCtxt thry => Conversion cls thry
@@ -1132,6 +1137,139 @@ ruleNUM_SQUARE tm = note "ruleNUM_SQUARE" $
                                   2 * 2 * 2 * 2 * 2 * 2 * m * m |]] `_THEN`
               tacREWRITE [thmEQ_MULT_LCANCEL, thmARITH_EQ]
 
+convNUM_GT :: WFCtxt thry => Conversion cls thry
+convNUM_GT = convGEN_REWRITE id [defGT] `_THEN` convNUM_LT
+
+convNUM_GE :: WFCtxt thry => Conversion cls thry
+convNUM_GE = convGEN_REWRITE id [defGE] `_THEN` convNUM_LE
+
+convNUM_PRE :: WFCtxt thry => Conversion cls thry
+convNUM_PRE = Conv $ \ tm ->
+    case tm of
+      Comb (Const "PRE" _) r ->
+          do x <- destNumeral r
+             if x == 0 then tth
+                else do tm' <- mkNumeral $ pred x
+                        th1 <- runConv convNUM_SUC $ mkComb [wf|SUC|] tm'
+                        th2 <- primINST [ ([wf|m:num|], tm'), ([wf|n:num|], r)
+                                        ] pth
+                        ruleMP th2 th1
+      _ -> fail "convNUM_PRE"
+  where tth :: WFCtxt thry => HOL cls thry HOLThm
+        tth = cacheProof "convNUM_PRE_tth" ctxtWF .
+            prove [txt| PRE 0 = 0 |] $ tacREWRITE [defPRE]
+
+        pth :: WFCtxt thry => HOL cls thry HOLThm
+        pth = cacheProof "convNUM_PRE_pth" ctxtWF .
+            prove [txt| (SUC m = n) ==> (PRE n = m) |] $
+              _DISCH_THEN (tacSUBST1 . ruleSYM) `_THEN` tacREWRITE [defPRE]
+
+convNUM_SUB :: WFCtxt thry => Conversion cls thry
+convNUM_SUB = Conv $ \ tm -> note "convNUM_SUB" $
+    do (l, r) <- destBinop [wf|(-)|] tm
+       ln <- destNumeral l
+       rn <- destNumeral r
+       if ln <= rn
+          then do pth <- primINST [([wf|p:num|], l), ([wf|n:num|], r)] pth0
+                  th0 <- ruleEQT_ELIM . runConv convNUM_LE $ 
+                           mkBinop [wf|(<=)|] l r
+                  ruleMP pth th0
+          else do k <- mkNumeral (ln - rn)
+                  pth <- primINST [ ([wf|m:num|], k), ([wf|p:num|], l)
+                                  , ([wf|n:num|], r) ] pth1
+                  th0 <- runConv convNUM_ADD $ mkBinop [wf|(+)|] k r
+                  ruleMP pth th0
+  where pth0 :: WFCtxt thry => HOL cls thry HOLThm
+        pth0 = cacheProof "convNUM_SUB_pth0" ctxtWF .
+            prove [txt| p <= n ==> (p - n = 0) |] $ tacREWRITE [thmSUB_EQ_0]
+
+        pth1 :: WFCtxt thry => HOL cls thry HOLThm
+        pth1 = cacheProof "convNUM_SUB_pth1" ctxtWF .
+            prove [txt| (m + n = p) ==> (p - n = m) |] $ 
+              _DISCH_THEN (tacSUBST1 . ruleSYM) `_THEN`
+              tacREWRITE [thmADD_SUB]
+
+
+convNUM_DIVMOD :: WFCtxt thry => Integer -> Integer -> HOL cls thry HOLThm
+convNUM_DIVMOD x y =
+    let (k, l) = x `quotRem` y in
+      do th0 <- primINST [([wf|m:num|], mkNumeral x), ([wf|n:num|], mkNumeral y)
+                         ,([wf|q:num|], mkNumeral k), ([wf|r:num|], mkNumeral l)
+                         ] pth
+         tm0 <- lHand . lHand $ concl th0
+         th1 <- runConv (convLAND convNUM_MULT `_THEN` convNUM_ADD) tm0
+         th2 <- ruleMP th0 th1
+         tm2 <- lHand $ concl th2
+         ruleMP th2 . ruleEQT_ELIM $ runConv convNUM_LT tm2
+  where pth :: WFCtxt thry => HOL cls thry HOLThm
+        pth = cacheProof "convNUM_DIVMOD_pth" ctxtWF .
+            prove [txt| (q * n + r = m) ==> r < n ==> 
+                        (m DIV n = q) /\ (m MOD n = r) |] $
+              tacMESON [thmDIVMOD_UNIQ]
+
+
+convNUM_DIV :: WFCtxt thry => Conversion cls thry
+convNUM_DIV = Conv $ \ tm ->
+    case tm of
+      Binary "DIV" xt yt ->
+          do xt' <- destNumeral xt
+             yt' <- destNumeral yt
+             ruleCONJUNCT1 $ convNUM_DIVMOD xt' yt'
+      _ -> fail' "convNUM_DIV"
+
+convNUM_MOD :: WFCtxt thry => Conversion cls thry
+convNUM_MOD = Conv $ \ tm ->
+    case tm of
+      Binary "MOD" xt yt ->
+          do xt' <- destNumeral xt
+             yt' <- destNumeral yt
+             ruleCONJUNCT2 $ convNUM_DIVMOD xt' yt'
+      _ -> fail' "convNUM_MOD"
+
+convNUM_FACT :: WFCtxt thry => Conversion cls thry
+convNUM_FACT = Conv $ \ tm ->
+    case tm of
+      Comb (Const "FACT" _) r -> convNUM_FACT' =<< destNumeral r
+      _ -> fail' "convNUM_FACT"
+  where convNUM_FACT' :: WFCtxt thry => Integer -> HOL cls thry HOLThm
+        convNUM_FACT' 0 = pth0
+        convNUM_FACT' n =
+            do th0 <- mksuc n
+               tmx <- rand . lHand $ concl th0
+               tm0 <- rand $ concl th0
+               th1 <- convNUM_FACT' $ pred n
+               tm1 <- rand $ concl th1
+               th2 <- runConv convNUM_FACT $ mkBinop [wf| (*) |] tm0 tm1
+               tm2 <- rand $ concl th2
+               pth <- primINST [ ([wf|x:num|], tmx), ([wf|y:num|], tm0)
+                               , ([wf|w:num|], tm1), ([wf|z:num|], tm2)
+                               ] pthSuc
+               ruleMP (ruleMP (ruleMP pth th0) th1) th2
+
+        mksuc :: WFCtxt thry => Integer -> HOL cls thry HOLThm
+        mksuc = runConv convNUM_SUC . mkComb [wf|SUC|] . mkNumeral . pred
+
+        pth0 :: WFCtxt thry => HOL cls thry HOLThm
+        pth0 = cacheProof "convNUM_FACT_pth0" ctxtWF .
+            prove [txt| FACT 0 = 1 |] $ tacREWRITE [defFACT]
+
+        pthSuc :: WFCtxt thry => HOL cls thry HOLThm
+        pthSuc = cacheProof "convNUM_FACT_pthSuc" ctxtWF .
+            prove [txt| (SUC x = y) ==> (FACT x = w) ==> 
+                        (y * w = z) ==> (FACT y = z) |] $
+              _REPEAT (_DISCH_THEN (tacSUBST1 . ruleSYM)) `_THEN`
+              tacREWRITE [defFACT]
+
+convNUM_MAX :: WFCtxt thry => Conversion cls thry
+convNUM_MAX =
+  convREWR defMAX `_THEN` convRATOR (convRATOR (convRAND convNUM_LE)) `_THEN`
+  convGEN_REWRITE id [thmCOND_CLAUSES]
+
+convNUM_MIN :: WFCtxt thry => Conversion cls thry
+convNUM_MIN =
+  convREWR defMIN `_THEN` convRATOR (convRATOR (convRAND convNUM_LE)) `_THEN`
+  convGEN_REWRITE id [thmCOND_CLAUSES]
+
 convNUM :: WFCtxt thry => Conversion cls thry
 convNUM = Conv $ \ tm -> note "convNUM" $
     do n <- liftM ((+) (-1)) $ destNumeral tm
@@ -1146,25 +1284,44 @@ convNUM_RED = Conv $ \ tm ->
   do net <- basicNet
      net' <- liftM (foldr (uncurry netOfConv) net) $
                mapM (toHTm `ffCombM` return)
-                 [ ([wf| SUC(NUMERAL n) |], HINT "convNUM_SUC" "HaskHOL.Lib.CalcNum")
-                   ([wf| PRE(NUMERAL n) |], HINT "convNUM_PRE" "HaskHOL.Lib.CalcNum")
-                   ([wf| FACT(NUMERAL n) |], HINT "convNUM_FACT" "HaskHOL.Lib.CalcNum")
-                   ([wf| NUMERAL m < NUMERAL n |], HINT "convNUM_LT" "HaskHOL.Lib.CalcNum")
-                   ([wf| NUMERAL m <= NUMERAL n |], HINT "convNUM_LE" "HaskHOL.Lib.CalcNum")
-                   ([wf| NUMERAL m > NUMERAL n |], HINT "convNUM_GT" "HaskHOL.Lib.CalcNum")
-                   ([wf| NUMERAL m >= NUMERAL n |], HINT "convNUM_GE" "HaskHOL.Lib.CalcNum")
-                   ([wf| NUMERAL m = NUMERAL n |], HINT "convNUM_EQ" "HaskHOL.Lib.CalcNum")
-                   ([wf| EVEN(NUMERAL n) |], HINT "convNUM_EVEN" "HaskHOL.Lib.CalcNum")
-                   ([wf| ODD(NUMERAL n) |], HINT "convNUM_ODD" "HaskHOL.Lib.CalcNum")
-                   ([wf| NUMERAL m + NUMERAL n |], HINT "convNUM_ADD" "HaskHOL.Lib.CalcNum")
-                   ([wf| NUMERAL m - NUMERAL n |], HINT "convNUM_SUB" "HaskHOL.Lib.CalcNum")
-                   ([wf| NUMERAL m * NUMERAL n |], HINT "convNUM_MULT" "HaskHOL.Lib.CalcNum")
-                   ([wf| (NUMERAL m) EXP (NUMERAL n) |], HINT "convNUM_EXP" "HaskHOL.Lib.CalcNum")
-                   ([wf| (NUMERAL m) DIV (NUMERAL n) |], HINT "convNUM_DIV" "HaskHOL.Lib.CalcNum")
-                   ([wf| (NUMERAL m) MOD (NUMERAL n) |], HINT "convNUM_MOD" "HaskHOL.Lib.CalcNum")
-                   ([wf| MAX (NUMERAL m) (NUMERAL n) |], HINT "convNUM_MAX" "HaskHOL.Lib.CalcNum")
-                   ([wf| MIN (NUMERAL m) (NUMERAL n) |], HINT "convNUM_MIN" "HaskHOL.Lib.CalcNum")
+                 [ ([wf| SUC(NUMERAL n) |], 
+                    HINT "convNUM_SUC" "HaskHOL.Lib.CalcNum")
+                 , ([wf| PRE(NUMERAL n) |], 
+                    HINT "convNUM_PRE" "HaskHOL.Lib.CalcNum")
+                 , ([wf| FACT(NUMERAL n) |], 
+                    HINT "convNUM_FACT" "HaskHOL.Lib.CalcNum")
+                 , ([wf| NUMERAL m < NUMERAL n |], 
+                    HINT "convNUM_LT" "HaskHOL.Lib.CalcNum")
+                 , ([wf| NUMERAL m <= NUMERAL n |], 
+                    HINT "convNUM_LE" "HaskHOL.Lib.CalcNum")
+                 , ([wf| NUMERAL m > NUMERAL n |], 
+                    HINT "convNUM_GT" "HaskHOL.Lib.CalcNum")
+                 , ([wf| NUMERAL m >= NUMERAL n |], 
+                    HINT "convNUM_GE" "HaskHOL.Lib.CalcNum")
+                 , ([wf| NUMERAL m = NUMERAL n |], 
+                    HINT "convNUM_EQ" "HaskHOL.Lib.CalcNum")
+                 , ([wf| EVEN(NUMERAL n) |], 
+                    HINT "convNUM_EVEN" "HaskHOL.Lib.CalcNum")
+                 , ([wf| ODD(NUMERAL n) |], 
+                    HINT "convNUM_ODD" "HaskHOL.Lib.CalcNum")
+                 , ([wf| NUMERAL m + NUMERAL n |], 
+                    HINT "convNUM_ADD" "HaskHOL.Lib.CalcNum")
+                 , ([wf| NUMERAL m - NUMERAL n |], 
+                    HINT "convNUM_SUB" "HaskHOL.Lib.CalcNum")
+                 , ([wf| NUMERAL m * NUMERAL n |], 
+                    HINT "convNUM_MULT" "HaskHOL.Lib.CalcNum")
+                 , ([wf| (NUMERAL m) EXP (NUMERAL n) |], 
+                    HINT "convNUM_EXP" "HaskHOL.Lib.CalcNum")
+                 , ([wf| (NUMERAL m) DIV (NUMERAL n) |], 
+                    HINT "convNUM_DIV" "HaskHOL.Lib.CalcNum")
+                 , ([wf| (NUMERAL m) MOD (NUMERAL n) |], 
+                    HINT "convNUM_MOD" "HaskHOL.Lib.CalcNum")
+                 , ([wf| MAX (NUMERAL m) (NUMERAL n) |], 
+                    HINT "convNUM_MAX" "HaskHOL.Lib.CalcNum")
+                 , ([wf| MIN (NUMERAL m) (NUMERAL n) |], 
+                    HINT "convNUM_MIN" "HaskHOL.Lib.CalcNum")
                  ]
+     runConv (gconvREWRITES net') tm
 
 convNUM_REDUCE :: WFCtxt thry => Conversion cls thry
 convNUM_REDUCE = convDEPTH convNUM_RED

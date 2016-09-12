@@ -83,6 +83,7 @@ module HaskHOL.Lib.Arith
     , thmLTE_TRANS
     , thmADD_SUBR2
     , thmEQ_ADD_LCANCEL_0
+    , thmEQ_ADD_RCANCEL_0
     , thmLE_ADDR
     , thmBIT1_THM
     , thmLT_ADD_LCANCEL
@@ -106,6 +107,7 @@ module HaskHOL.Lib.Arith
     , thmLE_MULT_LCANCEL
     , thmLT_MULT_LCANCEL
     , thmMULT_EQ_0
+    , thmMULT_EQ_1
     , thmEQ_MULT_LCANCEL
     , thmEQ_MULT_RCANCEL
     , thmEVEN_MULT
@@ -119,6 +121,8 @@ module HaskHOL.Lib.Arith
     , thmODD_EXISTS
     , thmLE_MULT_RCANCEL
     , thmDIVMOD_EXIST
+    , thmDIVMOD_UNIQ_LEMMA
+    , thmDIVMOD_UNIQ
     , thmMULT_2
     , thmDIVMOD_EXIST_0
     , specDIVISION_0
@@ -505,6 +509,11 @@ thmEQ_ADD_LCANCEL_0 = cacheProof "thmEQ_ADD_LCANCEL_0" ctxtArith .
     prove [txt| !m n. (m + n = m) <=> (n = 0) |] $
       tacINDUCT `_THEN` tacASM_REWRITE [thmADD_CLAUSES, thmSUC_INJ]
 
+thmEQ_ADD_RCANCEL_0 :: ArithCtxt thry => HOL cls thry HOLThm
+thmEQ_ADD_RCANCEL_0 = cacheProof "thmEQ_ADD_RCANCEL_0" ctxtArith .
+    prove [txt| !m n. (m + n = n) <=> (m = 0) |] $
+      tacONCE_REWRITE [thmADD_SYM] `_THEN` tacMATCH_ACCEPT thmEQ_ADD_LCANCEL_0
+
 thmLE_ADDR :: ArithCtxt thry => HOL cls thry HOLThm
 thmLE_ADDR = cacheProof "thmLE_ADDR" ctxtArith .
     prove [txt| !m n. n <= m + n |] $
@@ -673,6 +682,15 @@ thmMULT_EQ_0 = cacheProof "thmMULT_EQ_0" ctxtArith .
     prove [txt| !m n. (m * n = 0) <=> (m = 0) \/ (n = 0) |] $
       _REPEAT tacINDUCT `_THEN` 
       tacREWRITE [thmMULT_CLAUSES, thmADD_CLAUSES, thmNOT_SUC]
+
+thmMULT_EQ_1 :: ArithCtxt thry => HOL cls thry HOLThm
+thmMULT_EQ_1 = cacheProof "thmMULT_EQ_1" ctxtArith .
+    prove [txt| !m n. (m * n = 1) <=> (m = 1) /\ (n = 1) |] $
+      tacINDUCT `_THEN` tacINDUCT `_THEN` 
+      tacREWRITE [ thmMULT_CLAUSES, thmADD_CLAUSES, thmBIT0_THM, thmBIT1_THM
+                 , ruleGSYM thmNOT_SUC] `_THEN`
+      tacREWRITE [thmSUC_INJ, thmADD_EQ_0, thmMULT_EQ_0] `_THEN`
+      tacCONV (Conv $ \ tm -> ruleTAUT tm)
 
 thmEQ_MULT_LCANCEL :: ArithCtxt thry => HOL cls thry HOLThm
 thmEQ_MULT_LCANCEL = cacheProof "thmEQ_MULT_LCANCEL" ctxtArith .
