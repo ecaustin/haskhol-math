@@ -368,14 +368,12 @@ ruleMONOMIAL_MUL tm l r = do
         powvar x
             | ?isSemiringConstant x = toHTm ?tmOne
             | otherwise = 
-                case x of
-                  (Comb lop r') ->
-                      case lop of
-                        (Comb (Const op _) l')
-                            | op == ?tmPow && isNumeral r' -> return l'
-                            | otherwise -> fail "powvar"
-                        _ -> return x
-                  _ -> return x
+                (do (lop, r) <- destComb x
+                    (op, l) <- destComb lop
+                    case op of
+                      Const op' _
+                          | op' == ?tmPow && isNumeral r -> return l
+                          | otherwise -> return x) <|> return x
 
         vorder' :: HOLTerm -> HOLTerm -> HOLTerm -> Ordering
         vorder' one x y

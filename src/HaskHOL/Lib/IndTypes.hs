@@ -285,7 +285,8 @@ defineTypeNested def =
             do ths <- foldrM (mkRewrites False) [] [thmFUN_EQ]
                net <- basicNet
                net' <- foldrM (netOfThm False) net ths
-               ruleCONV (convCACHED_GENERAL_REWRITE False True convTOP_DEPTH net' thms) thm
+               ruleCONV (convCACHED_GENERAL_REWRITE Nothing True 
+                           convTOP_DEPTH net' thms) thm
 
         defineTypeBasecase :: IndTypesCtxt thry
                            => HOL Theory thry (HOLThm, HOLThm)

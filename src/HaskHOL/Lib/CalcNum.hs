@@ -265,7 +265,7 @@ convNUM_EXP = Conv $ \ tm -> note "convNUM_EXP" $
         convNUM_MULT' :: WFCtxt thry => Conversion cls thry
         convNUM_MULT' = Conv $ \ tm -> note "convNUM_MULT'" $
             case tm of
-              (mtm :* ntm)
+              (Comb (Comb (Const "*" _) mtm) ntm)
                   | mtm == ntm ->
                       do th1 <- ruleNUM_SQUARE mtm
                          ptm <- rand $ concl th1
